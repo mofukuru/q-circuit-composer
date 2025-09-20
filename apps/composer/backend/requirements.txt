@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+pydantic
+pennylane
+pennylane-lightning
+python-multipart

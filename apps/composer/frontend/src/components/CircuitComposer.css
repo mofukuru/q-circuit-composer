@@ -1,0 +1,100 @@
+.circuit-composer {
+  width: 100%;
+  height: calc(100vh - 140px);
+  display: flex;
+  flex-direction: column;
+}
+
+.composer-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr 350px;
+  gap: 20px;
+  height: 100%;
+  overflow: hidden;
+}
+
+.left-panel,
+.right-panel {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+}
+
+.main-content {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.error-message {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #ff6b6b;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  animation: slideIn 0.3s ease-out;
+}
+
+.error-close {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.error-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@media (max-width: 1200px) {
+  .composer-layout {
+    grid-template-columns: 280px 1fr 320px;
+    gap: 15px;
+  }
+}
+
+@media (max-width: 900px) {
+  .composer-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr;
+    gap: 15px;
+  }
+  
+  .left-panel,
+  .right-panel {
+    max-height: 300px;
+  }
+}

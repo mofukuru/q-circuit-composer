@@ -1,0 +1,133 @@
+.gate-palette {
+  padding: 20px;
+  height: 100%;
+  overflow-y: auto;
+  color: #333;
+}
+
+.palette-header {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.palette-header h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.4rem;
+  color: #2c3e50;
+}
+
+.palette-header p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #7f8c8d;
+  font-style: italic;
+}
+
+.gate-category {
+  margin-bottom: 24px;
+}
+
+.gate-category h4 {
+  margin: 0 0 12px 0;
+  font-size: 1.1rem;
+  color: #34495e;
+  border-bottom: 2px solid #e8ecef;
+  padding-bottom: 6px;
+}
+
+.gate-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 12px;
+}
+
+.gate-item {
+  background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  padding: 12px 8px;
+  text-align: center;
+  cursor: grab;
+  transition: all 0.2s ease;
+  user-select: none;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.gate-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: #667eea;
+  background: linear-gradient(145deg, #ffffff, #f8f9fa);
+}
+
+.gate-item:active {
+  cursor: grabbing;
+}
+
+.gate-item.dragging {
+  opacity: 0.5;
+  transform: rotate(5deg);
+}
+
+.gate-symbol {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #2c3e50;
+  margin-bottom: 4px;
+}
+
+.gate-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 2px;
+  line-height: 1.2;
+}
+
+.gate-params {
+  font-size: 0.65rem;
+  color: #6c757d;
+  font-style: italic;
+}
+
+/* Specific gate colors */
+.gate-item:has(.gate-name:contains("Hadamard")) {
+  border-color: #3498db;
+}
+
+.gate-item:has(.gate-name:contains("CNOT")) {
+  border-color: #e74c3c;
+}
+
+.gate-item:has(.gate-name:contains("Pauli")) {
+  border-color: #f39c12;
+}
+
+.gate-item:has(.gate-name:contains("R")) {
+  border-color: #9b59b6;
+}
+
+@media (max-width: 900px) {
+  .gate-grid {
+    grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+    gap: 10px;
+  }
+  
+  .gate-item {
+    min-height: 70px;
+    padding: 8px 6px;
+  }
+  
+  .gate-symbol {
+    font-size: 1.2rem;
+  }
+  
+  .gate-name {
+    font-size: 0.7rem;
+  }
+}
