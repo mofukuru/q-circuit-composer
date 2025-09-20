@@ -18,13 +18,21 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
   const circuitStateRef = useRef(circuitState);
   circuitStateRef.current = circuitState;
 
-  const canvasWidth = 800;
-  const qubitSpacing = 80; // Moved before canvasHeight
+  const qubitSpacing = 80;
   const leftMargin = 100;
-  const topMargin = 50; // Moved before canvasHeight
+  const topMargin = 50;
   const canvasHeight = Math.max(300, circuitState.qubits * qubitSpacing + topMargin + qubitSpacing);
   const gateWidth = 60; // Width of gate including spacing
   const gridSize = 60; // Grid size for gate positioning
+
+  // Calculate the maximum X position of any gate
+  const maxGateX = circuitState.operations.reduce(
+    (max, op) => (op.position.x > max ? op.position.x : max),
+    0
+  );
+
+  // Determine canvas width based on gate positions, with padding
+  const canvasWidth = Math.max(800, maxGateX + 150);
 
   const [{ isOver }, drop] = useDrop(() => ({
     accept: 'gate',
