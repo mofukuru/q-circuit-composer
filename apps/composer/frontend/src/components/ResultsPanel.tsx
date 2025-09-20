@@ -10,6 +10,7 @@ import {
   Legend,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+import { BarChart3, Zap, XCircle, CheckCircle } from 'lucide-react';
 import './ResultsPanel.css';
 
 ChartJS.register(
@@ -31,7 +32,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({ results, isLoading }) => {
     return (
       <div className="results-panel">
         <div className="panel-header">
-          <h3>📊 Results</h3>
+          <h3><BarChart3 size={20} /> Results</h3>
         </div>
         <div className="loading-container">
           <div className="loading-spinner"></div>
@@ -45,10 +46,10 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({ results, isLoading }) => {
     return (
       <div className="results-panel">
         <div className="panel-header">
-          <h3>📊 Results</h3>
+          <h3><BarChart3 size={20} /> Results</h3>
         </div>
         <div className="empty-state">
-          <div className="empty-icon">⚡</div>
+          <div className="empty-icon"><Zap size={48} /></div>
           <p>Build a circuit and click "Run Circuit" to see the results!</p>
         </div>
       </div>
@@ -59,7 +60,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({ results, isLoading }) => {
     return (
       <div className="results-panel">
         <div className="panel-header">
-          <h3>📊 Results</h3>
+          <h3><BarChart3 size={20} /> Results</h3>
         </div>
         <div className="error-state">
           <div className="error-icon">❌</div>
@@ -143,8 +144,8 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({ results, isLoading }) => {
   return (
     <div className="results-panel">
       <div className="panel-header">
-        <h3>📊 Results</h3>
-        <div className="success-indicator">✅ Success</div>
+        <h3><BarChart3 size={20} /> Results</h3>
+        <div className="success-indicator"><CheckCircle size={16} /> Success</div>
       </div>
       
       <div className="chart-container">

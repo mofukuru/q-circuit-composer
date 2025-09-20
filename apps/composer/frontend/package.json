@@ -9,6 +9,7 @@
     "axios": "^1.6.2",
     "chart.js": "^4.4.0",
     "konva": "^9.2.0",
+    "lucide-react": "^0.544.0",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.2.0",
     "react-dnd": "^16.0.1",

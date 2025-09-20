@@ -7,6 +7,7 @@ import ResultsPanel from './ResultsPanel';
 import ControlPanel from './ControlPanel';
 import { CircuitState, Gate, CircuitResponse } from '../types';
 import { apiService } from '../api';
+import { AlertTriangle } from 'lucide-react';
 import './CircuitComposer.css';
 
 const CircuitComposer: React.FC = () => {
@@ -117,7 +118,7 @@ const CircuitComposer: React.FC = () => {
             />
             {error && (
               <div className="error-message">
-                <span>⚠️ {error}</span>
+                <span><AlertTriangle size={16} /> {error}</span>
                 <button 
                   onClick={() => setError(null)}
                   className="error-close"

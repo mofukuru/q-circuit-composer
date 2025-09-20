@@ -1,6 +1,7 @@
 import React from 'react';
 import { Gate } from '../types';
 import { useDrag } from 'react-dnd';
+import { SlidersHorizontal } from 'lucide-react';
 import './GatePalette.css';
 
 interface GateItemProps {
@@ -44,7 +45,7 @@ const GatePalette: React.FC<GatePaletteProps> = ({ gates }) => {
   return (
     <div className="gate-palette">
       <div className="palette-header">
-        <h3>🎛️ Gate Palette</h3>
+        <h3><SlidersHorizontal size={20} /> Gate Palette</h3>
         <p>Drag gates onto the circuit</p>
       </div>
       

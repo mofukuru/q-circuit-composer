@@ -1,4 +1,5 @@
 import React from 'react';
+import { Settings, Play, Trash2 } from 'lucide-react';
 import './ControlPanel.css';
 
 interface ControlPanelProps {
@@ -23,7 +24,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   return (
     <div className="control-panel">
       <div className="panel-header">
-        <h3>⚙️ Control Panel</h3>
+        <h3><Settings size={20} /> Control Panel</h3>
       </div>
       
       <div className="control-group">
@@ -99,7 +100,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             </>
           ) : (
             <>
-              ▶️ Run Circuit
+              <Play size={16} /> Run Circuit
             </>
           )}
         </button>
@@ -109,7 +110,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           disabled={isLoading}
           className="clear-btn secondary"
         >
-          🗑️ Clear Circuit
+          <Trash2 size={16} /> Clear Circuit
         </button>
       </div>
     </div>
