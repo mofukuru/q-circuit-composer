@@ -17,19 +17,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
   const circuitStateRef = useRef(circuitState);
   circuitStateRef.current = circuitState;
   
-  // Debug: Log when props change
-  useEffect(() => {
-    console.log('CircuitCanvas received new props:', {
-      qubits: circuitState.qubits,
-      operationsCount: circuitState.operations.length,
-      operations: circuitState.operations.map(op => ({
-        id: op.id,
-        gate: op.gate,
-        wires: op.wires,
-        position: op.position
-      }))
-    });
-  }, [circuitState]);
+  
 
   const canvasWidth = 800;
   const canvasHeight = Math.max(300, circuitState.qubits * 80 + 100);
@@ -42,9 +30,6 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
   const [{ isOver }, drop] = useDrop(() => ({
     accept: 'gate',
     drop: (item: { gate: Gate }, monitor) => {
-      console.log('=== Drop Event ===');
-      console.log('Dropped gate:', item.gate.name);
-      
       const offset = monitor.getClientOffset();
       const canvasRect = document.querySelector('.canvas-container')?.getBoundingClientRect();
       
@@ -52,46 +37,22 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
         const rawX = offset.x - canvasRect.left;
         const rawY = offset.y - canvasRect.top;
         
-        console.log('Raw coordinates:', { rawX, rawY });
-        console.log('Canvas rect:', canvasRect);
-        
-        // Calculate which qubit line this corresponds to
         const qubitIndex = Math.round((rawY - topMargin) / qubitSpacing);
-        
-        // Snap to grid for X position
         const gridX = Math.round((rawX - leftMargin) / gridSize) * gridSize + leftMargin;
         
-        console.log('Calculated:', { qubitIndex, gridX, leftMargin, topMargin, qubitSpacing, gridSize });
-        
-        if (qubitIndex >= 0 && qubitIndex < circuitState.qubits && gridX >= leftMargin) {
-          console.log('Valid drop position, calling addGateToCircuit');
+        const currentQubits = circuitStateRef.current.qubits;
+        if (qubitIndex >= 0 && qubitIndex < currentQubits && gridX >= leftMargin) {
           addGateToCircuit(item.gate, qubitIndex, gridX);
-        } else {
-          console.log('Invalid drop position:', { 
-            qubitIndex, 
-            maxQubits: circuitState.qubits, 
-            gridX, 
-            minX: leftMargin 
-          });
         }
-      } else {
-        console.log('No offset or canvas rect available');
       }
-      
-      console.log('=== Drop Event Complete ===');
     },
     collect: (monitor) => ({
       isOver: monitor.isOver(),
     }),
-  }));
+  }), [circuitState]);
 
   const addGateToCircuit = useCallback((gate: Gate, qubitIndex: number, x: number) => {
-    console.log('=== Adding Gate ===');
-    console.log('Gate:', gate.name, 'Qubit:', qubitIndex, 'X:', x);
-    
-    // Use ref to get the latest state
     const currentState = circuitStateRef.current;
-    console.log('Current operations count:', currentState.operations.length);
     
     let wires: number[] = [qubitIndex];
     
@@ -101,13 +62,10 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
       if (targetQubit >= 0 && targetQubit < currentState.qubits) {
         wires = [qubitIndex, targetQubit];
       } else {
-        console.log('Cannot place multi-qubit gate: not enough qubits');
         return;
       }
     }
     
-    console.log('Wires:', wires);
-
     // Simplified collision detection - only check exact same position and wire
     const checkCollision = (testX: number) => {
       const collision = currentState.operations.some((op: GateOperation) => {
@@ -115,15 +73,6 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
         const sameWires = op.wires.length === wires.length && 
                           op.wires.every((wire: number, index: number) => wire === wires[index]);
         const result = sameColumn && sameWires;
-        if (result) {
-          console.log('Collision detected:', { 
-            existingGate: op.gate, 
-            existingX: op.position.x, 
-            testX, 
-            existingWires: op.wires, 
-            newWires: wires 
-          });
-        }
         return result;
       });
       return collision;
@@ -134,7 +83,6 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
     
     // If there's a collision, try to find next available spot
     if (checkCollision(finalX)) {
-      console.log('Initial position has collision, searching for alternative...');
       let found = false;
       
       // Try moving right
@@ -143,7 +91,6 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
         if (!checkCollision(testX) && testX < canvasWidth - 100) {
           finalX = testX;
           found = true;
-          console.log('Found position to the right:', finalX);
           break;
         }
       }
@@ -155,14 +102,12 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
           if (!checkCollision(testX) && testX >= leftMargin) {
             finalX = testX;
             found = true;
-            console.log('Found position to the left:', finalX);
             break;
           }
         }
       }
       
       if (!found) {
-        console.log('No available position found, placing anyway for debugging...');
       }
     }
 
@@ -174,21 +119,16 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
       position: { x: finalX, y: topMargin + qubitIndex * qubitSpacing },
     };
 
-    console.log('Creating new operation:', newOperation);
-    
     const newState = {
       ...currentState,
       operations: [...currentState.operations, newOperation],
     };
     
-    console.log('New state will have', newState.operations.length, 'operations');
     onStateChange(newState);
     
-    console.log('=== Gate Addition Complete ===');
-  }, [onStateChange, gridSize, canvasWidth, leftMargin, topMargin]); // Remove circuitState from dependencies
+  }, [onStateChange, gridSize, canvasWidth, leftMargin, topMargin]);
 
   const removeGate = useCallback((gateId: string) => {
-    console.log('Removing gate:', gateId);
     onStateChange({
       ...circuitState,
       operations: circuitState.operations.filter(op => op.id !== gateId),
@@ -403,26 +343,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
           </div>
         )}
         
-        {/* Debug info */}
-        <div style={{
-          position: 'absolute',
-          top: '10px',
-          right: '10px',
-          background: 'rgba(0,0,0,0.7)',
-          color: 'white',
-          padding: '10px',
-          borderRadius: '5px',
-          fontSize: '12px',
-          fontFamily: 'monospace'
-        }}>
-          <div>Gates: {circuitState.operations.length}</div>
-          <div>Qubits: {circuitState.qubits}</div>
-          {circuitState.operations.map((op, i) => (
-            <div key={op.id}>
-              {i+1}: {op.gate} @ ({Math.round(op.position.x)}, {op.wires.join(',')})
-            </div>
-          ))}
-        </div>
+        
       </div>
     </div>
   );

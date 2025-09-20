@@ -16,14 +16,7 @@ const CircuitComposer: React.FC = () => {
     shots: 1024,
   });
 
-  // Add logging for state changes
-  useEffect(() => {
-    console.log('CircuitState changed:', {
-      qubits: circuitState.qubits,
-      operationsCount: circuitState.operations.length,
-      operations: circuitState.operations
-    });
-  }, [circuitState]);
+  
   
   const [availableGates, setAvailableGates] = useState<Gate[]>([]);
   const [results, setResults] = useState<CircuitResponse | null>(null);
