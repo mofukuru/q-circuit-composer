@@ -1,7 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import pennylane as qml
-import numpy as np
 from models import CircuitRequest, CircuitResponse
 import logging
 
@@ -44,12 +43,30 @@ def create_circuit_function(circuit_operations: list, num_qubits: int):
                 elif gate == "pauliz" or gate == "z":
                     qml.PauliZ(wires=wires[0])
                 elif gate == "cnot" or gate == "cx":
-                    qml.CNOT(wires=wires)
+                    # wires[0] = control qubit, wires[1] = target qubit
+                    if len(wires) != 2:
+                        raise ValueError(
+                            "CNOT gate requires exactly 2 wires, "
+                            + f"got {len(wires)}"
+                        )
+                    qml.CNOT(wires=[wires[0], wires[1]])
                 elif gate == "rx":
+                    if not params or len(params) == 0:
+                        raise ValueError(
+                            "RX gate requires rotation angle parameter"
+                        )
                     qml.RX(params[0], wires=wires[0])
                 elif gate == "ry":
+                    if not params or len(params) == 0:
+                        raise ValueError(
+                            "RY gate requires rotation angle parameter"
+                        )
                     qml.RY(params[0], wires=wires[0])
                 elif gate == "rz":
+                    if not params or len(params) == 0:
+                        raise ValueError(
+                            "RZ gate requires rotation angle parameter"
+                        )
                     qml.RZ(params[0], wires=wires[0])
                 elif gate == "phase" or gate == "s":
                     qml.S(wires=wires[0])
@@ -88,7 +105,8 @@ async def execute_circuit(request: CircuitRequest):
     """Execute a quantum circuit using PennyLane."""
     try:
         logger.info(
-            f"Executing circuit with {request.qubits} qubits, {len(request.circuit)} operations"
+            f"Executing circuit with {request.qubits} qubits, "
+            + f"{len(request.circuit)} operations"
         )
 
         # Validate request

@@ -25,6 +25,18 @@
 
   --color-grid-line: #ced4da; /* ライトテーマ用の点線色 */
 
+  /* Quantum Gate Colors - Light Theme */
+  --color-gate-bg: #ffffff;
+  --color-gate-border: #2c3e50;
+  --color-gate-text: #2c3e50;
+  --color-gate-param: #666666;
+  
+  --color-cnot-line: #e74c3c;
+  --color-cnot-control: #2c3e50;
+  --color-cnot-target-bg: #ffffff;
+  --color-cnot-target-border: #2c3e50;
+  --color-cnot-target-cross: #2c3e50;
+
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
@@ -53,6 +65,18 @@ body.dark-theme {
   --color-warning: #f6ad55;
 
   --color-grid-line: #4a5568; /* ダークテーマ用の点線色 */
+
+  /* Quantum Gate Colors - Dark Theme */
+  --color-gate-bg: #2d3748;
+  --color-gate-border: #e2e8f0;
+  --color-gate-text: #f7fafc;
+  --color-gate-param: #a0aec0;
+  
+  --color-cnot-line: #fc8181;
+  --color-cnot-control: #f7fafc;
+  --color-cnot-target-bg: #2d3748;
+  --color-cnot-target-border: #e2e8f0;
+  --color-cnot-target-cross: #f7fafc;
 }
 
 body {

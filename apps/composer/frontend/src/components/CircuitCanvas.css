@@ -91,11 +91,32 @@
   animation: gatePlace 0.3s ease-out;
 }
 
+.circuit-instructions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: var(--color-bg-tertiary);
+  border-top: 1px solid var(--color-border-primary);
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  margin-top: auto;
+}
+
+.circuit-instructions p {
+  margin: 0;
+}
+
 @media (max-width: 992px) {
   .canvas-header {
     padding: 12px 16px;
     flex-direction: column;
     gap: 8px;
     text-align: center;
+  }
+  
+  .circuit-instructions {
+    padding: 8px 12px;
+    font-size: 0.8rem;
   }
 }

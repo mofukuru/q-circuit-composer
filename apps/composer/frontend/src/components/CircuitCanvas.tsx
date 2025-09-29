@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Beaker, Move } from 'lucide-react';
-import { useDrop } from 'react-dnd';
-import { Stage, Layer, Line, Text, Rect, Circle } from 'react-konva';
+import { useDrop, useDrag } from 'react-dnd';
+import { Stage, Layer, Line, Text, Rect, Circle, Group } from 'react-konva';
 import { CircuitState, GateOperation, Gate } from '../types';
+import GateParameterModal from './GateParameterModal';
 import './CircuitCanvas.css';
 
 interface CircuitCanvasProps {
@@ -17,6 +18,35 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
   // Use ref to always get the latest state
   const circuitStateRef = useRef(circuitState);
   circuitStateRef.current = circuitState;
+
+  // State for parameter modal
+  const [showParameterModal, setShowParameterModal] = useState(false);
+  const [pendingGate, setPendingGate] = useState<{
+    gate: Gate;
+    qubitIndex: number;
+    x: number;
+  } | null>(null);
+  
+  // Theme detection
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  
+  useEffect(() => {
+    const checkTheme = () => {
+      setIsDarkMode(document.body.classList.contains('dark-theme'));
+    };
+    
+    // Initial check
+    checkTheme();
+    
+    // Listen for theme changes
+    const observer = new MutationObserver(checkTheme);
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+    
+    return () => observer.disconnect();
+  }, []);
 
   const qubitSpacing = 80;
   const leftMargin = 100;
@@ -52,7 +82,13 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
 
         const currentQubits = circuitStateRef.current.qubits;
         if (qubitIndex >= 0 && qubitIndex < currentQubits && gridX >= leftMargin) {
-          addGateToCircuit(item.gate, qubitIndex, gridX);
+          // Check if gate requires parameters
+          if (item.gate.params > 0) {
+            setPendingGate({ gate: item.gate, qubitIndex, x: gridX });
+            setShowParameterModal(true);
+          } else {
+            addGateToCircuit(item.gate, qubitIndex, gridX);
+          }
         }
       }
     },
@@ -61,7 +97,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
     }),
   }), [circuitState]);
 
-  const addGateToCircuit = useCallback((gate: Gate, qubitIndex: number, x: number) => {
+  const addGateToCircuit = useCallback((gate: Gate, qubitIndex: number, x: number, params?: number[]) => {
     const currentState = circuitStateRef.current;
 
     let wires: number[] = [qubitIndex];
@@ -76,16 +112,9 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
       }
     }
 
-    // Simplified collision detection - only check exact same position and wire
+    // Use the shared collision detection function
     const checkCollision = (testX: number) => {
-      const collision = currentState.operations.some((op: GateOperation) => {
-        const sameColumn = Math.abs(op.position.x - testX) < 30; // Smaller tolerance
-        const sameWires = op.wires.length === wires.length &&
-                          op.wires.every((wire: number, index: number) => wire === wires[index]);
-        const result = sameColumn && sameWires;
-        return result;
-      });
-      return collision;
+      return checkCollisionAtPosition(testX, wires);
     };
 
     // Find available position
@@ -125,7 +154,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
       id: `gate_${Date.now()}_${Math.random()}`,
       gate: gate.name,
       wires: wires,
-      params: gate.params > 0 ? [Math.PI / 2] : undefined,
+      params: params || (gate.params > 0 ? [Math.PI / 2] : undefined),
       position: { x: finalX, y: topMargin + qubitIndex * qubitSpacing },
     };
 
@@ -137,6 +166,72 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
     onStateChange(newState);
 
   }, [onStateChange, gridSize, canvasWidth, leftMargin, topMargin]);
+
+  const handleParameterConfirm = (params: number[]) => {
+    if (pendingGate) {
+      addGateToCircuit(pendingGate.gate, pendingGate.qubitIndex, pendingGate.x, params);
+    }
+    setShowParameterModal(false);
+    setPendingGate(null);
+  };
+
+  const handleParameterCancel = () => {
+    setShowParameterModal(false);
+    setPendingGate(null);
+  };
+
+  const checkCollisionAtPosition = useCallback((testX: number, wires: number[], skipGateId?: string) => {
+    const currentState = circuitStateRef.current;
+    return currentState.operations.some((op: GateOperation) => {
+      if (skipGateId && op.id === skipGateId) return false;
+      
+      const sameColumn = Math.abs(op.position.x - testX) < 40;
+      const wiresOverlap = wires.some(wire => op.wires.includes(wire));
+      
+      return sameColumn && wiresOverlap;
+    });
+  }, []);
+
+  const moveGate = useCallback((gateId: string, newX: number, newQubitIndex: number) => {
+    const currentState = circuitStateRef.current;
+    const gateToMove = currentState.operations.find(op => op.id === gateId);
+    if (!gateToMove) return;
+
+    // Check if the new position is valid
+    if (newQubitIndex < 0 || newQubitIndex >= currentState.qubits) return;
+
+    let newWires = [newQubitIndex];
+    if (gateToMove.wires.length > 1) {
+      // Multi-qubit gate
+      const targetQubit = newQubitIndex + 1 < currentState.qubits ? newQubitIndex + 1 : newQubitIndex - 1;
+      if (targetQubit >= 0 && targetQubit < currentState.qubits) {
+        newWires = [newQubitIndex, targetQubit];
+      } else {
+        return; // Can't place multi-qubit gate here
+      }
+    }
+
+    // Check for collision at new position
+    if (checkCollisionAtPosition(newX, newWires, gateId)) {
+      return; // Can't move to occupied position
+    }
+
+    const updatedOperations = currentState.operations.map(op => {
+      if (op.id === gateId) {
+        return {
+          ...op,
+          wires: newWires,
+          position: { x: newX, y: topMargin + newQubitIndex * qubitSpacing }
+        };
+      }
+      return op;
+    });
+
+    onStateChange({
+      ...currentState,
+      operations: updatedOperations
+    });
+  }, [onStateChange, topMargin, qubitSpacing, checkCollisionAtPosition]);
 
   const removeGate = useCallback((gateId: string) => {
     onStateChange({
@@ -198,115 +293,190 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
 
       const elements = [];
 
+      // Make gates draggable by adding draggable property and onDragEnd
+      const handleDragEnd = (e: any) => {
+        const newX = Math.round((e.target.x() - leftMargin) / gridSize) * gridSize + leftMargin;
+        const newY = e.target.y();
+        const newQubitIndex = Math.round((newY - topMargin) / qubitSpacing);
+        
+        if (newQubitIndex >= 0 && newQubitIndex < circuitState.qubits && newX >= leftMargin) {
+          moveGate(operation.id, newX, newQubitIndex);
+        } else {
+          // Reset position if invalid
+          e.target.position({
+            x: operation.position.x,
+            y: operation.position.y
+          });
+        }
+      };
+
+      // Right-click to delete
+      const handleRightClick = (e: any) => {
+        e.evt.preventDefault();
+        removeGate(operation.id);
+      };
+
       if (isMultiQubit) {
         // Draw connection line for multi-qubit gates
-        const wire1Y = topMargin + operation.wires[0] * qubitSpacing;
-        const wire2Y = topMargin + operation.wires[1] * qubitSpacing;
+        const controlY = topMargin + operation.wires[0] * qubitSpacing; // Control qubit
+        const targetY = topMargin + operation.wires[1] * qubitSpacing;  // Target qubit
+        const colors = getThemeColors();
 
         elements.push(
-          <Line
-            key={`${operation.id}-connection`}
-            points={[x, wire1Y, x, wire2Y]}
-            stroke="#e74c3c"
-            strokeWidth={3}
-            onClick={() => removeGate(operation.id)}
-            onTap={() => removeGate(operation.id)}
-          />
-        );
-
-        // Control qubit (circle)
-        elements.push(
-          <Circle
-            key={`${operation.id}-control`}
-            x={x}
-            y={wire1Y}
-            radius={8}
-            fill="#2c3e50"
-            stroke="#2c3e50"
-            strokeWidth={2}
-            onClick={() => removeGate(operation.id)}
-            onTap={() => removeGate(operation.id)}
-          />
-        );
-
-        // Target qubit (cross in circle for CNOT)
-        elements.push(
-          <Circle
-            key={`${operation.id}-target-circle`} 
-            x={x}
-            y={wire2Y}
-            radius={20}
-            fill="white"
-            stroke="#2c3e50"
-            strokeWidth={3}
-            onClick={() => removeGate(operation.id)}
-            onTap={() => removeGate(operation.id)}
-          />
-        );
-
-        elements.push(
-          <Line
-            key={`${operation.id}-target-cross-1`}
-            points={[x - 12, wire2Y, x + 12, wire2Y]}
-            stroke="#2c3e50"
-            strokeWidth={3}
-            onClick={() => removeGate(operation.id)}
-            onTap={() => removeGate(operation.id)}
-          />
-        );
-
-        elements.push(
-          <Line
-            key={`${operation.id}-target-cross-2`}
-            points={[x, wire2Y - 12, x, wire2Y + 12]}
-            stroke="#2c3e50"
-            strokeWidth={3}
-            onClick={() => removeGate(operation.id)}
-            onTap={() => removeGate(operation.id)}
-          />
+          <Group
+            key={`${operation.id}-group`}
+            draggable
+            onDragEnd={handleDragEnd}
+            onContextMenu={handleRightClick}
+          >
+            <Line
+              points={[x, controlY, x, targetY]}
+              stroke={colors.cnotLine}
+              strokeWidth={3}
+            />
+            {/* Control qubit (filled dot) - first wire */}
+            <Circle
+              x={x}
+              y={controlY}
+              radius={8}
+              fill={colors.cnotControl}
+              stroke={colors.cnotControl}
+              strokeWidth={2}
+            />
+            {/* Target qubit (cross in circle for CNOT) - second wire */}
+            <Circle
+              x={x}
+              y={targetY}
+              radius={20}
+              fill={colors.cnotTargetBg}
+              stroke={colors.cnotTargetBorder}
+              strokeWidth={3}
+            />
+            <Line
+              points={[x - 12, targetY, x + 12, targetY]}
+              stroke={colors.cnotTargetCross}
+              strokeWidth={3}
+            />
+            <Line
+              points={[x, targetY - 12, x, targetY + 12]}
+              stroke={colors.cnotTargetCross}
+              strokeWidth={3}
+            />
+          </Group>
         );
       } else {
         // Single qubit gate - rectangle with symbol
         const gateSymbol = getGateSymbol(operation.gate);
+        const hasParams = operation.params && operation.params.length > 0;
 
+        const colors = getThemeColors();
+        
         elements.push(
-          <Rect
-            key={`${operation.id}-rect`}
-            x={x - 20}
-            y={y - 20}
-            width={40}
-            height={40}
-            fill="#f8f9fa"
-            stroke="#2c3e50"
-            strokeWidth={2}
-            cornerRadius={4}
-            onClick={() => removeGate(operation.id)}
-            onTap={() => removeGate(operation.id)}
-          />
-        );
-
-        elements.push(
-          <Text
-            key={`${operation.id}-text`}
+          <Group
+            key={`${operation.id}-group`}
             x={x}
             y={y}
-            text={gateSymbol}
-            fontSize={14}
-            fontFamily="Arial, sans-serif"
-            fontStyle="bold"
-            fill="#2c3e50"
-            align="center"
-            verticalAlign="middle"
-            offsetX={gateSymbol.length * 3.5}
-            offsetY={7}
-            onClick={() => removeGate(operation.id)}
-            onTap={() => removeGate(operation.id)}
-          />
+            draggable
+            onDragEnd={handleDragEnd}
+            onContextMenu={handleRightClick}
+          >
+            <Rect
+              x={-25}
+              y={-25}
+              width={50}
+              height={50}
+              fill={colors.gateBg}
+              stroke={colors.gateBorder}
+              strokeWidth={2}
+              cornerRadius={4}
+            />
+            <Text
+              x={-25}
+              y={hasParams ? -18 : -10}
+              text={gateSymbol}
+              fontSize={14}
+              fontFamily="Arial, sans-serif"
+              fontStyle="bold"
+              fill={colors.gateText}
+              align="center"
+              verticalAlign="middle"
+              width={50}
+              height={20}
+              listening={false}
+            />
+            {hasParams && (
+              <Text
+                x={-25}
+                y={2}
+                text={`(${formatAngle(operation.params![0])})`}
+                fontSize={9}
+                fontFamily="Arial, sans-serif"
+                fill={colors.gateParam}
+                align="center"
+                verticalAlign="middle"
+                width={50}
+                height={16}
+                listening={false}
+              />
+            )}
+          </Group>
         );
       }
 
       return elements;
     });
+  };
+
+  const formatAngle = (angle: number): string => {
+    const pi = Math.PI;
+    const tolerance = 0.001;
+    
+    // Common angle values
+    const commonAngles = [
+      { value: 0, text: '0' },
+      { value: pi / 8, text: 'π/8' },
+      { value: pi / 4, text: 'π/4' },
+      { value: pi / 2, text: 'π/2' },
+      { value: pi, text: 'π' },
+      { value: 3 * pi / 2, text: '3π/2' },
+      { value: 2 * pi, text: '2π' },
+    ];
+    
+    for (const common of commonAngles) {
+      if (Math.abs(angle - common.value) < tolerance) {
+        return common.text;
+      }
+    }
+    
+    return angle.toFixed(3);
+  };
+
+  const getThemeColors = () => {
+    if (isDarkMode) {
+      return {
+        gateBg: '#2d3748',
+        gateBorder: '#e2e8f0',
+        gateText: '#f7fafc',
+        gateParam: '#a0aec0',
+        cnotLine: '#fc8181',
+        cnotControl: '#f7fafc',
+        cnotTargetBg: '#2d3748',
+        cnotTargetBorder: '#e2e8f0',
+        cnotTargetCross: '#f7fafc',
+      };
+    } else {
+      return {
+        gateBg: '#f8f9fa',
+        gateBorder: '#2c3e50',
+        gateText: '#2c3e50',
+        gateParam: '#666',
+        cnotLine: '#e74c3c',
+        cnotControl: '#2c3e50',
+        cnotTargetBg: 'white',
+        cnotTargetBorder: '#2c3e50',
+        cnotTargetCross: '#2c3e50',
+      };
+    }
   };
 
   const getGateSymbol = (gateName: string): string => {
@@ -355,6 +525,21 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
 
 
       </div>
+      
+      {/* Instructions */}
+      <div className="circuit-instructions">
+        <p>💡 Drag gates to move them • Right-click to delete</p>
+      </div>
+      
+      {/* Parameter Modal */}
+      {showParameterModal && pendingGate && (
+        <GateParameterModal
+          gateName={pendingGate.gate.name}
+          currentParams={pendingGate.gate.params > 0 ? [Math.PI / 2] : []}
+          onConfirm={handleParameterConfirm}
+          onCancel={handleParameterCancel}
+        />
+      )}
     </div>
   );
 };

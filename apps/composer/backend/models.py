@@ -1,11 +1,13 @@
 from pydantic import BaseModel
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Optional
 
 
 class GateOperation(BaseModel):
     gate: str
     wires: List[int]
     params: Optional[List[float]] = None
+    # For CNOT: wires[0] = control, wires[1] = target
+    # For rotation gates: params[0] = rotation angle in radians
 
 
 class CircuitRequest(BaseModel):
