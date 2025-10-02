@@ -3,6 +3,7 @@
   color: var(--color-text-primary);
   height: 100%;
   overflow-y: auto;
+  overflow-x: hidden; /* prevent horizontal scroll */
 }
 
 .panel-header {
@@ -36,6 +37,7 @@
   align-items: center;
   gap: 6px;
   margin-bottom: 6px;
+  min-width: 0; /* allow children to shrink */
 }
 
 .adjust-btn {
@@ -67,7 +69,7 @@
 }
 
 .number-input {
-  flex: 1;
+  flex: 1 1 auto;
   padding: 8px 12px;
   border: 1px solid var(--color-border-primary);
   background-color: var(--color-bg-secondary);
@@ -77,6 +79,7 @@
   font-size: 1rem;
   font-weight: 500;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  min-width: 0; /* avoid causing horizontal scroll */
 }
 
 .number-input:focus {
@@ -109,6 +112,8 @@
   justify-content: center;
   gap: 8px;
   border: none;
+  width: 100%; /* ensure buttons don't overflow; matches Tooltip fullWidth wrapper */
+  box-sizing: border-box;
 }
 
 .action-btn.primary {
@@ -162,6 +167,6 @@
     flex-direction: row;
   }
   .action-btn {
-    flex: 1;
+    flex: 1 1 0;
   }
 }

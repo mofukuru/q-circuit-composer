@@ -3,6 +3,7 @@
   height: 100%;
   overflow-y: auto;
   color: var(--color-text-primary);
+  overflow-x: hidden; /* avoid horizontal scroll */
 }
 
 .palette-header {
@@ -40,7 +41,7 @@
 
 .gate-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
   gap: 12px;
 }
 
@@ -118,10 +119,14 @@
 
 @media (max-width: 992px) {
   .gate-grid {
-    grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
     gap: 10px;
   }
   .gate-item {
     min-height: 65px;
+  }
+  .gate-palette {
+    height: auto;
+    overflow: visible; /* remove inner scroll in small layouts */
   }
 }

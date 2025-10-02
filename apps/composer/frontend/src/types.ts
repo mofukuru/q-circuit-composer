@@ -29,10 +29,16 @@ export interface CircuitRequest {
     wires: number[];
     params?: number[];
   }>;
+  result_mode?: 'probs' | 'expval';
 }
 
 export interface CircuitResponse {
   probabilities: { [key: string]: number };
   success: boolean;
   message: string;
+  // Optional fields returned by backend for measured-wire semantics
+  marginal_probabilities?: { [key: string]: number };
+  measured_wires?: number[];
+  measured_bases?: { [wire: number]: 'Z' | 'X' | 'Y' };
+  expectations?: { [wire: number]: number };
 }

@@ -1,9 +1,10 @@
 .circuit-composer {
   width: 100%;
-  /* Adjust height based on the new header size */
-  height: calc(100vh - 125px);
+  /* Fill available space within main without forcing viewport calc */
+  height: 100%;
   display: flex;
   flex-direction: column;
+  min-height: 0; /* Avoid internal overflow pushing the page */
 }
 
 .composer-layout {
@@ -11,7 +12,7 @@
   grid-template-columns: 280px 1fr 340px;
   gap: 24px;
   height: 100%;
-  overflow: hidden;
+  overflow: hidden; /* Contain inner panel scrolls */
 }
 
 .left-panel,
@@ -90,21 +91,24 @@
 
 @media (max-width: 992px) {
   .circuit-composer {
-    height: auto;
+    height: auto; /* allow to expand */
   }
   .composer-layout {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto 1fr; /* Palette, Controls, Canvas */
+    grid-template-rows: auto auto auto; /* stack panels, let them size naturally */
     gap: 16px;
+    height: auto; /* allow full document scroll */
+    overflow: visible; /* avoid trapping scroll */
   }
   
   .left-panel,
   .right-panel {
-    max-height: 40vh; /* Allow more space on smaller screens */
-    overflow-y: auto;
+    max-height: none; /* let content define height */
+    overflow: visible; /* remove inner scroll */
   }
 
   .main-content {
     min-height: 400px;
+    overflow: visible; /* allow content to grow; use page scroll */
   }
 }

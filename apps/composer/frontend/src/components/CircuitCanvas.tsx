@@ -117,13 +117,23 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
     let wires: number[] = [qubitIndex];
 
     // For multi-qubit gates like CNOT, we need to specify target qubit
-    if (gate.qubits > 1) {
+    if (gate.qubits === 2) {
       const targetQubit = qubitIndex + 1 < currentState.qubits ? qubitIndex + 1 : qubitIndex - 1;
       if (targetQubit >= 0 && targetQubit < currentState.qubits) {
         wires = [qubitIndex, targetQubit];
       } else {
         return;
       }
+    } else if (gate.qubits === 3) {
+      // Toffoli (CCNOT) default placement: try [q, q+1, q+2], else [q-2, q-1, q], else [q-1, q, q+1]
+      const N = currentState.qubits;
+      const candidates: number[][] = [];
+      if (qubitIndex + 2 < N) candidates.push([qubitIndex, qubitIndex + 1, qubitIndex + 2]);
+      if (qubitIndex - 2 >= 0) candidates.push([qubitIndex - 2, qubitIndex - 1, qubitIndex]);
+      if (qubitIndex - 1 >= 0 && qubitIndex + 1 < N) candidates.push([qubitIndex - 1, qubitIndex, qubitIndex + 1]);
+      const chosen = candidates.find(arr => arr.every(w => w >= 0 && w < N));
+      if (!chosen) return;
+      wires = chosen;
     }
 
     // Use the shared collision detection function
@@ -405,6 +415,90 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
     onStateChange({ ...currentState, operations: updatedOperations });
   }, [onStateChange, isOccupied, yForQubit]);
 
+  // Move entire Toffoli gate (3-qubit) preserving relative offsets
+  const moveToffoliWhole = useCallback((gateId: string, newX: number, newMinWire: number) => {
+    const currentState = circuitStateRef.current;
+    const gateToMove = currentState.operations.find(op => op.id === gateId);
+    if (!gateToMove || gateToMove.wires.length !== 3) return;
+
+    const offsets = gateToMove.wires.map(w => w - Math.min(...gateToMove.wires));
+    const newWires = offsets.map(off => newMinWire + off);
+    if (newWires.some(w => w < 0 || w >= currentState.qubits)) return;
+
+    const newXClamped = Math.max(leftMargin, newX);
+    const isColumnFree = (testX: number) => newWires.every(w => !isOccupied(testX, w, gateId));
+    let finalX = newXClamped;
+    if (!isColumnFree(finalX)) {
+      const step = gridSize;
+      let found = false;
+      for (let i = 1; i <= 12; i++) {
+        const rightX = newXClamped + i * step;
+        const leftX = newXClamped - i * step;
+        if (rightX >= leftMargin && isColumnFree(rightX)) { finalX = rightX; found = true; break; }
+        if (leftX >= leftMargin && isColumnFree(leftX)) { finalX = leftX; found = true; break; }
+      }
+      if (!found) return;
+    }
+
+    const updatedOperations = currentState.operations.map(op => {
+      if (op.id === gateId) {
+        return {
+          ...op,
+          wires: newWires,
+          position: { ...op.position, x: finalX, y: yForQubit(newWires[0]) },
+          targetX: finalX,
+        };
+      }
+      return op;
+    });
+
+    onStateChange({ ...currentState, operations: updatedOperations });
+  }, [onStateChange, isOccupied, yForQubit]);
+
+  // Move one part of a Toffoli (which: 'c1'|'c2'|'t') vertically; may shift x to avoid collisions
+  const moveToffoliPart = useCallback((gateId: string, which: 'c1'|'c2'|'t', newWireIdx: number) => {
+    const currentState = circuitStateRef.current;
+    const op = currentState.operations.find(o => o.id === gateId);
+    if (!op || op.wires.length !== 3) return;
+    const maxIdx = currentState.qubits - 1;
+    let [c1, c2, t] = op.wires;
+    const others = which === 'c1' ? [c2, t] : which === 'c2' ? [c1, t] : [c1, c2];
+    let idx = Math.max(0, Math.min(maxIdx, newWireIdx));
+    // Keep distinct from others
+    const avoid = (i: number) => others.includes(i);
+    if (avoid(idx)) {
+      if (idx < maxIdx && !avoid(idx + 1)) idx = idx + 1;
+      else if (idx > 0 && !avoid(idx - 1)) idx = idx - 1;
+      else return; // give up if no space
+    }
+    if (which === 'c1') c1 = idx; else if (which === 'c2') c2 = idx; else t = idx;
+
+    const newWires = [c1, c2, t];
+    // Ensure ordering is preserved by role, not sorted; just distinctness and bounds above
+    const testX = op.position.x;
+    const occupied = newWires.some(w => isOccupied(testX, w, gateId));
+    let finalX = testX;
+    if (occupied) {
+      const step = gridSize;
+      let found = false;
+      for (let i = 1; i <= 12; i++) {
+        const rightX = testX + i * step;
+        const leftX = testX - i * step;
+        if (rightX >= leftMargin && newWires.every(w => !isOccupied(rightX, w, gateId))) { finalX = rightX; found = true; break; }
+        if (leftX >= leftMargin && newWires.every(w => !isOccupied(leftX, w, gateId))) { finalX = leftX; found = true; break; }
+      }
+      if (!found) return;
+    }
+
+    const updatedOperations = currentState.operations.map(o => {
+      if (o.id === gateId) {
+        return { ...o, wires: newWires, position: { ...o.position, x: finalX, y: yForQubit(newWires[0]) }, targetX: finalX };
+      }
+      return o;
+    });
+    onStateChange({ ...currentState, operations: updatedOperations });
+  }, [onStateChange, isOccupied, yForQubit]);
+
   const removeGate = useCallback((gateId: string) => {
     onStateChange({
       ...circuitState,
@@ -486,7 +580,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
 
       const colors = getThemeColors();
 
-      if (operation.gate === 'CNOT') {
+  if (operation.gate === 'CNOT') {
         const controlY = topMargin + operation.wires[0] * qubitSpacing;
         const targetY = topMargin + operation.wires[1] * qubitSpacing;
         const controlX = operation.position.x;
@@ -722,7 +816,528 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
             </Group>
           </Group>
         );
-      } else if (isMultiQubit) { // For CRX, CRY, CRZ
+  } else if (operation.gate === 'Controlled-Z' || operation.gate === 'CZ') {
+        // CZ gate: two black dots connected by a line; both ends draggable like CNOT, but X stays the same for both
+        const controlY = topMargin + operation.wires[0] * qubitSpacing;
+        const targetY = topMargin + operation.wires[1] * qubitSpacing;
+        const controlX = operation.position.x;
+        const targetX = operation.targetX ?? controlX;
+
+        const controlId = `ctrl-${operation.id}`;
+        const targetId = `tgt-${operation.id}`;
+        const lineId = `conn-${operation.id}`;
+
+        elements.push(
+          <Group key={`${operation.id}-group`} onContextMenu={handleRightClick}>
+            {/* Connection Line */}
+            <Line
+              points={[controlX, controlY, targetX, targetY]}
+              stroke={colors.cnotLine}
+              strokeWidth={3}
+              listening={false}
+              id={lineId}
+            />
+
+            {/* Whole-gate handle */}
+            <Rect
+              x={Math.min(controlX, targetX) - 15}
+              y={Math.min(controlY, targetY)}
+              width={30}
+              height={Math.max(1, Math.abs(targetY - controlY))}
+              fill={'rgba(0,0,0,0.0001)'}
+              draggable
+              dragBoundFunc={(pos) => {
+                const snappedX = Math.max(leftMargin, snapToGridX(pos.x));
+                const maxIdx = circuitStateRef.current.qubits - 1;
+                const delta = operation.wires[1] - operation.wires[0];
+                const absDelta = Math.abs(delta);
+                const rawMinIdx = snapToQubitIndex(pos.y);
+                const clampedMin = clamp(rawMinIdx, 0, maxIdx - absDelta);
+                return { x: snappedX - 15, y: yForQubit(clampedMin) };
+              }}
+              onDragStart={(e) => e.target.to({ scaleX: 1.03, scaleY: 1.03, shadowBlur: 8, shadowColor: 'black', shadowOpacity: 0.2, duration: 0.08 })}
+              onDragMove={(e) => {
+                const stage = e.target.getStage();
+                if (!stage) return;
+                const ctrlNode = stage.findOne(`#${controlId}`) as any;
+                const tgtNode = stage.findOne(`#${targetId}`) as any;
+                const lineNode = stage.findOne(`#${lineId}`) as any;
+                const snappedX = Math.max(leftMargin, snapToGridX((e.target.x() ?? 0) + 15));
+                const maxIdx = circuitStateRef.current.qubits - 1;
+                const delta = operation.wires[1] - operation.wires[0];
+                const absDelta = Math.abs(delta);
+                const rawMinIdx = snapToQubitIndex(e.target.y());
+                const minIdx = clamp(rawMinIdx, 0, maxIdx - absDelta);
+                const ctrlIdx = delta >= 0 ? minIdx : minIdx - delta;
+                const ctrlY2 = yForQubit(ctrlIdx);
+                const tgtY2 = yForQubit(ctrlIdx + delta);
+                if (ctrlNode) ctrlNode.position({ x: snappedX, y: ctrlY2 });
+                if (tgtNode) tgtNode.position({ x: snappedX, y: tgtY2 });
+                if (lineNode) lineNode.points([snappedX, ctrlY2, snappedX, tgtY2]);
+                e.target.position({ x: snappedX - 15, y: Math.min(ctrlY2, tgtY2) });
+                e.target.size({ width: 30, height: Math.max(1, Math.abs(tgtY2 - ctrlY2)) });
+              }}
+              onDragEnd={(e) => {
+                const snappedX = Math.max(leftMargin, snapToGridX((e.target.x() ?? 0) + 15));
+                const maxIdx = circuitStateRef.current.qubits - 1;
+                const delta = operation.wires[1] - operation.wires[0];
+                const absDelta = Math.abs(delta);
+                const rawMinIdx = snapToQubitIndex(e.target.y());
+                const minIdx = clamp(rawMinIdx, 0, maxIdx - absDelta);
+                const ctrlIdx = delta >= 0 ? minIdx : minIdx - delta;
+                moveMultiQubitWhole(operation.id, snappedX, ctrlIdx);
+                e.target.to({ scaleX: 1, scaleY: 1, shadowBlur: 0, shadowOpacity: 0, duration: 0.08 });
+              }}
+            />
+
+            {/* Endpoint dots */}
+            <Group
+              id={controlId}
+              x={controlX}
+              y={controlY}
+              draggable
+              dragBoundFunc={(pos) => {
+                const maxIdx = circuitStateRef.current.qubits - 1;
+                let idx = clamp(snapToQubitIndex(pos.y), 0, maxIdx);
+                const other = operation.wires[1];
+                if (idx === other) {
+                  const baseY = yForQubit(other);
+                  const dy = pos.y - baseY;
+                  if (dy >= 0 && other < maxIdx) idx = other + 1;
+                  else if (dy < 0 && other > 0) idx = other - 1;
+                  else if (other < maxIdx) idx = other + 1;
+                  else if (other > 0) idx = other - 1;
+                }
+                return { x: controlX, y: yForQubit(idx) };
+              }}
+              onDragStart={(e) => {
+                e.target.to({ scaleX: 1.08, scaleY: 1.08, shadowBlur: 12, shadowColor: 'black', shadowOpacity: 0.25, duration: 0.08 });
+                e.target.moveToTop();
+              }}
+              onDragMove={(e) => {
+                const stage = e.target.getStage();
+                if (!stage) return;
+                const lineNode = stage.findOne(`#${lineId}`) as any;
+                const tgtNode = stage.findOne(`#${targetId}`) as any;
+                const ctrlYCur = e.target.y();
+                const tgtYCur = tgtNode ? tgtNode.y() : targetY;
+                if (lineNode) lineNode.points([controlX, ctrlYCur, controlX, tgtYCur]);
+              }}
+              onDragEnd={(e) => {
+                const maxIdx = circuitStateRef.current.qubits - 1;
+                let idx = clamp(snapToQubitIndex(e.target.y()), 0, maxIdx);
+                const other = operation.wires[1];
+                if (idx === other) {
+                  const baseY = yForQubit(other);
+                  const dy = e.target.y() - baseY;
+                  if (dy >= 0 && other < maxIdx) idx = other + 1;
+                  else if (dy < 0 && other > 0) idx = other - 1;
+                  else if (other < maxIdx) idx = other + 1;
+                  else if (other > 0) idx = other - 1;
+                }
+                moveMultiQubitPart(operation.id, 'control', controlX, idx);
+                e.target.to({ scaleX: 1, scaleY: 1, shadowBlur: 0, shadowOpacity: 0, duration: 0.08 });
+              }}
+            >
+              <Circle radius={8} fill={'#000'} stroke={'#000'} strokeWidth={2} />
+            </Group>
+
+            <Group
+              id={targetId}
+              x={targetX}
+              y={targetY}
+              draggable
+              dragBoundFunc={(pos) => {
+                const maxIdx = circuitStateRef.current.qubits - 1;
+                let idx = clamp(snapToQubitIndex(pos.y), 0, maxIdx);
+                const other = operation.wires[0];
+                if (idx === other) {
+                  const baseY = yForQubit(other);
+                  const dy = pos.y - baseY;
+                  if (dy >= 0 && other < maxIdx) idx = other + 1;
+                  else if (dy < 0 && other > 0) idx = other - 1;
+                  else if (other < maxIdx) idx = other + 1;
+                  else if (other > 0) idx = other - 1;
+                }
+                return { x: targetX, y: yForQubit(idx) };
+              }}
+              onDragStart={(e) => {
+                e.target.to({ scaleX: 1.08, scaleY: 1.08, shadowBlur: 12, shadowColor: 'black', shadowOpacity: 0.25, duration: 0.08 });
+                e.target.moveToTop();
+              }}
+              onDragMove={(e) => {
+                const stage = e.target.getStage();
+                if (!stage) return;
+                const lineNode = stage.findOne(`#${lineId}`) as any;
+                const ctrlNode = stage.findOne(`#${controlId}`) as any;
+                const tgtYCur = e.target.y();
+                const ctrlYCur = ctrlNode ? ctrlNode.y() : controlY;
+                if (lineNode) lineNode.points([controlX, ctrlYCur, targetX, tgtYCur]);
+              }}
+              onDragEnd={(e) => {
+                const maxIdx = circuitStateRef.current.qubits - 1;
+                let idx = clamp(snapToQubitIndex(e.target.y()), 0, maxIdx);
+                const other = operation.wires[0];
+                if (idx === other) {
+                  const baseY = yForQubit(other);
+                  const dy = e.target.y() - baseY;
+                  if (dy >= 0 && other < maxIdx) idx = other + 1;
+                  else if (dy < 0 && other > 0) idx = other - 1;
+                  else if (other < maxIdx) idx = other + 1;
+                  else if (other > 0) idx = other - 1;
+                }
+                moveMultiQubitPart(operation.id, 'target', targetX, idx);
+                e.target.to({ scaleX: 1, scaleY: 1, shadowBlur: 0, shadowOpacity: 0, duration: 0.08 });
+              }}
+            >
+              <Circle radius={8} fill={'#000'} stroke={'#000'} strokeWidth={2} />
+            </Group>
+          </Group>
+        );
+      } else if (operation.gate === 'SWAP') {
+        // SWAP gate: draw X marks at both ends, connected by a line; both ends draggable like CNOT
+        const controlY = topMargin + operation.wires[0] * qubitSpacing;
+        const targetY = topMargin + operation.wires[1] * qubitSpacing;
+        const controlX = operation.position.x;
+        const targetX = operation.targetX ?? controlX;
+
+        const controlId = `ctrl-${operation.id}`;
+        const targetId = `tgt-${operation.id}`;
+        const lineId = `conn-${operation.id}`;
+
+        const XMark = ({ idPrefix = '' }: { idPrefix?: string }) => (
+          <Group>
+            <Line points={[-12, -12, 12, 12]} stroke={colors.cnotTargetCross} strokeWidth={3} />
+            <Line points={[-12, 12, 12, -12]} stroke={colors.cnotTargetCross} strokeWidth={3} />
+          </Group>
+        );
+
+        elements.push(
+          <Group key={`${operation.id}-group`} onContextMenu={handleRightClick}>
+            <Line
+              points={[controlX, controlY, targetX, targetY]}
+              stroke={colors.cnotLine}
+              strokeWidth={3}
+              listening={false}
+              id={lineId}
+            />
+
+            {/* Whole-gate handle */}
+            <Rect
+              x={Math.min(controlX, targetX) - 15}
+              y={Math.min(controlY, targetY)}
+              width={30}
+              height={Math.max(1, Math.abs(targetY - controlY))}
+              fill={'rgba(0,0,0,0.0001)'}
+              draggable
+              dragBoundFunc={(pos) => {
+                const snappedX = Math.max(leftMargin, snapToGridX(pos.x));
+                const maxIdx = circuitStateRef.current.qubits - 1;
+                const delta = operation.wires[1] - operation.wires[0];
+                const absDelta = Math.abs(delta);
+                const rawMinIdx = snapToQubitIndex(pos.y);
+                const clampedMin = clamp(rawMinIdx, 0, maxIdx - absDelta);
+                return { x: snappedX - 15, y: yForQubit(clampedMin) };
+              }}
+              onDragStart={(e) => e.target.to({ scaleX: 1.03, scaleY: 1.03, shadowBlur: 8, shadowColor: 'black', shadowOpacity: 0.2, duration: 0.08 })}
+              onDragMove={(e) => {
+                const stage = e.target.getStage();
+                if (!stage) return;
+                const ctrlNode = stage.findOne(`#${controlId}`) as any;
+                const tgtNode = stage.findOne(`#${targetId}`) as any;
+                const lineNode = stage.findOne(`#${lineId}`) as any;
+                const snappedX = Math.max(leftMargin, snapToGridX((e.target.x() ?? 0) + 15));
+                const maxIdx = circuitStateRef.current.qubits - 1;
+                const delta = operation.wires[1] - operation.wires[0];
+                const absDelta = Math.abs(delta);
+                const rawMinIdx = snapToQubitIndex(e.target.y());
+                const minIdx = clamp(rawMinIdx, 0, maxIdx - absDelta);
+                const ctrlIdx = delta >= 0 ? minIdx : minIdx - delta;
+                const ctrlY2 = yForQubit(ctrlIdx);
+                const tgtY2 = yForQubit(ctrlIdx + delta);
+                if (ctrlNode) ctrlNode.position({ x: snappedX, y: ctrlY2 });
+                if (tgtNode) tgtNode.position({ x: snappedX, y: tgtY2 });
+                if (lineNode) lineNode.points([snappedX, ctrlY2, snappedX, tgtY2]);
+                e.target.position({ x: snappedX - 15, y: Math.min(ctrlY2, tgtY2) });
+                e.target.size({ width: 30, height: Math.max(1, Math.abs(tgtY2 - ctrlY2)) });
+              }}
+              onDragEnd={(e) => {
+                const snappedX = Math.max(leftMargin, snapToGridX((e.target.x() ?? 0) + 15));
+                const maxIdx = circuitStateRef.current.qubits - 1;
+                const delta = operation.wires[1] - operation.wires[0];
+                const absDelta = Math.abs(delta);
+                const rawMinIdx = snapToQubitIndex(e.target.y());
+                const minIdx = clamp(rawMinIdx, 0, maxIdx - absDelta);
+                const ctrlIdx = delta >= 0 ? minIdx : minIdx - delta;
+                moveMultiQubitWhole(operation.id, snappedX, ctrlIdx);
+                e.target.to({ scaleX: 1, scaleY: 1, shadowBlur: 0, shadowOpacity: 0, duration: 0.08 });
+              }}
+            />
+
+            {/* Control X */}
+            <Group
+              id={controlId}
+              x={controlX}
+              y={controlY}
+              draggable
+              dragBoundFunc={(pos) => {
+                const maxIdx = circuitStateRef.current.qubits - 1;
+                let idx = clamp(snapToQubitIndex(pos.y), 0, maxIdx);
+                const other = operation.wires[1];
+                if (idx === other) {
+                  const baseY = yForQubit(other);
+                  const dy = pos.y - baseY;
+                  if (dy >= 0 && other < maxIdx) idx = other + 1;
+                  else if (dy < 0 && other > 0) idx = other - 1;
+                  else if (other < maxIdx) idx = other + 1;
+                  else if (other > 0) idx = other - 1;
+                }
+                return { x: controlX, y: yForQubit(idx) };
+              }}
+              onDragStart={(e) => {
+                e.target.to({ scaleX: 1.08, scaleY: 1.08, shadowBlur: 12, shadowColor: 'black', shadowOpacity: 0.25, duration: 0.08 });
+                e.target.moveToTop();
+              }}
+              onDragMove={(e) => {
+                const stage = e.target.getStage();
+                if (!stage) return;
+                const lineNode = stage.findOne(`#${lineId}`) as any;
+                const tgtNode = stage.findOne(`#${targetId}`) as any;
+                const ctrlYCur = e.target.y();
+                const tgtYCur = tgtNode ? tgtNode.y() : targetY;
+                if (lineNode) lineNode.points([controlX, ctrlYCur, targetX, tgtYCur]);
+              }}
+              onDragEnd={(e) => {
+                const maxIdx = circuitStateRef.current.qubits - 1;
+                let idx = clamp(snapToQubitIndex(e.target.y()), 0, maxIdx);
+                const other = operation.wires[1];
+                if (idx === other) {
+                  const baseY = yForQubit(other);
+                  const dy = e.target.y() - baseY;
+                  if (dy >= 0 && other < maxIdx) idx = other + 1;
+                  else if (dy < 0 && other > 0) idx = other - 1;
+                  else if (other < maxIdx) idx = other + 1;
+                  else if (other > 0) idx = other - 1;
+                }
+                moveMultiQubitPart(operation.id, 'control', controlX, idx);
+                e.target.to({ scaleX: 1, scaleY: 1, shadowBlur: 0, shadowOpacity: 0, duration: 0.08 });
+              }}
+            >
+              <XMark />
+            </Group>
+
+            {/* Target X */}
+            <Group
+              id={targetId}
+              x={targetX}
+              y={targetY}
+              draggable
+              dragBoundFunc={(pos) => {
+                const maxIdx = circuitStateRef.current.qubits - 1;
+                let idx = clamp(snapToQubitIndex(pos.y), 0, maxIdx);
+                const other = operation.wires[0];
+                if (idx === other) {
+                  const baseY = yForQubit(other);
+                  const dy = pos.y - baseY;
+                  if (dy >= 0 && other < maxIdx) idx = other + 1;
+                  else if (dy < 0 && other > 0) idx = other - 1;
+                  else if (other < maxIdx) idx = other + 1;
+                  else if (other > 0) idx = other - 1;
+                }
+                return { x: targetX, y: yForQubit(idx) };
+              }}
+              onDragStart={(e) => {
+                e.target.to({ scaleX: 1.08, scaleY: 1.08, shadowBlur: 12, shadowColor: 'black', shadowOpacity: 0.25, duration: 0.08 });
+                e.target.moveToTop();
+              }}
+              onDragMove={(e) => {
+                const stage = e.target.getStage();
+                if (!stage) return;
+                const lineNode = stage.findOne(`#${lineId}`) as any;
+                const ctrlNode = stage.findOne(`#${controlId}`) as any;
+                const tgtYCur = e.target.y();
+                const ctrlYCur = ctrlNode ? ctrlNode.y() : controlY;
+                if (lineNode) lineNode.points([controlX, ctrlYCur, targetX, tgtYCur]);
+              }}
+              onDragEnd={(e) => {
+                const maxIdx = circuitStateRef.current.qubits - 1;
+                let idx = clamp(snapToQubitIndex(e.target.y()), 0, maxIdx);
+                const other = operation.wires[0];
+                if (idx === other) {
+                  const baseY = yForQubit(other);
+                  const dy = e.target.y() - baseY;
+                  if (dy >= 0 && other < maxIdx) idx = other + 1;
+                  else if (dy < 0 && other > 0) idx = other - 1;
+                  else if (other < maxIdx) idx = other + 1;
+                  else if (other > 0) idx = other - 1;
+                }
+                moveMultiQubitPart(operation.id, 'target', targetX, idx);
+                e.target.to({ scaleX: 1, scaleY: 1, shadowBlur: 0, shadowOpacity: 0, duration: 0.08 });
+              }}
+            >
+              <XMark />
+            </Group>
+          </Group>
+        );
+  } else if (operation.gate === 'Toffoli' || operation.gate === 'CCNOT') {
+        // Toffoli (CCNOT): two control dots and a target plus, same X for all
+        // Assume wires are ordered as [control1, control2, target]
+        const x = operation.position.x;
+        const w1 = operation.wires[0];
+        const w2 = operation.wires[1];
+        const wt = operation.wires[2];
+        const y1 = yForQubit(w1);
+        const y2 = yForQubit(w2);
+        const yt = yForQubit(wt);
+        const minY = Math.min(y1, y2, yt);
+        const maxY = Math.max(y1, y2, yt);
+  const groupId = `${operation.id}-toffoli`;
+  const lineId = `line-${groupId}`;
+  const c1Id = `tof-c1-${operation.id}`;
+  const c2Id = `tof-c2-${operation.id}`;
+  const tId = `tof-t-${operation.id}`;
+
+        elements.push(
+          <Group key={`${operation.id}-group`} onContextMenu={handleRightClick}>
+            {/* Vertical connection */}
+            <Line id={lineId} points={[x, minY, x, maxY]} stroke={colors.cnotLine} strokeWidth={3} listening={false} />
+
+            {/* Whole-gate drag handle */}
+            <Rect
+              x={x - 15}
+              y={minY}
+              width={30}
+              height={Math.max(1, maxY - minY)}
+              fill={'rgba(0,0,0,0.0001)'}
+              draggable
+              dragBoundFunc={(pos) => {
+                const snappedX = Math.max(leftMargin, snapToGridX(pos.x));
+                const maxIdx = circuitStateRef.current.qubits - 1;
+                const sorted = [...operation.wires].sort((a, b) => a - b);
+                const span = sorted[sorted.length - 1] - sorted[0];
+                const rawMin = snapToQubitIndex(pos.y);
+                const clampedMin = clamp(rawMin, 0, maxIdx - span);
+                return { x: snappedX - 15, y: yForQubit(clampedMin) };
+              }}
+              onDragStart={(e) => e.target.to({ scaleX: 1.03, scaleY: 1.03, shadowBlur: 8, shadowColor: 'black', shadowOpacity: 0.2, duration: 0.08 })}
+              onDragMove={(e) => {
+                const snappedX = Math.max(leftMargin, snapToGridX((e.target.x() ?? 0) + 15));
+                const maxIdx = circuitStateRef.current.qubits - 1;
+                const sorted = [...operation.wires].sort((a, b) => a - b);
+                const span = sorted[sorted.length - 1] - sorted[0];
+                const rawMin = snapToQubitIndex(e.target.y());
+                const minIdx = clamp(rawMin, 0, maxIdx - span);
+                const ys = sorted.map((_, i) => yForQubit(minIdx + (sorted[i] - sorted[0])));
+                // Update line and handle position, plus endpoints
+                const stage = e.target.getStage();
+                const lineNode = stage?.findOne(`#${lineId}`) as any;
+                const c1Node = stage?.findOne(`#${c1Id}`) as any;
+                const c2Node = stage?.findOne(`#${c2Id}`) as any;
+                const tNode = stage?.findOne(`#${tId}`) as any;
+                if (lineNode) lineNode.points([snappedX, Math.min(...ys), snappedX, Math.max(...ys)]);
+                if (c1Node) c1Node.position({ x: snappedX, y: ys[operation.wires.indexOf(Math.min(...operation.wires))] });
+                if (c2Node) c2Node.position({ x: snappedX, y: ys[operation.wires.indexOf(operation.wires.sort((a,b)=>a-b)[1])] });
+                if (tNode) tNode.position({ x: snappedX, y: ys[operation.wires.indexOf(Math.max(...operation.wires))] });
+                e.target.position({ x: snappedX - 15, y: Math.min(...ys) });
+                e.target.size({ width: 30, height: Math.max(1, Math.max(...ys) - Math.min(...ys)) });
+              }}
+              onDragEnd={(e) => {
+                const snappedX = Math.max(leftMargin, snapToGridX((e.target.x() ?? 0) + 15));
+                const maxIdx = circuitStateRef.current.qubits - 1;
+                const sorted = [...operation.wires].sort((a, b) => a - b);
+                const span = sorted[sorted.length - 1] - sorted[0];
+                const rawMin = snapToQubitIndex(e.target.y());
+                const minIdx = clamp(rawMin, 0, maxIdx - span);
+                // Move whole Toffoli by min wire index
+                moveToffoliWhole(operation.id, snappedX, minIdx);
+                e.target.to({ scaleX: 1, scaleY: 1, shadowBlur: 0, shadowOpacity: 0, duration: 0.08 });
+              }}
+            />
+
+            {/* Control dots (black) */}
+            <Group id={c1Id} x={x} y={y1} draggable
+              dragBoundFunc={(pos) => {
+                const maxIdx = circuitStateRef.current.qubits - 1;
+                let idx = clamp(snapToQubitIndex(pos.y), 0, maxIdx);
+                return { x, y: yForQubit(idx) };
+              }}
+              onDragMove={(e) => {
+                const idx = snapToQubitIndex(e.target.y());
+                const stage = e.target.getStage();
+                const lineNode = stage?.findOne(`#${lineId}`) as any;
+                const c2Node = stage?.findOne(`#${c2Id}`) as any;
+                const tNode = stage?.findOne(`#${tId}`) as any;
+                const y1n = yForQubit(idx);
+                const y2n = c2Node ? c2Node.y() : y2;
+                const ytn = tNode ? tNode.y() : yt;
+                if (lineNode) lineNode.points([x, Math.min(y1n, y2n, ytn), x, Math.max(y1n, y2n, ytn)]);
+              }}
+              onDragEnd={(e) => {
+                const idx = snapToQubitIndex(e.target.y());
+                moveToffoliPart(operation.id, 'c1', idx);
+                e.target.to({ scaleX: 1, scaleY: 1, shadowBlur: 0, shadowOpacity: 0, duration: 0.08 });
+              }}
+            >
+              <Circle radius={8} fill={'#000'} stroke={'#000'} strokeWidth={2} />
+            </Group>
+
+            <Group id={c2Id} x={x} y={y2} draggable
+              dragBoundFunc={(pos) => {
+                const maxIdx = circuitStateRef.current.qubits - 1;
+                let idx = clamp(snapToQubitIndex(pos.y), 0, maxIdx);
+                return { x, y: yForQubit(idx) };
+              }}
+              onDragMove={(e) => {
+                const idx = snapToQubitIndex(e.target.y());
+                const stage = e.target.getStage();
+                const lineNode = stage?.findOne(`#${lineId}`) as any;
+                const c1Node = stage?.findOne(`#${c1Id}`) as any;
+                const tNode = stage?.findOne(`#${tId}`) as any;
+                const y2n = yForQubit(idx);
+                const y1n = c1Node ? c1Node.y() : y1;
+                const ytn = tNode ? tNode.y() : yt;
+                if (lineNode) lineNode.points([x, Math.min(y1n, y2n, ytn), x, Math.max(y1n, y2n, ytn)]);
+              }}
+              onDragEnd={(e) => {
+                const idx = snapToQubitIndex(e.target.y());
+                moveToffoliPart(operation.id, 'c2', idx);
+                e.target.to({ scaleX: 1, scaleY: 1, shadowBlur: 0, shadowOpacity: 0, duration: 0.08 });
+              }}
+            >
+              <Circle radius={8} fill={'#000'} stroke={'#000'} strokeWidth={2} />
+            </Group>
+
+            {/* Target plus circle */}
+            <Group id={tId} x={x} y={yt} draggable
+              dragBoundFunc={(pos) => {
+                const maxIdx = circuitStateRef.current.qubits - 1;
+                let idx = clamp(snapToQubitIndex(pos.y), 0, maxIdx);
+                return { x, y: yForQubit(idx) };
+              }}
+              onDragMove={(e) => {
+                const idx = snapToQubitIndex(e.target.y());
+                const stage = e.target.getStage();
+                const lineNode = stage?.findOne(`#${lineId}`) as any;
+                const c1Node = stage?.findOne(`#${c1Id}`) as any;
+                const c2Node = stage?.findOne(`#${c2Id}`) as any;
+                const ytn = yForQubit(idx);
+                const y1n = c1Node ? c1Node.y() : y1;
+                const y2n = c2Node ? c2Node.y() : y2;
+                if (lineNode) lineNode.points([x, Math.min(y1n, y2n, ytn), x, Math.max(y1n, y2n, ytn)]);
+              }}
+              onDragEnd={(e) => {
+                const idx = snapToQubitIndex(e.target.y());
+                moveToffoliPart(operation.id, 't', idx);
+                e.target.to({ scaleX: 1, scaleY: 1, shadowBlur: 0, shadowOpacity: 0, duration: 0.08 });
+              }}
+            >
+              <Circle radius={20} fill={colors.cnotTargetBg} stroke={colors.cnotTargetBorder} strokeWidth={3} />
+              <Line points={[-12, 0, 12, 0]} stroke={colors.cnotTargetCross} strokeWidth={3} />
+              <Line points={[0, -12, 0, 12]} stroke={colors.cnotTargetCross} strokeWidth={3} />
+            </Group>
+          </Group>
+        );
+      } else if (isMultiQubit) { // For Controlled rotation gates (CRX/CRY/CRZ)
         const controlY = topMargin + operation.wires[0] * qubitSpacing;
         const targetY = topMargin + operation.wires[1] * qubitSpacing;
         const controlX = operation.position.x;
@@ -823,6 +1438,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
               id={controlId}
               x={controlX}
               y={controlY}
+              draggable
               dragBoundFunc={(pos) => {
                 // Do not allow overlap during drag: avoid snapping to same wire as target
                 const maxIdx = circuitStateRef.current.qubits - 1;
@@ -1161,17 +1777,23 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
       'PauliX': 'X',
       'PauliY': 'Y',
       'PauliZ': 'Z',
+      'Controlled-Y': 'Y',
+      'Controlled-RX': 'RX',
+      'Controlled-RY': 'RY',
+      'Controlled-RZ': 'RZ',
+      'CRX': 'RX',
+      'CRY': 'RY',
+      'CRZ': 'RZ',
       'RX': 'RX',
       'RY': 'RY',
       'RZ': 'RZ',
       'Phase': 'S',
       'T': 'T',
-      'CRX': 'RX',
-      'CRY': 'RY',
-      'CRZ': 'RZ',
       'MeasureZ': 'MZ',
       'MeasureX': 'MX',
       'MeasureY': 'MY',
+      'CZ': 'CZ',
+      'SWAP': 'SWAP',
     };
     return symbolMap[gateName] || gateName.substring(0, 2).toUpperCase();
   };

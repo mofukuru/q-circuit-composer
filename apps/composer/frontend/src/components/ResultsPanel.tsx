@@ -10,7 +10,7 @@ import {
   Legend,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
-import { BarChart3, Zap, XCircle, CheckCircle } from 'lucide-react';
+import { BarChart3, Zap, CheckCircle } from 'lucide-react';
 import './ResultsPanel.css';
 
 ChartJS.register(
@@ -25,9 +25,13 @@ ChartJS.register(
 interface ResultsPanelProps {
   results: CircuitResponse | null;
   isLoading: boolean;
+  measuredWires?: number[]; // indices of wires that have explicit measurement gates
+  measuredBases?: Record<number, 'Z' | 'X' | 'Y'>; // wire -> basis
+  resultMode?: 'probs' | 'expval';
 }
 
-const ResultsPanel: React.FC<ResultsPanelProps> = ({ results, isLoading }) => {
+const ResultsPanel: React.FC<ResultsPanelProps> = ({ results, isLoading, measuredWires = [], measuredBases = {}, resultMode = 'probs' }) => {
+
   if (isLoading) {
     return (
       <div className="results-panel">
@@ -70,9 +74,113 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({ results, isLoading }) => {
     );
   }
 
-  const probabilities = results.probabilities;
+  // Prefer server-provided measured metadata; fall back to props
+  const serverMeasuredWires = (results as any).measured_wires as number[] | undefined;
+  const serverMeasuredBases = (results as any).measured_bases as Record<number, 'Z' | 'X' | 'Y'> | undefined;
+  const effMeasuredWires = (serverMeasuredWires && serverMeasuredWires.length > 0)
+    ? serverMeasuredWires
+    : (measuredWires || []);
+  const effMeasuredBases: Record<number, 'Z' | 'X' | 'Y'> = serverMeasuredBases && Object.keys(serverMeasuredBases).length > 0
+    ? serverMeasuredBases
+    : (measuredBases || {});
+  const hasMeasured = (effMeasuredWires?.length ?? 0) > 0;
+
+  // Expectations mode branch
+  const expectations = results.expectations || undefined;
+  const isExpval = resultMode === 'expval' || (!!expectations && Object.keys(expectations).length > 0);
+  if (isExpval) {
+    const wires = (expectations ? Object.keys(expectations).map(k => parseInt(k, 10)) : effMeasuredWires).sort((a, b) => a - b);
+    const labels = wires.map(w => `q${w}${effMeasuredBases[w] ? ` (${effMeasuredBases[w]})` : ''}`);
+    const values = wires.map(w => expectations ? expectations[w] ?? 0 : 0);
+
+    const chartDataExp = {
+      labels,
+      datasets: [
+        {
+          label: 'Expectation Value',
+          data: values,
+          backgroundColor: labels.map((_, i) => `hsla(${(i * 137.5) % 360}, 70%, 60%, 0.8)`),
+          borderColor: labels.map((_, i) => `hsla(${(i * 137.5) % 360}, 70%, 50%, 1)`),
+          borderWidth: 2,
+          borderRadius: 4,
+        },
+      ],
+    } as any;
+
+    const chartOptionsExp = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        title: { display: true, text: 'Per-wire Expectation Values (⟨Z⟩ after basis rotation)', font: { size: 14, weight: 'bold' as const } },
+        tooltip: {
+          callbacks: {
+            label: function (context: any) {
+              return `⟨Z⟩: ${Number(context.raw).toFixed(4)}`;
+            },
+          },
+        },
+      },
+      scales: {
+        y: {
+          beginAtZero: false,
+          min: -1,
+          max: 1,
+          ticks: {
+            callback: function (value: any) {
+              return (typeof value === 'number') ? value.toFixed(1) : value;
+            },
+          },
+          title: { display: true, text: 'Expectation Value' },
+        },
+        x: { title: { display: true, text: 'Wires' } },
+      },
+    } as any;
+
+    return (
+      <div className="results-panel">
+        <div className="panel-header">
+          <h3><BarChart3 size={20} /> Results</h3>
+          <div className="header-actions">
+            <div className="success-indicator"><CheckCircle size={16} /> Success</div>
+          </div>
+        </div>
+        {hasMeasured && wires.length > 0 && (
+          <div className="panel-subtitle">Wires: {wires.map(w => `${w}:${effMeasuredBases[w] ?? 'Z'}`).join(', ')}</div>
+        )}
+        <div className="chart-container">
+          <Bar data={chartDataExp} options={chartOptionsExp} />
+        </div>
+        <div className="probability-table">
+          <h4>Expectation Values</h4>
+          <div className="table-container">
+            {wires.map((w, idx) => (
+              <div key={w} className="table-row">
+                <span className="state">q{w}</span>
+                <span className="probability">{values[idx].toFixed(6)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Probabilities mode branch (default)
+  const probabilities = results.probabilities || {};
   const states = Object.keys(probabilities).sort();
+  const nBits = states[0]?.length ?? 0;
+  const sortedMeasured = hasMeasured ? [...effMeasuredWires].sort((a, b) => a - b) : [];
+  const bitOrderLabel = nBits > 0
+    ? hasMeasured && sortedMeasured.length === nBits
+      ? `Bit order: |${sortedMeasured.map((w) => `q${w}`).join(' ')}⟩`
+      : `Bit order: |${Array.from({ length: nBits }, (_, i) => `q${i}`).join(' ')}⟩`
+    : '';
   const values = states.map(state => probabilities[state]);
+  const chartTitle = 'Measurement Probabilities';
+  const subtitle = hasMeasured && sortedMeasured.length > 0
+    ? `Wires: ${sortedMeasured.map(w => `${w}:${effMeasuredBases[w] ?? 'Z'}`).join(', ')}`
+    : null;
 
   const chartData = {
     labels: states.map(state => `|${state}⟩`),
@@ -101,7 +209,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({ results, isLoading }) => {
       },
       title: {
         display: true,
-        text: 'Measurement Probabilities',
+        text: chartTitle,
         font: {
           size: 14,
           weight: 'bold' as const,
@@ -138,18 +246,26 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({ results, isLoading }) => {
     },
   };
 
-  const maxProbState = states[values.indexOf(Math.max(...values))];
   const maxProb = Math.max(...values);
+  const maxProbState = states[values.indexOf(maxProb)] ?? '';
 
   return (
     <div className="results-panel">
       <div className="panel-header">
         <h3><BarChart3 size={20} /> Results</h3>
-        <div className="success-indicator"><CheckCircle size={16} /> Success</div>
+        <div className="header-actions">
+          <div className="success-indicator"><CheckCircle size={16} /> Success</div>
+        </div>
       </div>
+      {subtitle && (
+        <div className="panel-subtitle">{subtitle}</div>
+      )}
+      {bitOrderLabel && (
+        <div className="panel-subtitle">{bitOrderLabel}</div>
+      )}
       
       <div className="chart-container">
-        <Bar data={chartData} options={chartOptions} />
+  <Bar data={chartData} options={chartOptions} />
       </div>
       
       <div className="results-summary">

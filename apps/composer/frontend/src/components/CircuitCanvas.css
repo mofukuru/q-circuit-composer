@@ -119,4 +119,7 @@
     padding: 8px 12px;
     font-size: 0.8rem;
   }
+  .canvas-container {
+    overflow: visible; /* remove inner scroll on small screens */
+  }
 }

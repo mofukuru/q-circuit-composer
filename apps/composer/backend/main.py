@@ -24,7 +24,9 @@ app.add_middleware(
 )
 
 
-def create_circuit_function(circuit_operations: list, num_qubits: int):
+def create_circuit_function(
+    circuit_operations: list, num_qubits: int, result_mode: str = "probs"
+):
     """Dynamically create a quantum circuit function from operations.
 
     Measurement gates (MeasureZ/MeasureX/MeasureY) are treated as
@@ -35,8 +37,10 @@ def create_circuit_function(circuit_operations: list, num_qubits: int):
     measurement gate are measured in Z basis by default.
     """
 
-    # default all wires to Z basis, override if measurement gates are present
+    # default all wires to Z basis for rotation purposes
+    # and record explicitly measured wires separately
     measurement_basis = {w: "Z" for w in range(num_qubits)}
+    explicit_measured = set()
 
     def circuit():
         for operation in circuit_operations:
@@ -53,14 +57,35 @@ def create_circuit_function(circuit_operations: list, num_qubits: int):
                     qml.PauliY(wires=wires[0])
                 elif gate == "pauliz" or gate == "z":
                     qml.PauliZ(wires=wires[0])
-                elif gate == "cnot" or gate == "cx":
+                elif gate == "swap":
                     # wires[0] = control qubit, wires[1] = target qubit
+                    if len(wires) != 2:
+                        raise ValueError(
+                            "SWAP gate requires exactly 2 wires, "
+                            + f"got {len(wires)}"
+                        )
+                    qml.SWAP(wires=[wires[0], wires[1]])
+                elif gate == "cnot" or gate == "cx":
                     if len(wires) != 2:
                         raise ValueError(
                             "CNOT gate requires exactly 2 wires, "
                             + f"got {len(wires)}"
                         )
                     qml.CNOT(wires=[wires[0], wires[1]])
+                elif gate == "cz":
+                    if len(wires) != 2:
+                        raise ValueError(
+                            "CZ gate requires exactly 2 wires, "
+                            + f"got {len(wires)}"
+                        )
+                    qml.CZ(wires=[wires[0], wires[1]])
+                elif gate == "cy":
+                    if len(wires) != 2:
+                        raise ValueError(
+                            "CY gate requires exactly 2 wires, "
+                            + f"got {len(wires)}"
+                        )
+                    qml.CY(wires=[wires[0], wires[1]])
                 elif gate == "crx":
                     if not params or len(params) == 0:
                         raise ValueError(
@@ -116,19 +141,29 @@ def create_circuit_function(circuit_operations: list, num_qubits: int):
                     qml.S(wires=wires[0])
                 elif gate == "t":
                     qml.T(wires=wires[0])
+                elif gate == "toffoli" or gate == "ccx":
+                    if len(wires) != 3:
+                        raise ValueError(
+                            "Toffoli gate requires exactly 3 wires, "
+                            + f"got {len(wires)}"
+                        )
+                    qml.Toffoli(wires=[wires[0], wires[1], wires[2]])
                 elif gate in ("measurez", "mz", "measure_z"):
                     # Mark wire for Z basis (no-op for circuit; before probs)
                     if len(wires) != 1:
                         raise ValueError("MeasureZ requires exactly 1 wire")
                     measurement_basis[wires[0]] = "Z"
+                    explicit_measured.add(wires[0])
                 elif gate in ("measurex", "mx", "measure_x"):
                     if len(wires) != 1:
                         raise ValueError("MeasureX requires exactly 1 wire")
                     measurement_basis[wires[0]] = "X"
+                    explicit_measured.add(wires[0])
                 elif gate in ("measurey", "my", "measure_y"):
                     if len(wires) != 1:
                         raise ValueError("MeasureY requires exactly 1 wire")
                     measurement_basis[wires[0]] = "Y"
+                    explicit_measured.add(wires[0])
                 else:
                     logger.warning(f"Unknown gate: {gate}")
 
@@ -145,7 +180,17 @@ def create_circuit_function(circuit_operations: list, num_qubits: int):
                 qml.adjoint(qml.S)(wires=w)
                 qml.Hadamard(wires=w)
 
-        return qml.probs(wires=range(num_qubits))
+        # Decide measurement wires set
+        measured_wires = sorted(explicit_measured)
+        if not measured_wires:
+            measured_wires = list(range(num_qubits))
+
+        # Return according to result_mode
+        if (result_mode or "probs").lower() == "expval":
+            # Expectation values of Z on selected wires after basis rotation
+            return [qml.expval(qml.PauliZ(wires=w)) for w in measured_wires]
+        # Default: probabilities (marginal over selected wires)
+        return qml.probs(wires=measured_wires)
 
     return circuit
 
@@ -194,27 +239,77 @@ async def execute_circuit(request: CircuitRequest):
         )
 
         # Create the circuit function
-        circuit_func = create_circuit_function(request.circuit, request.qubits)
+        circuit_func = create_circuit_function(
+            request.circuit, request.qubits, request.result_mode
+        )
 
         # Create QNode
         qnode = qml.QNode(circuit_func, device)
 
         # Execute the circuit
-        probabilities = qnode()
+        result_raw = qnode()
 
-        # Convert probabilities to binary string format
-        prob_dict = {}
-        for i, prob in enumerate(probabilities):
-            binary_state = format(i, f"0{request.qubits}b")
-            prob_dict[binary_state] = float(prob)
-
-        logger.info(f"Circuit execution successful. Results: {prob_dict}")
-
-        return CircuitResponse(
-            probabilities=prob_dict,
-            success=True,
-            message="Circuit executed successfully",
+        # Decide labeling width (if measured subset, width = len(measured))
+        # Reconstruct explicit measured wires/bases like in circuit build
+        measurement_basis = {w: "Z" for w in range(request.qubits)}
+        explicit_measured = set()
+        for op in request.circuit:
+            g = op.gate.lower()
+            if g in ("measurez", "mz", "measure_z"):
+                measurement_basis[op.wires[0]] = "Z"
+                explicit_measured.add(op.wires[0])
+            elif g in ("measurex", "mx", "measure_x"):
+                measurement_basis[op.wires[0]] = "X"
+                explicit_measured.add(op.wires[0])
+            elif g in ("measurey", "my", "measure_y"):
+                measurement_basis[op.wires[0]] = "Y"
+                explicit_measured.add(op.wires[0])
+        measured_wires = sorted(explicit_measured)
+        has_subset = (
+            len(measured_wires) > 0 and len(measured_wires) < request.qubits
         )
+        mode = (request.result_mode or "probs").lower()
+
+        if mode == "expval":
+            # result_raw is a sequence of expectation values per measured wire
+            # order
+            expectations = {}
+            for idx, w in enumerate(
+                measured_wires if measured_wires else range(request.qubits)
+            ):
+                # result_raw could be a list/np array; cast to float
+                expectations[w] = float(result_raw[idx])
+            logger.info(
+                f"Circuit execution successful. Expectations: {expectations}"
+            )
+            return CircuitResponse(
+                probabilities={},
+                success=True,
+                message="Circuit executed successfully",
+                measured_wires=measured_wires if has_subset else None,
+                measured_bases=measurement_basis if has_subset else None,
+                expectations=expectations,
+            )
+        else:
+            # probs mode
+            label_width = len(measured_wires) if has_subset else request.qubits
+            prob_dict = {}
+            for i, prob in enumerate(result_raw):
+                binary_state = format(i, f"0{label_width}b")
+                prob_dict[binary_state] = float(prob)
+
+            logger.info(f"Circuit execution successful. Results: {prob_dict}")
+
+            marginal = prob_dict if has_subset else None
+
+            return CircuitResponse(
+                probabilities=prob_dict,
+                success=True,
+                message="Circuit executed successfully",
+                marginal_probabilities=marginal,
+                measured_wires=measured_wires if has_subset else None,
+                measured_bases=measurement_basis if has_subset else None,
+            )
 
     except ValueError as ve:
         logger.error(f"Validation error: {str(ve)}")
@@ -260,6 +355,13 @@ async def get_available_gates():
             "qubits": 1,
         },
         {
+            "name": "SWAP",
+            "symbol": "SWAP",
+            "description": "SWAP gate",
+            "params": 0,
+            "qubits": 2,
+        },
+        {
             "name": "CNOT",
             "symbol": "⊕",
             "description": "Controlled-NOT gate",
@@ -267,42 +369,56 @@ async def get_available_gates():
             "qubits": 2,
         },
         {
-            "name": "CRX",
+            "name": "Controlled-Z",
+            "symbol": "CZ",
+            "description": "Controlled-Z gate",
+            "params": 0,
+            "qubits": 2,
+        },
+        {
+            "name": "Controlled-Y",
+            "symbol": "CY",
+            "description": "Controlled-Y gate",
+            "params": 0,
+            "qubits": 2,
+        },
+        {
+            "name": "Controlled-RX",
             "symbol": "CRX",
             "description": "Controlled-RX gate",
             "params": 1,
             "qubits": 2,
         },
         {
-            "name": "CRY",
+            "name": "Controlled-RY",
             "symbol": "CRY",
             "description": "Controlled-RY gate",
             "params": 1,
             "qubits": 2,
         },
         {
-            "name": "CRZ",
+            "name": "Controlled-RZ",
             "symbol": "CRZ",
             "description": "Controlled-RZ gate",
             "params": 1,
             "qubits": 2,
         },
         {
-            "name": "RX",
+            "name": "Rotation-X",
             "symbol": "RX",
             "description": "Rotation around X-axis",
             "params": 1,
             "qubits": 1,
         },
         {
-            "name": "RY",
+            "name": "Rotation-Y",
             "symbol": "RY",
             "description": "Rotation around Y-axis",
             "params": 1,
             "qubits": 1,
         },
         {
-            "name": "RZ",
+            "name": "Rotation-Z",
             "symbol": "RZ",
             "description": "Rotation around Z-axis",
             "params": 1,
@@ -343,6 +459,13 @@ async def get_available_gates():
             "description": "Measure in Y basis (readout basis)",
             "params": 0,
             "qubits": 1,
+        },
+        {
+            "name": "Toffoli",
+            "symbol": "CCX",
+            "description": "Toffoli (CCX) gate",
+            "params": 0,
+            "qubits": 3,
         },
     ]
     return {"gates": gates}

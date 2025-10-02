@@ -23,6 +23,7 @@ const CircuitComposer: React.FC = () => {
   const [results, setResults] = useState<CircuitResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resultMode, setResultMode] = useState<'probs' | 'expval'>('probs');
 
   useEffect(() => {
     // Load available gates from backend
@@ -57,6 +58,7 @@ const CircuitComposer: React.FC = () => {
           wires: op.wires,
           params: op.params,
         })),
+        result_mode: resultMode,
       };
 
       const response = await apiService.executeCircuit(circuitRequest);
@@ -107,6 +109,8 @@ const CircuitComposer: React.FC = () => {
               onExecute={executeCircuit}
               onClear={clearCircuit}
               isLoading={isLoading}
+              resultMode={resultMode}
+              onResultModeChange={setResultMode}
             />
             <GatePalette gates={availableGates} />
           </div>
@@ -130,7 +134,29 @@ const CircuitComposer: React.FC = () => {
           </div>
           
           <div className="right-panel">
-            <ResultsPanel results={results} isLoading={isLoading} />
+            {(() => {
+              const measOps = circuitState.operations.filter(op =>
+                /^(measurez|mz|measurex|mx|measurey|my)$/i.test(op.gate)
+              );
+              const basisMap: Record<number, 'Z' | 'X' | 'Y'> = {};
+              for (const op of measOps) {
+                const w = op.wires[0];
+                const g = op.gate.toLowerCase();
+                if (g === 'measurez' || g === 'mz' || g === 'measure_z') basisMap[w] = 'Z';
+                else if (g === 'measurex' || g === 'mx' || g === 'measure_x') basisMap[w] = 'X';
+                else if (g === 'measurey' || g === 'my' || g === 'measure_y') basisMap[w] = 'Y';
+              }
+              const measuredWires = Object.keys(basisMap).map(n => parseInt(n, 10)).sort((a, b) => a - b);
+              return (
+                <ResultsPanel
+                  results={results}
+                  isLoading={isLoading}
+                  measuredWires={measuredWires}
+                  measuredBases={basisMap}
+                  resultMode={resultMode}
+                />
+              );
+            })()}
           </div>
         </div>
       </div>

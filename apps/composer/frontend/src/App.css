@@ -1,6 +1,10 @@
 .App {
   text-align: center;
   min-height: 100vh;
+  height: 100vh; /* Ensure exact viewport height to avoid subtle overflow */
+  display: flex;
+  flex-direction: column;
+  gap: 24px; /* Space between header and main without affecting total height */
   background-color: var(--color-bg-primary);
   color: var(--color-text-primary);
 }
@@ -8,7 +12,6 @@
 .App-header {
   background: var(--color-bg-secondary);
   padding: 20px 40px;
-  margin-bottom: 24px;
   border-bottom: 1px solid var(--color-border-primary);
   display: flex;
   align-items: center;
@@ -37,6 +40,11 @@ main {
   padding: 0 24px 24px 24px;
   max-width: 1600px;
   margin: 0 auto;
+  flex: 1; /* Take remaining height below header */
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* Allow children to manage their own scroll */
+  overflow: hidden; /* Prevent tiny page-level vertical scroll */
 }
 
 @media (max-width: 768px) {
@@ -53,5 +61,16 @@ main {
 
   .App-header p {
     font-size: 0.9rem;
+  }
+}
+
+/* On small screens, allow page-level scrolling and let panels grow naturally */
+@media (max-width: 992px) {
+  .App {
+    height: auto; /* allow growth beyond viewport */
+    min-height: 100vh; /* still fill viewport at minimum */
+  }
+  main {
+    overflow: visible; /* allow document scroll instead of inner scroll */
   }
 }

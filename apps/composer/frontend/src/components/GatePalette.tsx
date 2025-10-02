@@ -21,7 +21,7 @@ const GateItem: React.FC<GateItemProps> = ({ gate }) => {
     <div
       ref={drag}
       className={`gate-item ${isDragging ? 'dragging' : ''}`}
-      title={gate.description}
+      title={`${gate.name}: ${gate.description}${gate.params > 0 ? ` (Params: ${gate.params})` : ''}`}
     >
       <div className="gate-symbol">{gate.symbol}</div>
       <div className="gate-name">{gate.name}</div>

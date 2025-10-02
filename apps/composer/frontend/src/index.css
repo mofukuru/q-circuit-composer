@@ -43,6 +43,10 @@
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
+html, body, #root {
+  height: 100%;
+}
+
 body.dark-theme {
   /* Dark Theme */
   --color-bg-primary: #121212;
@@ -89,6 +93,19 @@ body {
   background-color: var(--color-bg-primary);
   color: var(--color-text-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* On desktop, remove subtle page-level vertical scroll; allow scroll on small screens */
+@media (min-width: 993px) {
+  body {
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 992px) {
+  body {
+    overflow: auto; /* allow normal page scrolling on small screens */
+  }
 }
 
 code {

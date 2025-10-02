@@ -175,5 +175,7 @@
 @media (max-width: 992px) {
   .results-panel {
     padding: 16px;
+    height: auto;
+    overflow: visible; /* remove inner scrolling on small screens */
   }
 }

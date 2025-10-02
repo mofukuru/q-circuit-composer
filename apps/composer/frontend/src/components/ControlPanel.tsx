@@ -1,6 +1,7 @@
 import React from 'react';
-import { Settings, Play, Trash2 } from 'lucide-react';
+import { Settings, Play, Trash2, Info } from 'lucide-react';
 import './ControlPanel.css';
+import Tooltip from './Tooltip';
 
 interface ControlPanelProps {
   qubits: number;
@@ -10,6 +11,8 @@ interface ControlPanelProps {
   onExecute: () => void;
   onClear: () => void;
   isLoading: boolean;
+  resultMode: 'probs' | 'expval';
+  onResultModeChange: (mode: 'probs' | 'expval') => void;
 }
 
 const ControlPanel: React.FC<ControlPanelProps> = ({
@@ -20,6 +23,8 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   onExecute,
   onClear,
   isLoading,
+  resultMode,
+  onResultModeChange,
 }) => {
   return (
     <div className="control-panel">
@@ -86,6 +91,36 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
         </div>
         <small>Range: 1-100,000 shots</small>
       </div>
+
+        <div className="control-group">
+          <label htmlFor="result-mode">
+            Results Mode:
+            {' '}
+            <Tooltip
+              position="right"
+              trigger="click"
+              maxWidth={380}
+              content={
+                <div>
+                  Choose between a <strong>probability distribution</strong> over bitstrings (qml.probs) or <strong>per-wire expectation values</strong> ⟨Z⟩ after basis rotation (qml.expval). Measurement gates set the readout basis.
+                </div>
+              }
+            >
+              <span aria-label="About results mode" style={{ marginLeft: 6, verticalAlign: 'middle', display: 'inline-flex' }}>
+                <Info size={14} />
+              </span>
+            </Tooltip>
+          </label>
+          <select
+            id="result-mode"
+            className="number-input"
+            value={resultMode}
+            onChange={(e) => onResultModeChange((e.target.value as 'probs' | 'expval'))}
+          >
+            <option value="probs">Probabilities</option>
+            <option value="expval">Expectation values</option>
+          </select>
+        </div>
 
       <div className="control-actions">
         <button 
