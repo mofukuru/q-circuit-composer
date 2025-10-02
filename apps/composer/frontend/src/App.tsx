@@ -2,6 +2,7 @@ import React from 'react';
 import './App.css';
 import CircuitComposer from './components/CircuitComposer';
 import ThemeSwitcher from './components/ThemeSwitcher';
+import LanguageSwitcher from './components/LanguageSwitcher';
 
 function App() {
   return (
@@ -11,7 +12,10 @@ function App() {
           <h1>Quantum Circuit Composer</h1>
           <p>Design and simulate quantum circuits with PennyLane</p>
         </div>
-        <ThemeSwitcher />
+        <div className="header-controls">
+          <LanguageSwitcher />
+          <ThemeSwitcher />
+        </div>
       </header>
       <main>
         <CircuitComposer />

@@ -2,6 +2,7 @@ import React from 'react';
 import { Gate } from '../types';
 import { useDrag } from 'react-dnd';
 import { SlidersHorizontal } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import './GatePalette.css';
 
 interface GateItemProps {
@@ -39,6 +40,7 @@ interface GatePaletteProps {
 }
 
 const GatePalette: React.FC<GatePaletteProps> = ({ gates }) => {
+  const { t, i18n } = useTranslation();
   const singleQubitGates = gates.filter(gate => (gate.qubits === 1 && !gate.name.includes("Measure")));
   const multiQubitGates = gates.filter(gate => gate.qubits > 1);
   const measureQubits = gates.filter(gate => (gate.qubits === 1 && gate.name.includes("Measure")));
@@ -46,13 +48,13 @@ const GatePalette: React.FC<GatePaletteProps> = ({ gates }) => {
   return (
     <div className="gate-palette">
       <div className="palette-header">
-        <h3><SlidersHorizontal size={20} /> Gate Palette</h3>
-        <p>Drag gates onto the circuit</p>
+        <h3><SlidersHorizontal size={20} /> {t('gatePalette')}</h3>
+        <p>{t('dragDrop')}</p>
       </div>
-      
+
       {singleQubitGates.length > 0 && (
       <div className="gate-category">
-        <h4>Single-Qubit Gates</h4>
+        <h4>{t('singleQubitGates')}</h4>
         <div className="gate-grid">
           {singleQubitGates.map((gate) => (
             <GateItem key={gate.name} gate={gate} />
@@ -60,10 +62,10 @@ const GatePalette: React.FC<GatePaletteProps> = ({ gates }) => {
         </div>
       </div>
       )}
-      
+
       {multiQubitGates.length > 0 && (
         <div className="gate-category">
-          <h4>Multi-Qubit Gates</h4>
+          <h4>{t('multiQubitGates')}</h4>
           <div className="gate-grid">
             {multiQubitGates.map((gate) => (
               <GateItem key={gate.name} gate={gate} />
@@ -71,10 +73,10 @@ const GatePalette: React.FC<GatePaletteProps> = ({ gates }) => {
           </div>
         </div>
       )}
-      
+
       {measureQubits.length > 0 && (
       <div className="gate-category">
-        <h4>Measurement</h4>
+        <h4>{t('measurement')}</h4>
         <div className="gate-grid">
           {measureQubits.map((gate) => (
             <GateItem key={gate.name} gate={gate} />

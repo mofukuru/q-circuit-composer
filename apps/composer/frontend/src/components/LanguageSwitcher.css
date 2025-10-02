@@ -1,0 +1,27 @@
+.language-switcher {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.lang-btn {
+  background: none;
+  border: 1px solid transparent;
+  color: var(--color-text-primary);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.lang-btn:disabled {
+  font-weight: bold;
+  color: var(--color-primary);
+  cursor: default;
+}
+
+.lang-btn:not(:disabled):hover {
+  background-color: var(--color-background-hover);
+  border-color: var(--color-border);
+}

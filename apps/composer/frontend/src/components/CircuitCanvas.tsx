@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Beaker, Move } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useDrop, useDrag } from 'react-dnd';
 import { Stage, Layer, Line, Text, Rect, Circle, Group } from 'react-konva';
 import { CircuitState, GateOperation, Gate } from '../types';
@@ -15,6 +16,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
   circuitState,
   onStateChange
 }) => {
+  const { t, i18n } = useTranslation();
   // Use ref to always get the latest state
   const circuitStateRef = useRef(circuitState);
   circuitStateRef.current = circuitState;
@@ -26,25 +28,25 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
     qubitIndex: number;
     x: number;
   } | null>(null);
-  
+
   // Theme detection
   const [isDarkMode, setIsDarkMode] = useState(false);
-  
+
   useEffect(() => {
     const checkTheme = () => {
       setIsDarkMode(document.body.classList.contains('dark-theme'));
     };
-    
+
     // Initial check
     checkTheme();
-    
+
     // Listen for theme changes
     const observer = new MutationObserver(checkTheme);
     observer.observe(document.body, {
       attributes: true,
       attributeFilter: ['class']
     });
-    
+
     return () => observer.disconnect();
   }, []);
 
@@ -666,7 +668,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
                 e.target.to({ scaleX: 1, scaleY: 1, shadowBlur: 0, shadowOpacity: 0, duration: 0.08 });
               }}
             />
-            
+
             {/* Control Part (Draggable) */}
             <Group
               id={controlId}
@@ -735,7 +737,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
                 strokeWidth={2}
               />
             </Group>
-            
+
             {/* Target Part (Draggable) */}
             <Group
               id={targetId}
@@ -1514,7 +1516,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
                 strokeWidth={2}
               />
             </Group>
-            
+
             {/* Target Part (Draggable) */}
             <Group
               id={targetId}
@@ -1701,7 +1703,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
   const formatAngle = (angle: number): string => {
     const pi = Math.PI;
     const tolerance = 0.001;
-    
+
     // Common angle values
     const commonAngles = [
       { value: 0, text: '0' },
@@ -1712,13 +1714,13 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
       { value: 3 * pi / 2, text: '3π/2' },
       { value: 2 * pi, text: '2π' },
     ];
-    
+
     for (const common of commonAngles) {
       if (Math.abs(angle - common.value) < tolerance) {
         return common.text;
       }
     }
-    
+
     return angle.toFixed(3);
   };
 
@@ -1801,7 +1803,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
   return (
     <div className="circuit-canvas">
       <div className="canvas-header">
-        <h3><Beaker size={20} /> Quantum Circuit</h3>
+        <h3><Beaker size={20} /> {t('quantumCircuit')}</h3>
         <div className="canvas-info">
           <span>{circuitState.operations.length} gates</span>
           <span>•</span>
@@ -1820,21 +1822,13 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
           </Layer>
         </Stage>
 
-        {circuitState.operations.length === 0 && (
-          <div className="empty-canvas-message">
-            <p><Move size={16} /> Drag quantum gates from the palette to build your circuit</p>
-            <p className="hint">Click on gates to remove them</p>
-          </div>
-        )}
-
-
       </div>
-      
+
       {/* Instructions */}
       <div className="circuit-instructions">
-        <p>💡 Drag gates to move them • Right-click to delete</p>
+        <p><Move size={13} /> {t('instruction')}</p>
       </div>
-      
+
       {/* Parameter Modal */}
       {showParameterModal && pendingGate && (
         <GateParameterModal

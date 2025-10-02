@@ -1,5 +1,6 @@
 import React from 'react';
 import { Settings, Play, Trash2, Info } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import './ControlPanel.css';
 import Tooltip from './Tooltip';
 
@@ -26,14 +27,16 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   resultMode,
   onResultModeChange,
 }) => {
+  const { t, i18n } = useTranslation();
+
   return (
     <div className="control-panel">
       <div className="panel-header">
-        <h3><Settings size={20} /> Control Panel</h3>
+        <h3><Settings size={20} /> {t('controlPanel')}</h3>
       </div>
       
       <div className="control-group">
-        <label htmlFor="qubit-count">Number of Qubits:</label>
+        <label htmlFor="qubit-count">{t('qubits')}</label>
         <div className="input-with-buttons">
           <button 
             onClick={() => onQubitCountChange(qubits - 1)}
@@ -59,11 +62,11 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             +
           </button>
         </div>
-        <small>Range: 1-10 qubits</small>
+        <small>{t('qubitRange')}</small>
       </div>
 
       <div className="control-group">
-        <label htmlFor="shots">Number of Shots:</label>
+        <label htmlFor="shots">{t('shots')}</label>
         <div className="input-with-buttons">
           <button 
             onClick={() => onShotsChange(Math.max(1, shots - 100))}
@@ -89,22 +92,18 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             +100
           </button>
         </div>
-        <small>Range: 1-100,000 shots</small>
+        <small>{t('shotRange')}</small>
       </div>
 
         <div className="control-group">
           <label htmlFor="result-mode">
-            Results Mode:
+            {t('resultsMode')}
             {' '}
             <Tooltip
               position="right"
               trigger="click"
               maxWidth={380}
-              content={
-                <div>
-                  Choose between a <strong>probability distribution</strong> over bitstrings (qml.probs) or <strong>per-wire expectation values</strong> ⟨Z⟩ after basis rotation (qml.expval). Measurement gates set the readout basis.
-                </div>
-              }
+              content={<div dangerouslySetInnerHTML={{ __html: t('resultsModeTooltip') }} />}
             >
               <span aria-label="About results mode" style={{ marginLeft: 6, verticalAlign: 'middle', display: 'inline-flex' }}>
                 <Info size={14} />
@@ -117,8 +116,8 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             value={resultMode}
             onChange={(e) => onResultModeChange((e.target.value as 'probs' | 'expval'))}
           >
-            <option value="probs">Probabilities</option>
-            <option value="expval">Expectation values</option>
+            <option value="probs">{t('probabilities')}</option>
+            <option value="expval">{t('expectationValues')}</option>
           </select>
         </div>
 
@@ -131,11 +130,11 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           {isLoading ? (
             <>
               <span className="spinner"></span>
-              Running...
+              {t('running')}
             </>
           ) : (
             <>
-              <Play size={16} /> Run Circuit
+              <Play size={16} /> {t('runCircuit')}
             </>
           )}
         </button>
@@ -145,9 +144,11 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           disabled={isLoading}
           className="action-btn secondary"
         >
-          <Trash2 size={16} /> Clear Circuit
+          <Trash2 size={16} /> {t('clearCircuit')}
         </button>
       </div>
+
+
     </div>
   );
 };

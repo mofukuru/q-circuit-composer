@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { CircuitResponse } from '../types';
 import {
   Chart as ChartJS,
@@ -30,17 +31,25 @@ interface ResultsPanelProps {
   resultMode?: 'probs' | 'expval';
 }
 
-const ResultsPanel: React.FC<ResultsPanelProps> = ({ results, isLoading, measuredWires = [], measuredBases = {}, resultMode = 'probs' }) => {
+const ResultsPanel: React.FC<ResultsPanelProps> = ({
+  results,
+  isLoading,
+  measuredWires = [],
+  measuredBases = {},
+  resultMode = 'probs'
+}) => {
+
+  const  { t, i18n } = useTranslation();
 
   if (isLoading) {
     return (
       <div className="results-panel">
         <div className="panel-header">
-          <h3><BarChart3 size={20} /> Results</h3>
+          <h3><BarChart3 size={20} /> {t('results')}</h3>
         </div>
         <div className="loading-container">
           <div className="loading-spinner"></div>
-          <p>Running quantum circuit...</p>
+          <p>{t('resultLoader')}</p>
         </div>
       </div>
     );
@@ -50,11 +59,11 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({ results, isLoading, measure
     return (
       <div className="results-panel">
         <div className="panel-header">
-          <h3><BarChart3 size={20} /> Results</h3>
+          <h3><BarChart3 size={20} /> {t('results')}</h3>
         </div>
         <div className="empty-state">
           <div className="empty-icon"><Zap size={48} /></div>
-          <p>Build a circuit and click "Run Circuit" to see the results!</p>
+          <p>{t('resultInstruction')}</p>
         </div>
       </div>
     );
@@ -64,7 +73,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({ results, isLoading, measure
     return (
       <div className="results-panel">
         <div className="panel-header">
-          <h3><BarChart3 size={20} /> Results</h3>
+          <h3><BarChart3 size={20} /> {t('results')}</h3>
         </div>
         <div className="error-state">
           <div className="error-icon">❌</div>
@@ -112,11 +121,11 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({ results, isLoading, measure
       maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
-        title: { display: true, text: 'Per-wire Expectation Values (⟨Z⟩ after basis rotation)', font: { size: 14, weight: 'bold' as const } },
+        title: { display: true, text: 'Per-wire Expectation Values', font: { size: 14, weight: 'bold' as const } },
         tooltip: {
           callbacks: {
             label: function (context: any) {
-              return `⟨Z⟩: ${Number(context.raw).toFixed(4)}`;
+              return `${Number(context.raw).toFixed(4)}`;
             },
           },
         },
@@ -140,9 +149,9 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({ results, isLoading, measure
     return (
       <div className="results-panel">
         <div className="panel-header">
-          <h3><BarChart3 size={20} /> Results</h3>
+          <h3><BarChart3 size={20} /> {t('results')}</h3>
           <div className="header-actions">
-            <div className="success-indicator"><CheckCircle size={16} /> Success</div>
+            <div className="success-indicator"><CheckCircle size={16} /> {t('status')}</div>
           </div>
         </div>
         {hasMeasured && wires.length > 0 && (
@@ -152,7 +161,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({ results, isLoading, measure
           <Bar data={chartDataExp} options={chartOptionsExp} />
         </div>
         <div className="probability-table">
-          <h4>Expectation Values</h4>
+          <h4>{t('expValue')}</h4>
           <div className="table-container">
             {wires.map((w, idx) => (
               <div key={w} className="table-row">
@@ -188,10 +197,10 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({ results, isLoading, measure
       {
         label: 'Probability',
         data: values,
-        backgroundColor: states.map((_, i) => 
+        backgroundColor: states.map((_, i) =>
           `hsla(${(i * 137.5) % 360}, 70%, 60%, 0.8)`
         ),
-        borderColor: states.map((_, i) => 
+        borderColor: states.map((_, i) =>
           `hsla(${(i * 137.5) % 360}, 70%, 50%, 1)`
         ),
         borderWidth: 2,
@@ -252,9 +261,9 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({ results, isLoading, measure
   return (
     <div className="results-panel">
       <div className="panel-header">
-        <h3><BarChart3 size={20} /> Results</h3>
+        <h3><BarChart3 size={20} /> {t('results')}</h3>
         <div className="header-actions">
-          <div className="success-indicator"><CheckCircle size={16} /> Success</div>
+          <div className="success-indicator"><CheckCircle size={16} /> {t('status')}</div>
         </div>
       </div>
       {subtitle && (
@@ -263,24 +272,24 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({ results, isLoading, measure
       {bitOrderLabel && (
         <div className="panel-subtitle">{bitOrderLabel}</div>
       )}
-      
+
       <div className="chart-container">
   <Bar data={chartData} options={chartOptions} />
       </div>
-      
+
       <div className="results-summary">
         <div className="summary-item">
-          <span className="label">Most Likely State:</span>
+          <span className="label">{t('mlsState')}</span>
           <span className="value">|{maxProbState}⟩</span>
         </div>
         <div className="summary-item">
-          <span className="label">Probability:</span>
+          <span className="label">{t('probValue')}</span>
           <span className="value">{(maxProb * 100).toFixed(2)}%</span>
         </div>
       </div>
-      
+
       <div className="probability-table">
-        <h4>All Probabilities</h4>
+        <h4>{t('allProb')}</h4>
         <div className="table-container">
           {states.map((state, i) => (
             <div key={state} className="table-row">
