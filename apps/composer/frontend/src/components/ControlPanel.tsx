@@ -91,7 +91,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
         <button 
           onClick={onExecute}
           disabled={isLoading}
-          className="execute-btn primary"
+          className="action-btn primary"
         >
           {isLoading ? (
             <>
@@ -108,7 +108,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
         <button 
           onClick={onClear}
           disabled={isLoading}
-          className="clear-btn secondary"
+          className="action-btn secondary"
         >
           <Trash2 size={16} /> Clear Circuit
         </button>

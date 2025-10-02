@@ -12,6 +12,7 @@ export interface GateOperation {
   params?: number[];
   id: string;
   position: { x: number; y: number };
+  targetX?: number; // For CNOT target position
 }
 
 export interface CircuitState {

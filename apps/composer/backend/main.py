@@ -50,6 +50,24 @@ def create_circuit_function(circuit_operations: list, num_qubits: int):
                             + f"got {len(wires)}"
                         )
                     qml.CNOT(wires=[wires[0], wires[1]])
+                elif gate == "crx":
+                    if not params or len(params) == 0:
+                        raise ValueError("CRX gate requires rotation angle parameter")
+                    if len(wires) != 2:
+                        raise ValueError(f"CRX gate requires exactly 2 wires, got {len(wires)}")
+                    qml.CRX(params[0], wires=wires)
+                elif gate == "cry":
+                    if not params or len(params) == 0:
+                        raise ValueError("CRY gate requires rotation angle parameter")
+                    if len(wires) != 2:
+                        raise ValueError(f"CRY gate requires exactly 2 wires, got {len(wires)}")
+                    qml.CRY(params[0], wires=wires)
+                elif gate == "crz":
+                    if not params or len(params) == 0:
+                        raise ValueError("CRZ gate requires rotation angle parameter")
+                    if len(wires) != 2:
+                        raise ValueError(f"CRZ gate requires exactly 2 wires, got {len(wires)}")
+                    qml.CRZ(params[0], wires=wires)
                 elif gate == "rx":
                     if not params or len(params) == 0:
                         raise ValueError(
@@ -198,6 +216,27 @@ async def get_available_gates():
             "symbol": "⊕",
             "description": "Controlled-NOT gate",
             "params": 0,
+            "qubits": 2,
+        },
+        {
+            "name": "CRX",
+            "symbol": "CRX",
+            "description": "Controlled-RX gate",
+            "params": 1,
+            "qubits": 2,
+        },
+        {
+            "name": "CRY",
+            "symbol": "CRY",
+            "description": "Controlled-RY gate",
+            "params": 1,
+            "qubits": 2,
+        },
+        {
+            "name": "CRZ",
+            "symbol": "CRZ",
+            "description": "Controlled-RZ gate",
+            "params": 1,
             "qubits": 2,
         },
         {

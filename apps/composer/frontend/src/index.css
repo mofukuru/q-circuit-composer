@@ -31,7 +31,8 @@
   --color-gate-text: #2c3e50;
   --color-gate-param: #666666;
   
-  --color-cnot-line: #e74c3c;
+  /* --color-cnot-line: #e74c3c; */
+  --color-cnot-line: #2c3e50;
   --color-cnot-control: #2c3e50;
   --color-cnot-target-bg: #ffffff;
   --color-cnot-target-border: #2c3e50;
@@ -72,7 +73,8 @@ body.dark-theme {
   --color-gate-text: #f7fafc;
   --color-gate-param: #a0aec0;
   
-  --color-cnot-line: #fc8181;
+  /* --color-cnot-line: #fc8181; */
+  --color-cnot-line: #f7fafc;
   --color-cnot-control: #f7fafc;
   --color-cnot-target-bg: #2d3748;
   --color-cnot-target-border: #e2e8f0;
