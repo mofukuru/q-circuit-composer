@@ -39,8 +39,9 @@ interface GatePaletteProps {
 }
 
 const GatePalette: React.FC<GatePaletteProps> = ({ gates }) => {
-  const singleQubitGates = gates.filter(gate => gate.qubits === 1);
+  const singleQubitGates = gates.filter(gate => (gate.qubits === 1 && !gate.name.includes("Measure")));
   const multiQubitGates = gates.filter(gate => gate.qubits > 1);
+  const measureQubits = gates.filter(gate => (gate.qubits === 1 && gate.name.includes("Measure")));
 
   return (
     <div className="gate-palette">
@@ -49,6 +50,7 @@ const GatePalette: React.FC<GatePaletteProps> = ({ gates }) => {
         <p>Drag gates onto the circuit</p>
       </div>
       
+      {singleQubitGates.length > 0 && (
       <div className="gate-category">
         <h4>Single-Qubit Gates</h4>
         <div className="gate-grid">
@@ -57,6 +59,7 @@ const GatePalette: React.FC<GatePaletteProps> = ({ gates }) => {
           ))}
         </div>
       </div>
+      )}
       
       {multiQubitGates.length > 0 && (
         <div className="gate-category">
@@ -67,6 +70,17 @@ const GatePalette: React.FC<GatePaletteProps> = ({ gates }) => {
             ))}
           </div>
         </div>
+      )}
+      
+      {measureQubits.length > 0 && (
+      <div className="gate-category">
+        <h4>Measurement</h4>
+        <div className="gate-grid">
+          {measureQubits.map((gate) => (
+            <GateItem key={gate.name} gate={gate} />
+          ))}
+        </div>
+      </div>
       )}
     </div>
   );

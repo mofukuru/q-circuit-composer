@@ -1169,6 +1169,9 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
       'CRX': 'RX',
       'CRY': 'RY',
       'CRZ': 'RZ',
+      'MeasureZ': 'MZ',
+      'MeasureX': 'MX',
+      'MeasureY': 'MY',
     };
     return symbolMap[gateName] || gateName.substring(0, 2).toUpperCase();
   };

@@ -25,7 +25,18 @@ app.add_middleware(
 
 
 def create_circuit_function(circuit_operations: list, num_qubits: int):
-    """Dynamically create a quantum circuit function from operations."""
+    """Dynamically create a quantum circuit function from operations.
+
+    Measurement gates (MeasureZ/MeasureX/MeasureY) are treated as
+    readout-basis selection markers. We record the chosen basis per wire
+    and, at the end of the circuit, rotate into that basis before
+    returning qml.probs over all wires. If multiple measurement gates are
+    placed on the same wire, the last one wins. Wires without an explicit
+    measurement gate are measured in Z basis by default.
+    """
+
+    # default all wires to Z basis, override if measurement gates are present
+    measurement_basis = {w: "Z" for w in range(num_qubits)}
 
     def circuit():
         for operation in circuit_operations:
@@ -52,21 +63,36 @@ def create_circuit_function(circuit_operations: list, num_qubits: int):
                     qml.CNOT(wires=[wires[0], wires[1]])
                 elif gate == "crx":
                     if not params or len(params) == 0:
-                        raise ValueError("CRX gate requires rotation angle parameter")
+                        raise ValueError(
+                            "CRX gate requires rotation angle parameter"
+                        )
                     if len(wires) != 2:
-                        raise ValueError(f"CRX gate requires exactly 2 wires, got {len(wires)}")
+                        raise ValueError(
+                            "CRX gate requires exactly 2 wires, got "
+                            f"{len(wires)}"
+                        )
                     qml.CRX(params[0], wires=wires)
                 elif gate == "cry":
                     if not params or len(params) == 0:
-                        raise ValueError("CRY gate requires rotation angle parameter")
+                        raise ValueError(
+                            "CRY gate requires rotation angle parameter"
+                        )
                     if len(wires) != 2:
-                        raise ValueError(f"CRY gate requires exactly 2 wires, got {len(wires)}")
+                        raise ValueError(
+                            "CRY gate requires exactly 2 wires, got "
+                            f"{len(wires)}"
+                        )
                     qml.CRY(params[0], wires=wires)
                 elif gate == "crz":
                     if not params or len(params) == 0:
-                        raise ValueError("CRZ gate requires rotation angle parameter")
+                        raise ValueError(
+                            "CRZ gate requires rotation angle parameter"
+                        )
                     if len(wires) != 2:
-                        raise ValueError(f"CRZ gate requires exactly 2 wires, got {len(wires)}")
+                        raise ValueError(
+                            "CRZ gate requires exactly 2 wires, got "
+                            f"{len(wires)}"
+                        )
                     qml.CRZ(params[0], wires=wires)
                 elif gate == "rx":
                     if not params or len(params) == 0:
@@ -90,12 +116,34 @@ def create_circuit_function(circuit_operations: list, num_qubits: int):
                     qml.S(wires=wires[0])
                 elif gate == "t":
                     qml.T(wires=wires[0])
+                elif gate in ("measurez", "mz", "measure_z"):
+                    # Mark wire for Z basis (no-op for circuit; before probs)
+                    if len(wires) != 1:
+                        raise ValueError("MeasureZ requires exactly 1 wire")
+                    measurement_basis[wires[0]] = "Z"
+                elif gate in ("measurex", "mx", "measure_x"):
+                    if len(wires) != 1:
+                        raise ValueError("MeasureX requires exactly 1 wire")
+                    measurement_basis[wires[0]] = "X"
+                elif gate in ("measurey", "my", "measure_y"):
+                    if len(wires) != 1:
+                        raise ValueError("MeasureY requires exactly 1 wire")
+                    measurement_basis[wires[0]] = "Y"
                 else:
                     logger.warning(f"Unknown gate: {gate}")
 
             except Exception as e:
                 logger.error(f"Error applying gate {gate}: {str(e)}")
                 raise ValueError(f"Invalid gate operation: {gate}")
+
+        # Apply basis rotations just before measuring probabilities
+        # Z: no-op; X: H; Y: S^† then H
+        for w, b in measurement_basis.items():
+            if b == "X":
+                qml.Hadamard(wires=w)
+            elif b == "Y":
+                qml.adjoint(qml.S)(wires=w)
+                qml.Hadamard(wires=w)
 
         return qml.probs(wires=range(num_qubits))
 
@@ -274,11 +322,27 @@ async def get_available_gates():
             "params": 0,
             "qubits": 1,
         },
+        # Measurement gates (readout basis selectors)
+        {
+            "name": "MeasureZ",
+            "symbol": "MZ",
+            "description": "Measure in Z basis (readout basis)",
+            "params": 0,
+            "qubits": 1,
+        },
+        {
+            "name": "MeasureX",
+            "symbol": "MX",
+            "description": "Measure in X basis (readout basis)",
+            "params": 0,
+            "qubits": 1,
+        },
+        {
+            "name": "MeasureY",
+            "symbol": "MY",
+            "description": "Measure in Y basis (readout basis)",
+            "params": 0,
+            "qubits": 1,
+        },
     ]
     return {"gates": gates}
-
-
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8000)
