@@ -22,6 +22,10 @@
   border-color: var(--color-accent-primary);
 }
 
+body.dark-theme .theme-switcher:hover {
+  box-shadow: 0 4px 12px rgba(127, 90, 240, 0.3), var(--shadow-md);
+}
+
 .theme-switcher:active {
   transform: translateY(0);
 }

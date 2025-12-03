@@ -151,6 +151,10 @@
   background-color: var(--color-bg-tertiary);
 }
 
+body.dark-theme .table-row:hover {
+  background-color: rgba(127, 90, 240, 0.1);
+}
+
 .table-row:last-child {
   border-bottom: none;
 }
