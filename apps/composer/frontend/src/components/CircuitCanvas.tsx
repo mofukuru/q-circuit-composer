@@ -272,10 +272,14 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
     const gateToMove = currentState.operations.find(op => op.id === gateId);
     if (!gateToMove || gateToMove.wires.length <= 1) return;
 
-    const controlWire = part === 'control' ? newQubitIndex : gateToMove.wires[0];
-    const targetWire = part === 'target' ? newQubitIndex : gateToMove.wires[1];
+    let controlWire = part === 'control' ? newQubitIndex : gateToMove.wires[0];
+    let targetWire = part === 'target' ? newQubitIndex : gateToMove.wires[1];
 
-    if (controlWire === targetWire) return;
+    // If control and target are on the same wire, swap them
+    if (controlWire === targetWire) {
+      [controlWire, targetWire] = [gateToMove.wires[1], gateToMove.wires[0]];
+    }
+
     if (controlWire < 0 || controlWire >= currentState.qubits || targetWire < 0 || targetWire >= currentState.qubits) return;
 
     // Determine the new X positions for both parts
@@ -347,7 +351,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
     });
 
     onStateChange({ ...currentState, operations: updatedOperations });
-  }, [onStateChange, topMargin, qubitSpacing, isOccupied]);
+  }, [onStateChange, topMargin, qubitSpacing, isOccupied, gridSize, leftMargin]);
 
   // Move entire multi-qubit gate (both control and target) using snapped X and control wire index
   const moveMultiQubitWhole = useCallback((gateId: string, newX: number, newControlWire: number) => {
@@ -669,25 +673,16 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
               }}
             />
 
-            {/* Control Part (Draggable) */}
+            {/* Control Part (Draggable) - allows swapping with target */}
             <Group
               id={controlId}
               x={controlX}
               y={controlY}
               draggable
               dragBoundFunc={(pos) => {
-                // Do not allow overlap during drag: avoid snapping to same wire as target
+                // Allow moving to any qubit wire including the target's wire (for swapping)
                 const maxIdx = circuitStateRef.current.qubits - 1;
-                let idx = clamp(snapToQubitIndex(pos.y), 0, maxIdx);
-                const other = operation.wires[1];
-                if (idx === other) {
-                  const baseY = yForQubit(other);
-                  const dy = pos.y - baseY;
-                  if (dy >= 0 && other < maxIdx) idx = other + 1;
-                  else if (dy < 0 && other > 0) idx = other - 1;
-                  else if (other < maxIdx) idx = other + 1;
-                  else if (other > 0) idx = other - 1;
-                }
+                const idx = clamp(snapToQubitIndex(pos.y), 0, maxIdx);
                 return { x: controlX, y: yForQubit(idx) };
               }}
               onDragStart={(e) => {
@@ -711,16 +706,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
               }}
               onDragEnd={(e) => {
                 const maxIdx = circuitStateRef.current.qubits - 1;
-                let idx = clamp(snapToQubitIndex(e.target.y()), 0, maxIdx);
-                const other = operation.wires[1];
-                if (idx === other) {
-                  const baseY = yForQubit(other);
-                  const dy = e.target.y() - baseY;
-                  if (dy >= 0 && other < maxIdx) idx = other + 1;
-                  else if (dy < 0 && other > 0) idx = other - 1;
-                  else if (other < maxIdx) idx = other + 1;
-                  else if (other > 0) idx = other - 1;
-                }
+                const idx = clamp(snapToQubitIndex(e.target.y()), 0, maxIdx);
                 moveMultiQubitPart(operation.id, 'control', controlX, idx);
                 // Reset visual offset
                 const stage = e.target.getStage();
@@ -738,25 +724,16 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
               />
             </Group>
 
-            {/* Target Part (Draggable) */}
+            {/* Target Part (Draggable) - allows swapping with control */}
             <Group
               id={targetId}
               x={targetX}
               y={targetY}
               draggable
               dragBoundFunc={(pos) => {
-                // Do not allow overlap during drag: avoid snapping to same wire as control
+                // Allow moving to any qubit wire including the control's wire (for swapping)
                 const maxIdx = circuitStateRef.current.qubits - 1;
-                let idx = clamp(snapToQubitIndex(pos.y), 0, maxIdx);
-                const other = operation.wires[0];
-                if (idx === other) {
-                  const baseY = yForQubit(other);
-                  const dy = pos.y - baseY;
-                  if (dy >= 0 && other < maxIdx) idx = other + 1;
-                  else if (dy < 0 && other > 0) idx = other - 1;
-                  else if (other < maxIdx) idx = other + 1;
-                  else if (other > 0) idx = other - 1;
-                }
+                const idx = clamp(snapToQubitIndex(pos.y), 0, maxIdx);
                 return { x: targetX, y: yForQubit(idx) };
               }}
               onDragStart={(e) => {
@@ -780,16 +757,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
               }}
               onDragEnd={(e) => {
                 const maxIdx = circuitStateRef.current.qubits - 1;
-                let idx = clamp(snapToQubitIndex(e.target.y()), 0, maxIdx);
-                const other = operation.wires[0];
-                if (idx === other) {
-                  const baseY = yForQubit(other);
-                  const dy = e.target.y() - baseY;
-                  if (dy >= 0 && other < maxIdx) idx = other + 1;
-                  else if (dy < 0 && other > 0) idx = other - 1;
-                  else if (other < maxIdx) idx = other + 1;
-                  else if (other > 0) idx = other - 1;
-                }
+                const idx = clamp(snapToQubitIndex(e.target.y()), 0, maxIdx);
                 moveMultiQubitPart(operation.id, 'target', targetX, idx);
                 // Reset visual offset
                 const stage = e.target.getStage();
