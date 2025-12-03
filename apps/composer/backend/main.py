@@ -63,18 +63,6 @@ def create_circuit_function(
 
             # Check if this operation is conditional
             condition = getattr(operation, "condition", None)
-            if condition:
-                # Skip this operation if condition is not met
-                classical_bit = condition.classical_bit
-                expected_value = condition.value
-                if classical_bit not in classical_bits:
-                    logger.warning(
-                        f"Classical bit {classical_bit} not yet "
-                        "measured, skipping conditional gate"
-                    )
-                    continue
-                if classical_bits[classical_bit] != expected_value:
-                    continue  # Condition not met, skip this gate
 
             # Check if this is a mid-circuit measurement
             classical_store = getattr(operation, "classical_store", None)
@@ -85,12 +73,27 @@ def create_circuit_function(
                 def apply_gate_op(gate_func):
                     """Apply gate with conditional execution if needed."""
                     if condition:
+                        classical_bit = condition.classical_bit
+                        if classical_bit not in classical_bits:
+                            logger.warning(
+                                f"Classical bit {classical_bit} not yet "
+                                "measured, skipping conditional gate"
+                            )
+                            return
+
                         # Use PennyLane's conditional execution
-                        qml.cond(
-                            classical_bits[condition.classical_bit]
-                            == condition.value,
-                            gate_func,
-                        )()
+                        # qml.cond expects (measurement == value, true_fn, false_fn)
+                        cond_val = condition.value
+                        m_val = classical_bits[classical_bit]
+
+                        # Create conditional function
+                        def true_fn():
+                            gate_func()
+
+                        def false_fn():
+                            pass  # Do nothing if condition not met
+
+                        qml.cond(m_val == cond_val, true_fn, false_fn)()
                     else:
                         gate_func()
 
@@ -265,7 +268,16 @@ def create_circuit_function(
         # Decide measurement wires set
         measured_wires = sorted(explicit_measured)
         if not measured_wires:
-            measured_wires = list(range(num_qubits))
+            # If no explicit measurement specified, measure all qubits
+            # EXCEPT those that were mid-circuit measured
+            measured_wires = [
+                w for w in range(num_qubits) if w not in mid_circuit_measured
+            ]
+
+        # If all qubits were mid-circuit measured, still need to return something
+        if not measured_wires:
+            # Return a trivial probability (just measure qubit 0)
+            measured_wires = [0]
 
         # Return according to result_mode
         if (result_mode or "probs").lower() == "expval":
@@ -289,6 +301,17 @@ def generate_pennylane_code(
     lines.append("import pennylane as qml")
     lines.append("import numpy as np")
     lines.append("")
+
+    # Check if this is a dynamic circuit
+    has_mid_circuit_meas = any(
+        getattr(op, "classical_store", None) is not None
+        for op in circuit_operations
+    )
+    has_conditional = any(
+        getattr(op, "condition", None) is not None for op in circuit_operations
+    )
+    is_dynamic = has_mid_circuit_meas or has_conditional
+
     lines.append(f"# Create a quantum device with {num_qubits} qubit(s)")
     lines.append(
         f'dev = qml.device("default.qubit", '
@@ -299,9 +322,15 @@ def generate_pennylane_code(
     lines.append("@qml.qnode(dev)")
     lines.append("def circuit():")
 
+    if is_dynamic:
+        lines.append("    # Classical bits for measurement results")
+        lines.append("    classical_bits = {}")
+        lines.append("")
+
     # Track measurement bases
     measurement_basis = {w: "Z" for w in range(num_qubits)}
     explicit_measured = set()
+    mid_circuit_measured = set()
 
     # Generate circuit operations
     has_ops = False
@@ -310,69 +339,116 @@ def generate_pennylane_code(
         wires = operation.wires
         params = operation.params or []
 
+        condition = getattr(operation, "condition", None)
+        gate_code = None
+
         if gate == "hadamard" or gate == "h":
-            lines.append(f"    qml.Hadamard(wires={wires[0]})")
+            gate_code = f"qml.Hadamard(wires={wires[0]})"
             has_ops = True
         elif gate == "paulix" or gate == "x":
-            lines.append(f"    qml.PauliX(wires={wires[0]})")
+            gate_code = f"qml.PauliX(wires={wires[0]})"
             has_ops = True
         elif gate == "pauliy" or gate == "y":
-            lines.append(f"    qml.PauliY(wires={wires[0]})")
+            gate_code = f"qml.PauliY(wires={wires[0]})"
             has_ops = True
         elif gate == "pauliz" or gate == "z":
-            lines.append(f"    qml.PauliZ(wires={wires[0]})")
+            gate_code = f"qml.PauliZ(wires={wires[0]})"
             has_ops = True
         elif gate == "swap":
-            lines.append(f"    qml.SWAP(wires={wires})")
+            gate_code = f"qml.SWAP(wires={wires})"
             has_ops = True
         elif gate == "cnot" or gate == "cx":
-            lines.append(f"    qml.CNOT(wires={wires})")
+            gate_code = f"qml.CNOT(wires={wires})"
             has_ops = True
         elif gate == "cz":
-            lines.append(f"    qml.CZ(wires={wires})")
+            gate_code = f"qml.CZ(wires={wires})"
             has_ops = True
         elif gate == "cy":
-            lines.append(f"    qml.CY(wires={wires})")
+            gate_code = f"qml.CY(wires={wires})"
             has_ops = True
         elif gate in ("crx", "controlled-rx"):
-            lines.append(f"    qml.CRX({params[0]}, wires={wires})")
+            gate_code = f"qml.CRX({params[0]}, wires={wires})"
             has_ops = True
         elif gate in ("cry", "controlled-ry"):
-            lines.append(f"    qml.CRY({params[0]}, wires={wires})")
+            gate_code = f"qml.CRY({params[0]}, wires={wires})"
             has_ops = True
         elif gate in ("crz", "controlled-rz"):
-            lines.append(f"    qml.CRZ({params[0]}, wires={wires})")
+            gate_code = f"qml.CRZ({params[0]}, wires={wires})"
             has_ops = True
         elif gate == "rx":
-            lines.append(f"    qml.RX({params[0]}, wires={wires[0]})")
+            gate_code = f"qml.RX({params[0]}, wires={wires[0]})"
             has_ops = True
         elif gate == "ry":
-            lines.append(f"    qml.RY({params[0]}, wires={wires[0]})")
+            gate_code = f"qml.RY({params[0]}, wires={wires[0]})"
             has_ops = True
         elif gate == "rz":
-            lines.append(f"    qml.RZ({params[0]}, wires={wires[0]})")
+            gate_code = f"qml.RZ({params[0]}, wires={wires[0]})"
             has_ops = True
         elif gate == "phase" or gate == "s":
-            lines.append(f"    qml.S(wires={wires[0]})")
+            gate_code = f"qml.S(wires={wires[0]})"
             has_ops = True
         elif gate == "t":
-            lines.append(f"    qml.T(wires={wires[0]})")
+            gate_code = f"qml.T(wires={wires[0]})"
             has_ops = True
         elif gate == "toffoli" or gate == "ccx":
-            lines.append(f"    qml.Toffoli(wires={wires})")
+            gate_code = f"qml.Toffoli(wires={wires})"
             has_ops = True
+
+        # Add the gate code with conditional wrapper if needed
+        if gate_code:
+            if condition:
+                lines.append(f"    def gate_fn():")
+                lines.append(f"        {gate_code}")
+                lines.append(
+                    f"    qml.cond(classical_bits[{condition.classical_bit}] == {condition.value}, gate_fn, lambda: None)()"
+                )
+            else:
+                lines.append(f"    {gate_code}")
         elif gate in ("measurez", "mz", "measure_z"):
-            measurement_basis[wires[0]] = "Z"
-            explicit_measured.add(wires[0])
-            lines.append(f"    # Measure qubit {wires[0]} in Z basis")
+            classical_store = getattr(operation, "classical_store", None)
+            if classical_store is not None:
+                # Mid-circuit measurement
+                lines.append(
+                    f"    classical_bits[{classical_store}] = qml.measure(wires={wires[0]})"
+                )
+                mid_circuit_measured.add(wires[0])
+                has_ops = True
+            else:
+                # Final measurement
+                measurement_basis[wires[0]] = "Z"
+                explicit_measured.add(wires[0])
+                lines.append(f"    # Measure qubit {wires[0]} in Z basis")
         elif gate in ("measurex", "mx", "measure_x"):
-            measurement_basis[wires[0]] = "X"
-            explicit_measured.add(wires[0])
-            lines.append(f"    # Measure qubit {wires[0]} in X basis")
+            classical_store = getattr(operation, "classical_store", None)
+            if classical_store is not None:
+                # Mid-circuit measurement in X basis
+                lines.append(f"    qml.Hadamard(wires={wires[0]})")
+                lines.append(
+                    f"    classical_bits[{classical_store}] = qml.measure(wires={wires[0]})"
+                )
+                mid_circuit_measured.add(wires[0])
+                has_ops = True
+            else:
+                # Final measurement
+                measurement_basis[wires[0]] = "X"
+                explicit_measured.add(wires[0])
+                lines.append(f"    # Measure qubit {wires[0]} in X basis")
         elif gate in ("measurey", "my", "measure_y"):
-            measurement_basis[wires[0]] = "Y"
-            explicit_measured.add(wires[0])
-            lines.append(f"    # Measure qubit {wires[0]} in Y basis")
+            classical_store = getattr(operation, "classical_store", None)
+            if classical_store is not None:
+                # Mid-circuit measurement in Y basis
+                lines.append(f"    qml.adjoint(qml.S)(wires={wires[0]})")
+                lines.append(f"    qml.Hadamard(wires={wires[0]})")
+                lines.append(
+                    f"    classical_bits[{classical_store}] = qml.measure(wires={wires[0]})"
+                )
+                mid_circuit_measured.add(wires[0])
+                has_ops = True
+            else:
+                # Final measurement
+                measurement_basis[wires[0]] = "Y"
+                explicit_measured.add(wires[0])
+                lines.append(f"    # Measure qubit {wires[0]} in Y basis")
 
     if not has_ops:
         lines.append("    pass  # Empty circuit")
@@ -429,11 +505,24 @@ def generate_qiskit_code(
 
     measurement_basis = {w: "Z" for w in range(num_qubits)}
     explicit_measured = set()
+    mid_circuit_measured = set()
 
     for op in circuit_operations:
         gate = op.gate.lower()
         w = op.wires
         p = op.params or []
+        condition = getattr(op, "condition", None)
+        classical_store = getattr(op, "classical_store", None)
+
+        # Add conditional wrapper if needed
+        if condition:
+            lines.append(
+                f"# Conditional on c[{condition.classical_bit}] == {condition.value}"
+            )
+            lines.append(
+                f"qc.if_test((cr[{condition.classical_bit}], {condition.value}), lambda: ["
+            )
+
         if gate in ("hadamard", "h"):
             lines.append(f"qc.h({w[0]})")
         elif gate in ("paulix", "x"):
@@ -469,14 +558,45 @@ def generate_qiskit_code(
         elif gate in ("toffoli", "ccx"):
             lines.append(f"qc.ccx({w[0]}, {w[1]}, {w[2]})")
         elif gate in ("measurez", "mz", "measure_z"):
-            measurement_basis[w[0]] = "Z"
-            explicit_measured.add(w[0])
+            if classical_store is not None:
+                # Mid-circuit measurement
+                lines.append(
+                    f"qc.measure({w[0]}, {classical_store})  # Mid-circuit measurement to c[{classical_store}]"
+                )
+                mid_circuit_measured.add(w[0])
+            else:
+                # Final measurement
+                measurement_basis[w[0]] = "Z"
+                explicit_measured.add(w[0])
         elif gate in ("measurex", "mx", "measure_x"):
-            measurement_basis[w[0]] = "X"
-            explicit_measured.add(w[0])
+            if classical_store is not None:
+                # Mid-circuit measurement in X basis
+                lines.append(f"qc.h({w[0]})")
+                lines.append(
+                    f"qc.measure({w[0]}, {classical_store})  # Mid-circuit measurement in X basis to c[{classical_store}]"
+                )
+                mid_circuit_measured.add(w[0])
+            else:
+                # Final measurement
+                measurement_basis[w[0]] = "X"
+                explicit_measured.add(w[0])
         elif gate in ("measurey", "my", "measure_y"):
-            measurement_basis[w[0]] = "Y"
-            explicit_measured.add(w[0])
+            if classical_store is not None:
+                # Mid-circuit measurement in Y basis
+                lines.append(f"qc.sdg({w[0]})")
+                lines.append(f"qc.h({w[0]})")
+                lines.append(
+                    f"qc.measure({w[0]}, {classical_store})  # Mid-circuit measurement in Y basis to c[{classical_store}]"
+                )
+                mid_circuit_measured.add(w[0])
+            else:
+                # Final measurement
+                measurement_basis[w[0]] = "Y"
+                explicit_measured.add(w[0])
+
+        if condition:
+            lines.append("], None)()")
+            lines.append("")
 
     # Basis rotation before measurement (approximate with H and Sdg+H)
     for w, b in measurement_basis.items():
@@ -517,10 +637,53 @@ def generate_qulacs_code(
     measurement_basis = {w: "Z" for w in range(num_qubits)}
     explicit_measured = set()
 
+    # Check for dynamic circuit features
+    has_dynamic = any(
+        getattr(op, "classical_store", None) is not None
+        or getattr(op, "condition", None) is not None
+        for op in circuit_operations
+    )
+
+    if has_dynamic:
+        lines.append("# Note: Qulacs has limited support for dynamic circuits")
+        lines.append(
+            "# Mid-circuit measurement and conditional gates may not be fully supported"
+        )
+        lines.append("")
+
     for op in circuit_operations:
         g = op.gate.lower()
         w = op.wires
         p = op.params or []
+        condition = getattr(op, "condition", None)
+        classical_store = getattr(op, "classical_store", None)
+
+        if condition:
+            lines.append(
+                f"# Conditional on classical bit {condition.classical_bit} == {condition.value}"
+            )
+            lines.append(
+                "# (Qulacs does not natively support conditional gates)"
+            )
+
+        if classical_store is not None and g in (
+            "measurez",
+            "mz",
+            "measure_z",
+            "measurex",
+            "mx",
+            "measure_x",
+            "measurey",
+            "my",
+            "measure_y",
+        ):
+            lines.append(
+                f"# Mid-circuit measurement to classical bit {classical_store}"
+            )
+            lines.append(
+                "# (Qulacs does not natively support mid-circuit measurement)"
+            )
+
         if g in ("hadamard", "h"):
             lines.append(f"circuit.add_gate(H({w[0]}))")
         elif g in ("paulix", "x"):
@@ -613,14 +776,38 @@ def generate_qasm_code(
     lines.append('include "qelib1.inc";')
     lines.append(f"qreg q[{num_qubits}];")
     lines.append(f"creg c[{num_qubits}];")
+    lines.append("")
 
     measurement_basis = {w: "Z" for w in range(num_qubits)}
     explicit_measured = set()
+
+    # Check for dynamic circuit features
+    has_dynamic = any(
+        getattr(op, "classical_store", None) is not None
+        or getattr(op, "condition", None) is not None
+        for op in circuit_operations
+    )
+
+    if has_dynamic:
+        lines.append(
+            "// Note: OpenQASM 2.0 has limited support for dynamic circuits"
+        )
+        lines.append("// For full support, use OpenQASM 3.0")
+        lines.append("")
 
     for op in circuit_operations:
         g = op.gate.lower()
         w = op.wires
         p = op.params or []
+        condition = getattr(op, "condition", None)
+        classical_store = getattr(op, "classical_store", None)
+
+        if condition:
+            # OpenQASM 2.0 conditional syntax: if(c==value) gate ...
+            lines.append(
+                f"if(c[{condition.classical_bit}]=={condition.value}) {{"
+            )
+
         if g in ("hadamard", "h"):
             lines.append(f"h q[{w[0]}];")
         elif g in ("paulix", "x"):
@@ -656,14 +843,39 @@ def generate_qasm_code(
         elif g in ("toffoli", "ccx"):
             lines.append(f"ccx q[{w[0]}],q[{w[1]}],q[{w[2]}];")
         elif g in ("measurez", "mz", "measure_z"):
-            measurement_basis[w[0]] = "Z"
-            explicit_measured.add(w[0])
+            if classical_store is not None:
+                # Mid-circuit measurement
+                lines.append(
+                    f"measure q[{w[0]}] -> c[{classical_store}];  // Mid-circuit measurement"
+                )
+            else:
+                measurement_basis[w[0]] = "Z"
+                explicit_measured.add(w[0])
         elif g in ("measurex", "mx", "measure_x"):
-            measurement_basis[w[0]] = "X"
-            explicit_measured.add(w[0])
+            if classical_store is not None:
+                # Mid-circuit measurement in X basis
+                lines.append(f"h q[{w[0]}];")
+                lines.append(
+                    f"measure q[{w[0]}] -> c[{classical_store}];  // Mid-circuit X measurement"
+                )
+            else:
+                measurement_basis[w[0]] = "X"
+                explicit_measured.add(w[0])
         elif g in ("measurey", "my", "measure_y"):
-            measurement_basis[w[0]] = "Y"
-            explicit_measured.add(w[0])
+            if classical_store is not None:
+                # Mid-circuit measurement in Y basis
+                lines.append(f"sdg q[{w[0]}];")
+                lines.append(f"h q[{w[0]}];")
+                lines.append(
+                    f"measure q[{w[0]}] -> c[{classical_store}];  // Mid-circuit Y measurement"
+                )
+            else:
+                measurement_basis[w[0]] = "Y"
+                explicit_measured.add(w[0])
+
+        if condition:
+            lines.append("}")
+            lines.append("")
 
     for w, b in measurement_basis.items():
         if b == "X":
@@ -686,7 +898,7 @@ def generate_latex_code(
     result_mode: str = "probs",
 ):
     """Generate standalone LaTeX code using quantikz package for
-    the circuit."""
+    the circuit with dynamic circuit support."""
 
     def format_angle(radians):
         """Format angle in radians to a nice LaTeX representation."""
@@ -745,185 +957,224 @@ def generate_latex_code(
 
     lines = []
     lines.append("\\documentclass[border=2pt]{standalone}")
+    lines.append("\\usepackage{tikz}")
     lines.append("\\usepackage{quantikz}")
+    lines.append("\\usepackage{amsmath}")
     lines.append("")
     lines.append("\\begin{document}")
     lines.append("\\begin{quantikz}")
 
-    # Track operations by column
-    # Build gate matrix: [qubit][column] = gate_instruction
-    max_cols = len(circuit_operations) + 2  # Initial + ops + measurements
-    grid = [[None for _ in range(max_cols)] for _ in range(num_qubits)]
+    # Build circuit row by row (each qubit is a row)
+    # Each row is a list of quantikz commands
+    rows = [[] for _ in range(num_qubits)]
 
-    # Track which columns are used for multi-qubit gates
-    col_idx = 0
+    # Track which qubits have been measured (become classical wires)
+    mid_circuit_measured = {}  # {qubit: classical_bit}
+    wire_is_classical = [False] * num_qubits  # Track if wire became classical
+
+    # Track measurement info for classical control lines
+    classical_controls = {}  # {classical_bit: source_qubit}
 
     measurement_basis = {w: "Z" for w in range(num_qubits)}
     explicit_measured = set()
+
+    # Initialize all rows with lstick
+    for q in range(num_qubits):
+        rows[q].append(f"\\lstick{{$q_{{{q}}}$: $\\ket{{0}}$}}")
 
     for op in circuit_operations:
         g = op.gate.lower()
         w = op.wires
         p = op.params or []
+        condition = getattr(op, "condition", None)
+        classical_store = getattr(op, "classical_store", None)
+
+        # Handle conditional gates - need to add cwbend from classical bit
+        if condition:
+            # This gate depends on a classical bit
+            # We'll add the gate with a comment for now
+            # In a more sophisticated implementation, we'd track column positions
+            pass
 
         # Single-qubit gates
         if g in ("hadamard", "h"):
-            grid[w[0]][col_idx] = "\\gate{H}"
+            rows[w[0]].append("\\gate{H}")
         elif g in ("paulix", "x"):
-            grid[w[0]][col_idx] = "\\gate{X}"
+            if condition:
+                rows[w[0]].append("\\gate{X}")
+            else:
+                rows[w[0]].append("\\gate{X}")
         elif g in ("pauliy", "y"):
-            grid[w[0]][col_idx] = "\\gate{Y}"
+            rows[w[0]].append("\\gate{Y}")
         elif g in ("pauliz", "z"):
-            grid[w[0]][col_idx] = "\\gate{Z}"
+            if condition:
+                rows[w[0]].append("\\gate{Z}")
+            else:
+                rows[w[0]].append("\\gate{Z}")
         elif g == "rx":
             angle_str = format_angle(p[0])
-            grid[w[0]][col_idx] = f"\\gate{{R_x({angle_str})}}"
+            rows[w[0]].append(f"\\gate{{R_x({angle_str})}}")
         elif g == "ry":
             angle_str = format_angle(p[0])
-            grid[w[0]][col_idx] = f"\\gate{{R_y({angle_str})}}"
+            rows[w[0]].append(f"\\gate{{R_y({angle_str})}}")
         elif g == "rz":
             angle_str = format_angle(p[0])
-            grid[w[0]][col_idx] = f"\\gate{{R_z({angle_str})}}"
+            rows[w[0]].append(f"\\gate{{R_z({angle_str})}}")
         elif g in ("phase", "s"):
-            grid[w[0]][col_idx] = "\\gate{S}"
+            rows[w[0]].append("\\gate{S}")
         elif g == "t":
-            grid[w[0]][col_idx] = "\\gate{T}"
+            rows[w[0]].append("\\gate{T}")
 
         # Two-qubit gates
-        elif g == "swap":
-            min_w, max_w = min(w[0], w[1]), max(w[0], w[1])
-            grid[min_w][col_idx] = f"\\swap{{{max_w - min_w}}}"
-            grid[max_w][col_idx] = "\\targX{}"
-            # Fill wires in between
-            for between in range(min_w + 1, max_w):
-                if grid[between][col_idx] is None:
-                    grid[between][col_idx] = "\\qwx"
         elif g in ("cnot", "cx"):
             ctrl, targ = w[0], w[1]
-            grid[ctrl][col_idx] = f"\\ctrl{{{targ - ctrl}}}"
-            grid[targ][col_idx] = "\\targ{}"
-            # Fill wires in between
-            min_w, max_w = (ctrl, targ) if ctrl < targ else (targ, ctrl)
-            for between in range(min_w + 1, max_w):
-                if grid[between][col_idx] is None:
-                    grid[between][col_idx] = "\\qwx"
+            rows[ctrl].append(f"\\ctrl{{{targ - ctrl}}}")
+            rows[targ].append("\\targ{}")
+            # Sync other rows
+            for q in range(num_qubits):
+                if q != ctrl and q != targ:
+                    rows[q].append("\\qw")
         elif g == "cz":
             ctrl, targ = w[0], w[1]
-            grid[ctrl][col_idx] = f"\\ctrl{{{targ - ctrl}}}"
-            grid[targ][col_idx] = "\\gate{Z}"
-            # Fill wires in between
-            min_w, max_w = (ctrl, targ) if ctrl < targ else (targ, ctrl)
-            for between in range(min_w + 1, max_w):
-                if grid[between][col_idx] is None:
-                    grid[between][col_idx] = "\\qwx"
+            rows[ctrl].append(f"\\ctrl{{{targ - ctrl}}}")
+            rows[targ].append("\\gate{Z}")
+            for q in range(num_qubits):
+                if q != ctrl and q != targ:
+                    rows[q].append("\\qw")
         elif g == "cy":
             ctrl, targ = w[0], w[1]
-            grid[ctrl][col_idx] = f"\\ctrl{{{targ - ctrl}}}"
-            grid[targ][col_idx] = "\\gate{Y}"
-            # Fill wires in between
-            min_w, max_w = (ctrl, targ) if ctrl < targ else (targ, ctrl)
-            for between in range(min_w + 1, max_w):
-                if grid[between][col_idx] is None:
-                    grid[between][col_idx] = "\\qwx"
-        elif g in ("crx", "controlled-rx"):
-            angle_str = format_angle(p[0])
-            ctrl, targ = w[0], w[1]
-            grid[ctrl][col_idx] = f"\\ctrl{{{targ - ctrl}}}"
-            grid[targ][col_idx] = f"\\gate{{R_x({angle_str})}}"
-            # Fill wires in between
-            min_w, max_w = (ctrl, targ) if ctrl < targ else (targ, ctrl)
-            for between in range(min_w + 1, max_w):
-                if grid[between][col_idx] is None:
-                    grid[between][col_idx] = "\\qwx"
-        elif g in ("cry", "controlled-ry"):
-            angle_str = format_angle(p[0])
-            ctrl, targ = w[0], w[1]
-            grid[ctrl][col_idx] = f"\\ctrl{{{targ - ctrl}}}"
-            grid[targ][col_idx] = f"\\gate{{R_y({angle_str})}}"
-            # Fill wires in between
-            min_w, max_w = (ctrl, targ) if ctrl < targ else (targ, ctrl)
-            for between in range(min_w + 1, max_w):
-                if grid[between][col_idx] is None:
-                    grid[between][col_idx] = "\\qwx"
-        elif g in ("crz", "controlled-rz"):
-            angle_str = format_angle(p[0])
-            ctrl, targ = w[0], w[1]
-            grid[ctrl][col_idx] = f"\\ctrl{{{targ - ctrl}}}"
-            grid[targ][col_idx] = f"\\gate{{R_z({angle_str})}}"
-            # Fill wires in between
-            min_w, max_w = (ctrl, targ) if ctrl < targ else (targ, ctrl)
-            for between in range(min_w + 1, max_w):
-                if grid[between][col_idx] is None:
-                    grid[between][col_idx] = "\\qwx"
-
-        # Three-qubit gates
-        elif g in ("toffoli", "ccx"):
-            ctrl1, ctrl2, targ = w[0], w[1], w[2]
-            grid[ctrl1][col_idx] = f"\\ctrl{{{ctrl2 - ctrl1}}}"
-            grid[ctrl2][col_idx] = f"\\ctrl{{{targ - ctrl2}}}"
-            grid[targ][col_idx] = "\\targ{}"
-            # Fill wires in between ctrl1 and ctrl2
-            min_w1, max_w1 = (
-                (ctrl1, ctrl2) if ctrl1 < ctrl2 else (ctrl2, ctrl1)
-            )
-            for between in range(min_w1 + 1, max_w1):
-                if grid[between][col_idx] is None:
-                    grid[between][col_idx] = "\\qwx"
-            # Fill wires in between ctrl2 and targ
-            min_w2, max_w2 = (ctrl2, targ) if ctrl2 < targ else (targ, ctrl2)
-            for between in range(min_w2 + 1, max_w2):
-                if grid[between][col_idx] is None:
-                    grid[between][col_idx] = "\\qwx"
+            rows[ctrl].append(f"\\ctrl{{{targ - ctrl}}}")
+            rows[targ].append("\\gate{Y}")
+            for q in range(num_qubits):
+                if q != ctrl and q != targ:
+                    rows[q].append("\\qw")
+        elif g == "swap":
+            q0, q1 = w[0], w[1]
+            rows[q0].append(f"\\swap{{{q1 - q0}}}")
+            rows[q1].append("\\targX{}")
+            for q in range(num_qubits):
+                if q != q0 and q != q1:
+                    rows[q].append("\\qw")
 
         # Measurement gates
         elif g in ("measurez", "mz", "measure_z"):
-            measurement_basis[w[0]] = "Z"
-            explicit_measured.add(w[0])
-        elif g in ("measurex", "mx", "measure_x"):
-            measurement_basis[w[0]] = "X"
-            explicit_measured.add(w[0])
-        elif g in ("measurey", "my", "measure_y"):
-            measurement_basis[w[0]] = "Y"
-            explicit_measured.add(w[0])
-
-        col_idx += 1
-
-    # Add basis rotations for measurement
-    basis_col = col_idx
-    has_basis_rotation = False
-    for w, b in measurement_basis.items():
-        if b == "X":
-            grid[w][basis_col] = "\\gate{H}"
-            has_basis_rotation = True
-        elif b == "Y":
-            grid[w][basis_col] = "\\gate{S^\\dagger}"
-            has_basis_rotation = True
-
-    if has_basis_rotation:
-        col_idx += 1
-        # Add H for Y basis after S†
-        for w, b in measurement_basis.items():
-            if b == "Y" and grid[w][col_idx] is None:
-                grid[w][col_idx] = "\\gate{H}"
-        col_idx += 1
-
-    # Add measurement symbols
-    measured_wires = sorted(explicit_measured) or list(range(num_qubits))
-    meas_col = col_idx
-    for w in measured_wires:
-        grid[w][meas_col] = "\\meter{}"
-
-    # Generate quantikz code
-    for q in range(num_qubits):
-        row_parts = [f"\\lstick{{$|q_{{{q}}}\\rangle$}}"]
-
-        for c in range(max_cols):
-            if grid[q][c] is not None:
-                row_parts.append(grid[q][c])
+            if classical_store is not None:
+                # Mid-circuit measurement - convert to classical wire
+                rows[w[0]].append("\\meter{}")
+                rows[w[0]].append("\\setwiretype{c}")
+                wire_is_classical[w[0]] = True
+                mid_circuit_measured[w[0]] = classical_store
+                classical_controls[classical_store] = w[0]
+                # Sync other rows
+                for q in range(num_qubits):
+                    if q != w[0]:
+                        if wire_is_classical[q]:
+                            rows[q].append("\\cw")
+                        else:
+                            rows[q].append("\\qw")
+                        rows[q].append(
+                            "\\qw" if not wire_is_classical[q] else "\\cw"
+                        )
             else:
-                row_parts.append("\\qw")
+                measurement_basis[w[0]] = "Z"
+                explicit_measured.add(w[0])
+        elif g in ("measurex", "mx", "measure_x"):
+            if classical_store is not None:
+                rows[w[0]].append("\\gate{H}")
+                for q in range(num_qubits):
+                    if q != w[0]:
+                        rows[q].append(
+                            "\\qw" if not wire_is_classical[q] else "\\cw"
+                        )
+                rows[w[0]].append("\\meter{}")
+                rows[w[0]].append("\\setwiretype{c}")
+                wire_is_classical[w[0]] = True
+                mid_circuit_measured[w[0]] = classical_store
+                classical_controls[classical_store] = w[0]
+                for q in range(num_qubits):
+                    if q != w[0]:
+                        rows[q].append(
+                            "\\qw" if not wire_is_classical[q] else "\\cw"
+                        )
+                        rows[q].append(
+                            "\\qw" if not wire_is_classical[q] else "\\cw"
+                        )
+            else:
+                measurement_basis[w[0]] = "X"
+                explicit_measured.add(w[0])
+        elif g in ("measurey", "my", "measure_y"):
+            if classical_store is not None:
+                rows[w[0]].append("\\gate{S^{\\dagger}}")
+                for q in range(num_qubits):
+                    if q != w[0]:
+                        rows[q].append(
+                            "\\qw" if not wire_is_classical[q] else "\\cw"
+                        )
+                rows[w[0]].append("\\gate{H}")
+                for q in range(num_qubits):
+                    if q != w[0]:
+                        rows[q].append(
+                            "\\qw" if not wire_is_classical[q] else "\\cw"
+                        )
+                rows[w[0]].append("\\meter{}")
+                rows[w[0]].append("\\setwiretype{c}")
+                wire_is_classical[w[0]] = True
+                mid_circuit_measured[w[0]] = classical_store
+                classical_controls[classical_store] = w[0]
+                for q in range(num_qubits):
+                    if q != w[0]:
+                        rows[q].append(
+                            "\\qw" if not wire_is_classical[q] else "\\cw"
+                        )
+                        rows[q].append(
+                            "\\qw" if not wire_is_classical[q] else "\\cw"
+                        )
+                        rows[q].append(
+                            "\\qw" if not wire_is_classical[q] else "\\cw"
+                        )
+            else:
+                measurement_basis[w[0]] = "Y"
+                explicit_measured.add(w[0])
+        else:
+            # Unknown gate - add qw to all rows
+            for q in range(num_qubits):
+                rows[q].append("\\qw" if not wire_is_classical[q] else "\\cw")
 
-        line = " & ".join(row_parts)
+    # Add final basis rotations and measurements for terminal measurements
+    if explicit_measured:
+        for w, b in measurement_basis.items():
+            if w in explicit_measured:
+                if b == "X":
+                    rows[w].append("\\gate{H}")
+                    for q in range(num_qubits):
+                        if q != w:
+                            rows[q].append(
+                                "\\qw" if not wire_is_classical[q] else "\\cw"
+                            )
+                elif b == "Y":
+                    rows[w].append("\\gate{S^{\\dagger}}")
+                    for q in range(num_qubits):
+                        if q != w:
+                            rows[q].append(
+                                "\\qw" if not wire_is_classical[q] else "\\cw"
+                            )
+                    rows[w].append("\\gate{H}")
+                    for q in range(num_qubits):
+                        if q != w:
+                            rows[q].append(
+                                "\\qw" if not wire_is_classical[q] else "\\cw"
+                            )
+
+                rows[w].append("\\meter{}")
+                for q in range(num_qubits):
+                    if q != w:
+                        rows[q].append(
+                            "\\qw" if not wire_is_classical[q] else "\\cw"
+                        )
+
+    # Generate quantikz code from rows
+    for q in range(num_qubits):
+        line = " & ".join(rows[q])
         if q < num_qubits - 1:
             line += " \\\\"
         lines.append("  " + line)

@@ -628,8 +628,10 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
       // Double-click to edit properties (dynamic circuit features)
       const handleDblClick = (e: any) => {
         e.evt.preventDefault();
+        console.log('Double-clicked gate:', operation);
         setEditingGate(operation);
         setShowPropertyModal(true);
+        console.log('showPropertyModal set to true');
       };
 
       const colors = getThemeColors();
@@ -1796,11 +1798,14 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
             setEditingGate(null);
           }}
           onSave={(updatedGate) => {
+            console.log('Updating gate in circuit:', updatedGate);
+            const newOperations = circuitState.operations.map((op) =>
+              op.id === updatedGate.id ? updatedGate : op
+            );
+            console.log('New operations:', newOperations);
             onStateChange({
               ...circuitState,
-              operations: circuitState.operations.map((op) =>
-                op.id === updatedGate.id ? updatedGate : op
-              ),
+              operations: newOperations,
             });
             setShowPropertyModal(false);
             setEditingGate(null);

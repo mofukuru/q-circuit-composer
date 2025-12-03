@@ -31,6 +31,10 @@ const GatePropertyModal: React.FC<GatePropertyModalProps> = ({
     gate.gate
   );
 
+  console.log('GatePropertyModal rendered for gate:', gate);
+  console.log('isMeasurement:', isMeasurement);
+  console.log('classicalBits:', classicalBits);
+
   const handleSave = () => {
     const updatedGate: GateOperation = {
       ...gate,
@@ -42,6 +46,7 @@ const GatePropertyModal: React.FC<GatePropertyModalProps> = ({
           }
         : undefined,
     };
+    console.log('Saving gate properties:', updatedGate);
     onSave(updatedGate);
   };
 
@@ -137,10 +142,10 @@ const GatePropertyModal: React.FC<GatePropertyModalProps> = ({
         </div>
 
         <div className="modal-footer">
-          <button onClick={onClose} className="btn-secondary">
+          <button onClick={onClose} className="property-btn-secondary">
             Cancel
           </button>
-          <button onClick={handleSave} className="btn-primary">
+          <button onClick={handleSave} className="property-btn-primary">
             Save
           </button>
         </div>
