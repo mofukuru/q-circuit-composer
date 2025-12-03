@@ -18,7 +18,7 @@ export const apiService = {
       // Default to requesting all code formats if not specified
       const payload = {
         ...circuitData,
-        code_formats: circuitData.code_formats ?? ['pennylane','qiskit','qulacs','qasm'],
+        code_formats: circuitData.code_formats ?? ['pennylane','qiskit','qulacs','qasm','latex'],
       };
       const response = await api.post<CircuitResponse>('/execute', payload);
       return response.data;

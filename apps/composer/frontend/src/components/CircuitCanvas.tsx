@@ -287,7 +287,11 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
     if (gateToMove.gate === 'CNOT') {
         finalControlX = (part === 'control') ? newX : gateToMove.position.x;
         finalTargetX = (part === 'target') ? newX : (gateToMove.targetX ?? gateToMove.position.x);
-    } else { // CR gates
+    } else if (gateToMove.gate === 'CZ' || gateToMove.gate === 'SWAP') {
+        // CZ and SWAP: both ends are at same X, can be dragged independently
+        finalControlX = (part === 'control') ? newX : gateToMove.position.x;
+        finalTargetX = (part === 'target') ? newX : (gateToMove.targetX ?? gateToMove.position.x);
+    } else { // CR* gates and others
         finalControlX = newX;
         finalTargetX = newX;
     }
@@ -306,7 +310,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
         // try right
         let candCtrlX = finalControlX + i * step;
         let candTgtX = finalTargetX + (part === 'control' ? i * step : (part === 'target' ? i * step : 0));
-        if (gateToMove.gate === 'CNOT') {
+        if (gateToMove.gate === 'CNOT' || gateToMove.gate === 'CZ' || gateToMove.gate === 'SWAP') {
           if (part === 'control') candTgtX = prevTargetX + (candCtrlX - prevControlX);
           else if (part === 'target') candCtrlX = prevControlX + (candTgtX - prevTargetX);
         } else {
@@ -322,7 +326,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
         // try left
         candCtrlX = finalControlX - i * step;
         candTgtX = finalTargetX - i * step;
-        if (gateToMove.gate === 'CNOT') {
+        if (gateToMove.gate === 'CNOT' || gateToMove.gate === 'CZ' || gateToMove.gate === 'SWAP') {
           if (part === 'control') candTgtX = prevTargetX + (candCtrlX - prevControlX);
           else if (part === 'target') candCtrlX = prevControlX + (candTgtX - prevTargetX);
         } else {
@@ -468,16 +472,48 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
     if (!op || op.wires.length !== 3) return;
     const maxIdx = currentState.qubits - 1;
     let [c1, c2, t] = op.wires;
-    const others = which === 'c1' ? [c2, t] : which === 'c2' ? [c1, t] : [c1, c2];
+    
+    // Update the wire being moved
     let idx = Math.max(0, Math.min(maxIdx, newWireIdx));
-    // Keep distinct from others
-    const avoid = (i: number) => others.includes(i);
-    if (avoid(idx)) {
-      if (idx < maxIdx && !avoid(idx + 1)) idx = idx + 1;
-      else if (idx > 0 && !avoid(idx - 1)) idx = idx - 1;
-      else return; // give up if no space
+    
+    // If the new position conflicts with another part, swap them
+    if (which === 'c1') {
+      if (idx === c2) {
+        // Swap c1 and c2
+        c1 = idx;
+        c2 = op.wires[0];
+      } else if (idx === t) {
+        // Swap c1 and t
+        c1 = idx;
+        t = op.wires[0];
+      } else {
+        c1 = idx;
+      }
+    } else if (which === 'c2') {
+      if (idx === c1) {
+        // Swap c2 and c1
+        c2 = idx;
+        c1 = op.wires[1];
+      } else if (idx === t) {
+        // Swap c2 and t
+        c2 = idx;
+        t = op.wires[1];
+      } else {
+        c2 = idx;
+      }
+    } else { // which === 't'
+      if (idx === c1) {
+        // Swap t and c1
+        t = idx;
+        c1 = op.wires[2];
+      } else if (idx === c2) {
+        // Swap t and c2
+        t = idx;
+        c2 = op.wires[2];
+      } else {
+        t = idx;
+      }
     }
-    if (which === 'c1') c1 = idx; else if (which === 'c2') c2 = idx; else t = idx;
 
     const newWires = [c1, c2, t];
     // Ensure ordering is preserved by role, not sorted; just distinctness and bounds above
@@ -895,16 +931,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
               }}
               onDragEnd={(e) => {
                 const maxIdx = circuitStateRef.current.qubits - 1;
-                let idx = clamp(snapToQubitIndex(e.target.y()), 0, maxIdx);
-                const other = operation.wires[1];
-                if (idx === other) {
-                  const baseY = yForQubit(other);
-                  const dy = e.target.y() - baseY;
-                  if (dy >= 0 && other < maxIdx) idx = other + 1;
-                  else if (dy < 0 && other > 0) idx = other - 1;
-                  else if (other < maxIdx) idx = other + 1;
-                  else if (other > 0) idx = other - 1;
-                }
+                const idx = clamp(snapToQubitIndex(e.target.y()), 0, maxIdx);
                 moveMultiQubitPart(operation.id, 'control', controlX, idx);
                 e.target.to({ scaleX: 1, scaleY: 1, shadowBlur: 0, shadowOpacity: 0, duration: 0.08 });
               }}
@@ -946,16 +973,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
               }}
               onDragEnd={(e) => {
                 const maxIdx = circuitStateRef.current.qubits - 1;
-                let idx = clamp(snapToQubitIndex(e.target.y()), 0, maxIdx);
-                const other = operation.wires[0];
-                if (idx === other) {
-                  const baseY = yForQubit(other);
-                  const dy = e.target.y() - baseY;
-                  if (dy >= 0 && other < maxIdx) idx = other + 1;
-                  else if (dy < 0 && other > 0) idx = other - 1;
-                  else if (other < maxIdx) idx = other + 1;
-                  else if (other > 0) idx = other - 1;
-                }
+                const idx = clamp(snapToQubitIndex(e.target.y()), 0, maxIdx);
                 moveMultiQubitPart(operation.id, 'target', targetX, idx);
                 e.target.to({ scaleX: 1, scaleY: 1, shadowBlur: 0, shadowOpacity: 0, duration: 0.08 });
               }}
@@ -1051,17 +1069,9 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
               y={controlY}
               draggable
               dragBoundFunc={(pos) => {
+                // Allow moving to any qubit wire including the target's wire (for swapping)
                 const maxIdx = circuitStateRef.current.qubits - 1;
-                let idx = clamp(snapToQubitIndex(pos.y), 0, maxIdx);
-                const other = operation.wires[1];
-                if (idx === other) {
-                  const baseY = yForQubit(other);
-                  const dy = pos.y - baseY;
-                  if (dy >= 0 && other < maxIdx) idx = other + 1;
-                  else if (dy < 0 && other > 0) idx = other - 1;
-                  else if (other < maxIdx) idx = other + 1;
-                  else if (other > 0) idx = other - 1;
-                }
+                const idx = clamp(snapToQubitIndex(pos.y), 0, maxIdx);
                 return { x: controlX, y: yForQubit(idx) };
               }}
               onDragStart={(e) => {
@@ -1079,16 +1089,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
               }}
               onDragEnd={(e) => {
                 const maxIdx = circuitStateRef.current.qubits - 1;
-                let idx = clamp(snapToQubitIndex(e.target.y()), 0, maxIdx);
-                const other = operation.wires[1];
-                if (idx === other) {
-                  const baseY = yForQubit(other);
-                  const dy = e.target.y() - baseY;
-                  if (dy >= 0 && other < maxIdx) idx = other + 1;
-                  else if (dy < 0 && other > 0) idx = other - 1;
-                  else if (other < maxIdx) idx = other + 1;
-                  else if (other > 0) idx = other - 1;
-                }
+                const idx = clamp(snapToQubitIndex(e.target.y()), 0, maxIdx);
                 moveMultiQubitPart(operation.id, 'control', controlX, idx);
                 e.target.to({ scaleX: 1, scaleY: 1, shadowBlur: 0, shadowOpacity: 0, duration: 0.08 });
               }}
@@ -1103,17 +1104,9 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
               y={targetY}
               draggable
               dragBoundFunc={(pos) => {
+                // Allow moving to any qubit wire including the control's wire (for swapping)
                 const maxIdx = circuitStateRef.current.qubits - 1;
-                let idx = clamp(snapToQubitIndex(pos.y), 0, maxIdx);
-                const other = operation.wires[0];
-                if (idx === other) {
-                  const baseY = yForQubit(other);
-                  const dy = pos.y - baseY;
-                  if (dy >= 0 && other < maxIdx) idx = other + 1;
-                  else if (dy < 0 && other > 0) idx = other - 1;
-                  else if (other < maxIdx) idx = other + 1;
-                  else if (other > 0) idx = other - 1;
-                }
+                const idx = clamp(snapToQubitIndex(pos.y), 0, maxIdx);
                 return { x: targetX, y: yForQubit(idx) };
               }}
               onDragStart={(e) => {
@@ -1131,16 +1124,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
               }}
               onDragEnd={(e) => {
                 const maxIdx = circuitStateRef.current.qubits - 1;
-                let idx = clamp(snapToQubitIndex(e.target.y()), 0, maxIdx);
-                const other = operation.wires[0];
-                if (idx === other) {
-                  const baseY = yForQubit(other);
-                  const dy = e.target.y() - baseY;
-                  if (dy >= 0 && other < maxIdx) idx = other + 1;
-                  else if (dy < 0 && other > 0) idx = other - 1;
-                  else if (other < maxIdx) idx = other + 1;
-                  else if (other > 0) idx = other - 1;
-                }
+                const idx = clamp(snapToQubitIndex(e.target.y()), 0, maxIdx);
                 moveMultiQubitPart(operation.id, 'target', targetX, idx);
                 e.target.to({ scaleX: 1, scaleY: 1, shadowBlur: 0, shadowOpacity: 0, duration: 0.08 });
               }}
@@ -1410,18 +1394,9 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
               y={controlY}
               draggable
               dragBoundFunc={(pos) => {
-                // Do not allow overlap during drag: avoid snapping to same wire as target
+                // Allow moving to any qubit wire including the target's wire (for swapping)
                 const maxIdx = circuitStateRef.current.qubits - 1;
-                let idx = clamp(snapToQubitIndex(pos.y), 0, maxIdx);
-                const other = operation.wires[1];
-                if (idx === other) {
-                  const baseY = yForQubit(other);
-                  const dy = pos.y - baseY;
-                  if (dy >= 0 && other < maxIdx) idx = other + 1;
-                  else if (dy < 0 && other > 0) idx = other - 1;
-                  else if (other < maxIdx) idx = other + 1;
-                  else if (other > 0) idx = other - 1;
-                }
+                const idx = clamp(snapToQubitIndex(pos.y), 0, maxIdx);
                 return { x: controlX, y: yForQubit(idx) };
               }}
               onDragStart={(e) => {
@@ -1452,16 +1427,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
               }}
               onDragEnd={(e) => {
                 const maxIdx = circuitStateRef.current.qubits - 1;
-                let idx = clamp(snapToQubitIndex(e.target.y()), 0, maxIdx);
-                const other = operation.wires[1];
-                if (idx === other) {
-                  const baseY = yForQubit(other);
-                  const dy = e.target.y() - baseY;
-                  if (dy >= 0 && other < maxIdx) idx = other + 1;
-                  else if (dy < 0 && other > 0) idx = other - 1;
-                  else if (other < maxIdx) idx = other + 1;
-                  else if (other > 0) idx = other - 1;
-                }
+                const idx = clamp(snapToQubitIndex(e.target.y()), 0, maxIdx);
                 moveMultiQubitPart(operation.id, 'control', controlX, idx);
                 // Reset visual offsets
                 const stage2 = e.target.getStage();
@@ -1492,18 +1458,9 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
               y={targetY}
               draggable
               dragBoundFunc={(pos) => {
-                // Do not allow overlap during drag: avoid snapping to same wire as control
+                // Allow moving to any qubit wire including the control's wire (for swapping)
                 const maxIdx = circuitStateRef.current.qubits - 1;
-                let idx = clamp(snapToQubitIndex(pos.y), 0, maxIdx);
-                const other = operation.wires[0];
-                if (idx === other) {
-                  const baseY = yForQubit(other);
-                  const dy = pos.y - baseY;
-                  if (dy >= 0 && other < maxIdx) idx = other + 1;
-                  else if (dy < 0 && other > 0) idx = other - 1;
-                  else if (other < maxIdx) idx = other + 1;
-                  else if (other > 0) idx = other - 1;
-                }
+                const idx = clamp(snapToQubitIndex(pos.y), 0, maxIdx);
                 return { x: targetX, y: yForQubit(idx) };
               }}
               onDragStart={(e) => {
@@ -1531,16 +1488,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
               }}
               onDragEnd={(e) => {
                 const maxIdx = circuitStateRef.current.qubits - 1;
-                let idx = clamp(snapToQubitIndex(e.target.y()), 0, maxIdx);
-                const other = operation.wires[0];
-                if (idx === other) {
-                  const baseY = yForQubit(other);
-                  const dy = e.target.y() - baseY;
-                  if (dy >= 0 && other < maxIdx) idx = other + 1;
-                  else if (dy < 0 && other > 0) idx = other - 1;
-                  else if (other < maxIdx) idx = other + 1;
-                  else if (other > 0) idx = other - 1;
-                }
+                const idx = clamp(snapToQubitIndex(e.target.y()), 0, maxIdx);
                 moveMultiQubitPart(operation.id, 'target', targetX, idx);
                 const stage = e.target.getStage();
                 const tgtRect = stage?.findOne(`#cr-tgt-rect-${operation.id}`) as any;

@@ -36,3 +36,4 @@ class CircuitResponse(BaseModel):
     qiskit_code: Optional[str] = None
     qulacs_code: Optional[str] = None
     qasm_code: Optional[str] = None
+    latex_code: Optional[str] = None

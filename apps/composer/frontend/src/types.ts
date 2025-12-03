@@ -30,7 +30,7 @@ export interface CircuitRequest {
     params?: number[];
   }>;
   result_mode?: 'probs' | 'expval';
-  code_formats?: Array<'pennylane' | 'qiskit' | 'qulacs' | 'qasm'>;
+  code_formats?: Array<'pennylane' | 'qiskit' | 'qulacs' | 'qasm' | 'latex'>;
 }
 
 export interface CircuitResponse {
@@ -46,4 +46,5 @@ export interface CircuitResponse {
   qiskit_code?: string;
   qulacs_code?: string;
   qasm_code?: string;
+  latex_code?: string;
 }

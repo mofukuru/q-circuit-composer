@@ -58,7 +58,7 @@ def create_circuit_function(
                 elif gate == "pauliz" or gate == "z":
                     qml.PauliZ(wires=wires[0])
                 elif gate == "swap":
-                    # wires[0] = control qubit, wires[1] = target qubit
+                    # SWAP gate - order can be either direction
                     if len(wires) != 2:
                         raise ValueError(
                             "SWAP gate requires exactly 2 wires, "
@@ -66,6 +66,7 @@ def create_circuit_function(
                         )
                     qml.SWAP(wires=[wires[0], wires[1]])
                 elif gate == "cnot" or gate == "cx":
+                    # CNOT gate - wires[0] = control, wires[1] = target (order matters)
                     if len(wires) != 2:
                         raise ValueError(
                             "CNOT gate requires exactly 2 wires, "
@@ -73,6 +74,7 @@ def create_circuit_function(
                         )
                     qml.CNOT(wires=[wires[0], wires[1]])
                 elif gate == "cz":
+                    # CZ gate - wires[0] = control, wires[1] = target (order matters)
                     if len(wires) != 2:
                         raise ValueError(
                             "CZ gate requires exactly 2 wires, "
@@ -80,6 +82,7 @@ def create_circuit_function(
                         )
                     qml.CZ(wires=[wires[0], wires[1]])
                 elif gate == "cy":
+                    # CY gate - wires[0] = control, wires[1] = target (order matters)
                     if len(wires) != 2:
                         raise ValueError(
                             "CY gate requires exactly 2 wires, "
@@ -142,6 +145,7 @@ def create_circuit_function(
                 elif gate == "t":
                     qml.T(wires=wires[0])
                 elif gate == "toffoli" or gate == "ccx":
+                    # Toffoli gate - wires[0] = control1, wires[1] = control2, wires[2] = target
                     if len(wires) != 3:
                         raise ValueError(
                             "Toffoli gate requires exactly 3 wires, "
@@ -568,6 +572,246 @@ def generate_qasm_code(
     return "\n".join(lines)
 
 
+def generate_latex_code(
+    circuit_operations: list,
+    num_qubits: int,
+    num_shots: int,
+    result_mode: str = "probs",
+):
+    """Generate standalone LaTeX code using quantikz package for the circuit."""
+
+    def format_angle(radians):
+        """Format angle in radians to a nice LaTeX representation."""
+        import math
+
+        # Check for common multiples of pi
+        pi_ratio = radians / math.pi
+
+        # Check if it's close to a simple fraction of pi
+        simple_fractions = [
+            (0, "0"),
+            (0.25, "\\pi/4"),
+            (0.5, "\\pi/2"),
+            (0.75, "3\\pi/4"),
+            (1, "\\pi"),
+            (-0.25, "-\\pi/4"),
+            (-0.5, "-\\pi/2"),
+            (-0.75, "-3\\pi/4"),
+            (-1, "-\\pi"),
+            (2, "2\\pi"),
+            (-2, "-2\\pi"),
+        ]
+
+        for fraction, latex_str in simple_fractions:
+            if abs(pi_ratio - fraction) < 0.01:  # tolerance
+                return latex_str
+
+        # Check if it's close to n*pi where n is an integer
+        if abs(pi_ratio - round(pi_ratio)) < 0.01:
+            n = int(round(pi_ratio))
+            if n == 0:
+                return "0"
+            elif n == 1:
+                return "\\pi"
+            elif n == -1:
+                return "-\\pi"
+            else:
+                return f"{n}\\pi"
+
+        # Otherwise, format as decimal
+        return f"{radians:.3f}".rstrip("0").rstrip(".")
+
+    lines = []
+    lines.append("\\documentclass[border=2pt]{standalone}")
+    lines.append("\\usepackage{quantikz}")
+    lines.append("")
+    lines.append("\\begin{document}")
+    lines.append("\\begin{quantikz}")
+
+    # Track operations by column
+    # Build gate matrix: [qubit][column] = gate_instruction
+    max_cols = len(circuit_operations) + 2  # Initial + ops + measurements
+    grid = [[None for _ in range(max_cols)] for _ in range(num_qubits)]
+
+    # Track which columns are used for multi-qubit gates
+    col_idx = 0
+
+    measurement_basis = {w: "Z" for w in range(num_qubits)}
+    explicit_measured = set()
+
+    for op in circuit_operations:
+        g = op.gate.lower()
+        w = op.wires
+        p = op.params or []
+
+        # Single-qubit gates
+        if g in ("hadamard", "h"):
+            grid[w[0]][col_idx] = "\\gate{H}"
+        elif g in ("paulix", "x"):
+            grid[w[0]][col_idx] = "\\gate{X}"
+        elif g in ("pauliy", "y"):
+            grid[w[0]][col_idx] = "\\gate{Y}"
+        elif g in ("pauliz", "z"):
+            grid[w[0]][col_idx] = "\\gate{Z}"
+        elif g == "rx":
+            angle_str = format_angle(p[0])
+            grid[w[0]][col_idx] = f"\\gate{{R_x({angle_str})}}"
+        elif g == "ry":
+            angle_str = format_angle(p[0])
+            grid[w[0]][col_idx] = f"\\gate{{R_y({angle_str})}}"
+        elif g == "rz":
+            angle_str = format_angle(p[0])
+            grid[w[0]][col_idx] = f"\\gate{{R_z({angle_str})}}"
+        elif g in ("phase", "s"):
+            grid[w[0]][col_idx] = "\\gate{S}"
+        elif g == "t":
+            grid[w[0]][col_idx] = "\\gate{T}"
+
+        # Two-qubit gates
+        elif g == "swap":
+            min_w, max_w = min(w[0], w[1]), max(w[0], w[1])
+            grid[min_w][col_idx] = f"\\swap{{{max_w - min_w}}}"
+            grid[max_w][col_idx] = "\\targX{}"
+            # Fill wires in between
+            for between in range(min_w + 1, max_w):
+                if grid[between][col_idx] is None:
+                    grid[between][col_idx] = "\\qwx"
+        elif g in ("cnot", "cx"):
+            ctrl, targ = w[0], w[1]
+            grid[ctrl][col_idx] = f"\\ctrl{{{targ - ctrl}}}"
+            grid[targ][col_idx] = "\\targ{}"
+            # Fill wires in between
+            min_w, max_w = (ctrl, targ) if ctrl < targ else (targ, ctrl)
+            for between in range(min_w + 1, max_w):
+                if grid[between][col_idx] is None:
+                    grid[between][col_idx] = "\\qwx"
+        elif g == "cz":
+            ctrl, targ = w[0], w[1]
+            grid[ctrl][col_idx] = f"\\ctrl{{{targ - ctrl}}}"
+            grid[targ][col_idx] = "\\gate{Z}"
+            # Fill wires in between
+            min_w, max_w = (ctrl, targ) if ctrl < targ else (targ, ctrl)
+            for between in range(min_w + 1, max_w):
+                if grid[between][col_idx] is None:
+                    grid[between][col_idx] = "\\qwx"
+        elif g == "cy":
+            ctrl, targ = w[0], w[1]
+            grid[ctrl][col_idx] = f"\\ctrl{{{targ - ctrl}}}"
+            grid[targ][col_idx] = "\\gate{Y}"
+            # Fill wires in between
+            min_w, max_w = (ctrl, targ) if ctrl < targ else (targ, ctrl)
+            for between in range(min_w + 1, max_w):
+                if grid[between][col_idx] is None:
+                    grid[between][col_idx] = "\\qwx"
+        elif g == "crx":
+            angle_str = format_angle(p[0])
+            ctrl, targ = w[0], w[1]
+            grid[ctrl][col_idx] = f"\\ctrl{{{targ - ctrl}}}"
+            grid[targ][col_idx] = f"\\gate{{R_x({angle_str})}}"
+            # Fill wires in between
+            min_w, max_w = (ctrl, targ) if ctrl < targ else (targ, ctrl)
+            for between in range(min_w + 1, max_w):
+                if grid[between][col_idx] is None:
+                    grid[between][col_idx] = "\\qwx"
+        elif g == "cry":
+            angle_str = format_angle(p[0])
+            ctrl, targ = w[0], w[1]
+            grid[ctrl][col_idx] = f"\\ctrl{{{targ - ctrl}}}"
+            grid[targ][col_idx] = f"\\gate{{R_y({angle_str})}}"
+            # Fill wires in between
+            min_w, max_w = (ctrl, targ) if ctrl < targ else (targ, ctrl)
+            for between in range(min_w + 1, max_w):
+                if grid[between][col_idx] is None:
+                    grid[between][col_idx] = "\\qwx"
+        elif g == "crz":
+            angle_str = format_angle(p[0])
+            ctrl, targ = w[0], w[1]
+            grid[ctrl][col_idx] = f"\\ctrl{{{targ - ctrl}}}"
+            grid[targ][col_idx] = f"\\gate{{R_z({angle_str})}}"
+            # Fill wires in between
+            min_w, max_w = (ctrl, targ) if ctrl < targ else (targ, ctrl)
+            for between in range(min_w + 1, max_w):
+                if grid[between][col_idx] is None:
+                    grid[between][col_idx] = "\\qwx"
+
+        # Three-qubit gates
+        elif g in ("toffoli", "ccx"):
+            ctrl1, ctrl2, targ = w[0], w[1], w[2]
+            grid[ctrl1][col_idx] = f"\\ctrl{{{ctrl2 - ctrl1}}}"
+            grid[ctrl2][col_idx] = f"\\ctrl{{{targ - ctrl2}}}"
+            grid[targ][col_idx] = "\\targ{}"
+            # Fill wires in between ctrl1 and ctrl2
+            min_w1, max_w1 = (
+                (ctrl1, ctrl2) if ctrl1 < ctrl2 else (ctrl2, ctrl1)
+            )
+            for between in range(min_w1 + 1, max_w1):
+                if grid[between][col_idx] is None:
+                    grid[between][col_idx] = "\\qwx"
+            # Fill wires in between ctrl2 and targ
+            min_w2, max_w2 = (ctrl2, targ) if ctrl2 < targ else (targ, ctrl2)
+            for between in range(min_w2 + 1, max_w2):
+                if grid[between][col_idx] is None:
+                    grid[between][col_idx] = "\\qwx"
+
+        # Measurement gates
+        elif g in ("measurez", "mz", "measure_z"):
+            measurement_basis[w[0]] = "Z"
+            explicit_measured.add(w[0])
+        elif g in ("measurex", "mx", "measure_x"):
+            measurement_basis[w[0]] = "X"
+            explicit_measured.add(w[0])
+        elif g in ("measurey", "my", "measure_y"):
+            measurement_basis[w[0]] = "Y"
+            explicit_measured.add(w[0])
+
+        col_idx += 1
+
+    # Add basis rotations for measurement
+    basis_col = col_idx
+    has_basis_rotation = False
+    for w, b in measurement_basis.items():
+        if b == "X":
+            grid[w][basis_col] = "\\gate{H}"
+            has_basis_rotation = True
+        elif b == "Y":
+            grid[w][basis_col] = "\\gate{S^\\dagger}"
+            has_basis_rotation = True
+
+    if has_basis_rotation:
+        col_idx += 1
+        # Add H for Y basis after S†
+        for w, b in measurement_basis.items():
+            if b == "Y" and grid[w][col_idx] is None:
+                grid[w][col_idx] = "\\gate{H}"
+        col_idx += 1
+
+    # Add measurement symbols
+    measured_wires = sorted(explicit_measured) or list(range(num_qubits))
+    meas_col = col_idx
+    for w in measured_wires:
+        grid[w][meas_col] = "\\meter{}"
+
+    # Generate quantikz code
+    for q in range(num_qubits):
+        row_parts = [f"\\lstick{{$|q_{{{q}}}\\rangle$}}"]
+
+        for c in range(max_cols):
+            if grid[q][c] is not None:
+                row_parts.append(grid[q][c])
+            else:
+                row_parts.append("\\qw")
+
+        line = " & ".join(row_parts)
+        if q < num_qubits - 1:
+            line += " \\\\"
+        lines.append("  " + line)
+
+    lines.append("\\end{quantikz}")
+    lines.append("\\end{document}")
+
+    return "\n".join(lines)
+
+
 @app.get("/")
 async def root():
     """Root endpoint with API information."""
@@ -628,6 +872,7 @@ async def execute_circuit(request: CircuitRequest):
         qiskit_code = None
         qulacs_code = None
         qasm_code = None
+        latex_code = None
 
         if "pennylane" in requested:
             pennylane_code = generate_pennylane_code(
@@ -652,6 +897,13 @@ async def execute_circuit(request: CircuitRequest):
             )
         if "qasm" in requested:
             qasm_code = generate_qasm_code(
+                request.circuit,
+                request.qubits,
+                request.shots,
+                request.result_mode,
+            )
+        if "latex" in requested:
+            latex_code = generate_latex_code(
                 request.circuit,
                 request.qubits,
                 request.shots,
@@ -702,6 +954,7 @@ async def execute_circuit(request: CircuitRequest):
                 qiskit_code=qiskit_code,
                 qulacs_code=qulacs_code,
                 qasm_code=qasm_code,
+                latex_code=latex_code,
             )
         else:
             # probs mode
@@ -726,6 +979,7 @@ async def execute_circuit(request: CircuitRequest):
                 qiskit_code=qiskit_code,
                 qulacs_code=qulacs_code,
                 qasm_code=qasm_code,
+                latex_code=latex_code,
             )
 
     except ValueError as ve:
@@ -821,21 +1075,21 @@ async def get_available_gates():
             "qubits": 2,
         },
         {
-            "name": "Rotation-X",
+            "name": "RX",
             "symbol": "RX",
             "description": "Rotation around X-axis",
             "params": 1,
             "qubits": 1,
         },
         {
-            "name": "Rotation-Y",
+            "name": "RY",
             "symbol": "RY",
             "description": "Rotation around Y-axis",
             "params": 1,
             "qubits": 1,
         },
         {
-            "name": "Rotation-Z",
+            "name": "RZ",
             "symbol": "RZ",
             "description": "Rotation around Z-axis",
             "params": 1,

@@ -11,7 +11,7 @@ import {
   Legend,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
-import { BarChart3, Zap, CheckCircle, Code, Copy, Check, Cpu, Layers, Box, FileCode } from 'lucide-react';
+import { BarChart3, Zap, CheckCircle, Code, Copy, Check, Cpu, Layers, Box, FileCode, FileText } from 'lucide-react';
 import './ResultsPanel.css';
 
 ChartJS.register(
@@ -42,7 +42,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   const  { t } = useTranslation();
   const [viewMode, setViewMode] = useState<'results' | 'code'>('results');
   const [copied, setCopied] = useState(false);
-  const [codeLang, setCodeLang] = useState<'pennylane' | 'qiskit' | 'qulacs' | 'qasm'>('pennylane');
+  const [codeLang, setCodeLang] = useState<'pennylane' | 'qiskit' | 'qulacs' | 'qasm' | 'latex'>('pennylane');
 
   const handleCopyCode = () => {
     let codeText = '';
@@ -54,6 +54,8 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       codeText = results?.qulacs_code || '';
     } else if (codeLang === 'qasm') {
       codeText = results?.qasm_code || '';
+    } else if (codeLang === 'latex') {
+      codeText = results?.latex_code || '';
     }
     
     if (codeText) {
@@ -378,6 +380,14 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
             >
               <FileCode size={16} />
             </button>
+            <button 
+              className={`lang-btn ${codeLang==='latex'?'active':''}`} 
+              onClick={()=>setCodeLang('latex')} 
+              title="LaTeX"
+              aria-label="LaTeX"
+            >
+              <FileText size={16} />
+            </button>
           </div>
           <div className="code-header">
             <span>
@@ -385,6 +395,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
               {codeLang === 'qiskit' && 'Qiskit Code'}
               {codeLang === 'qulacs' && 'Qulacs Code'}
               {codeLang === 'qasm' && 'OpenQASM Code'}
+              {codeLang === 'latex' && 'LaTeX Code'}
             </span>
             <button 
               className="copy-btn"
@@ -400,7 +411,8 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
               codeLang==='pennylane' ? (results.pennylane_code || '') :
               codeLang==='qiskit' ? (results.qiskit_code || '') :
               codeLang==='qulacs' ? (results.qulacs_code || '') :
-              (results.qasm_code || '')
+              codeLang==='qasm' ? (results.qasm_code || '') :
+              (results.latex_code || '')
             }</code>
           </pre>
         </div>
