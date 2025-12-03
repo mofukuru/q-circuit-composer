@@ -89,7 +89,7 @@ def create_circuit_function(
                             + f"got {len(wires)}"
                         )
                     qml.CY(wires=[wires[0], wires[1]])
-                elif gate == "crx":
+                elif gate in ("crx", "controlled-rx"):
                     if not params or len(params) == 0:
                         raise ValueError(
                             "CRX gate requires rotation angle parameter"
@@ -100,7 +100,7 @@ def create_circuit_function(
                             f"{len(wires)}"
                         )
                     qml.CRX(params[0], wires=wires)
-                elif gate == "cry":
+                elif gate in ("cry", "controlled-ry"):
                     if not params or len(params) == 0:
                         raise ValueError(
                             "CRY gate requires rotation angle parameter"
@@ -111,7 +111,7 @@ def create_circuit_function(
                             f"{len(wires)}"
                         )
                     qml.CRY(params[0], wires=wires)
-                elif gate == "crz":
+                elif gate in ("crz", "controlled-rz"):
                     if not params or len(params) == 0:
                         raise ValueError(
                             "CRZ gate requires rotation angle parameter"
@@ -255,13 +255,13 @@ def generate_pennylane_code(
         elif gate == "cy":
             lines.append(f"    qml.CY(wires={wires})")
             has_ops = True
-        elif gate == "crx":
+        elif gate in ("crx", "controlled-rx"):
             lines.append(f"    qml.CRX({params[0]}, wires={wires})")
             has_ops = True
-        elif gate == "cry":
+        elif gate in ("cry", "controlled-ry"):
             lines.append(f"    qml.CRY({params[0]}, wires={wires})")
             has_ops = True
-        elif gate == "crz":
+        elif gate in ("crz", "controlled-rz"):
             lines.append(f"    qml.CRZ({params[0]}, wires={wires})")
             has_ops = True
         elif gate == "rx":
@@ -370,11 +370,11 @@ def generate_qiskit_code(
             lines.append(f"qc.cz({w[0]}, {w[1]})")
         elif gate == "cy":
             lines.append(f"qc.cy({w[0]}, {w[1]})")
-        elif gate == "crx":
+        elif gate in ("crx", "controlled-rx"):
             lines.append(f"qc.crx({p[0]}, {w[0]}, {w[1]})")
-        elif gate == "cry":
+        elif gate in ("cry", "controlled-ry"):
             lines.append(f"qc.cry({p[0]}, {w[0]}, {w[1]})")
-        elif gate == "crz":
+        elif gate in ("crz", "controlled-rz"):
             lines.append(f"qc.crz({p[0]}, {w[0]}, {w[1]})")
         elif gate == "rx":
             lines.append(f"qc.rx({p[0]}, {w[0]})")
@@ -455,6 +455,31 @@ def generate_qulacs_code(
             lines.append(f"circuit.add_gate(CNOT({w[0]}, {w[1]}))")
         elif g == "cz":
             lines.append(f"circuit.add_gate(CZ({w[0]}, {w[1]}))")
+        elif g == "cy":
+            lines.append(
+                f"# CY gate (Qulacs may not have native CY, use decomposition)"
+            )
+            lines.append(f"circuit.add_gate(Sdag({w[1]}))")
+            lines.append(f"circuit.add_gate(CNOT({w[0]}, {w[1]}))")
+            lines.append(f"circuit.add_gate(S({w[1]}))")
+        elif g in ("crx", "controlled-rx"):
+            lines.append(f"# CRX gate (use decomposition)")
+            lines.append(f"circuit.add_gate(RX({w[1]}, {p[0]}/2))")
+            lines.append(f"circuit.add_gate(CNOT({w[0]}, {w[1]}))")
+            lines.append(f"circuit.add_gate(RX({w[1]}, -{p[0]}/2))")
+            lines.append(f"circuit.add_gate(CNOT({w[0]}, {w[1]}))")
+        elif g in ("cry", "controlled-ry"):
+            lines.append(f"# CRY gate (use decomposition)")
+            lines.append(f"circuit.add_gate(RY({w[1]}, {p[0]}/2))")
+            lines.append(f"circuit.add_gate(CNOT({w[0]}, {w[1]}))")
+            lines.append(f"circuit.add_gate(RY({w[1]}, -{p[0]}/2))")
+            lines.append(f"circuit.add_gate(CNOT({w[0]}, {w[1]}))")
+        elif g in ("crz", "controlled-rz"):
+            lines.append(f"# CRZ gate (use decomposition)")
+            lines.append(f"circuit.add_gate(RZ({w[1]}, {p[0]}/2))")
+            lines.append(f"circuit.add_gate(CNOT({w[0]}, {w[1]}))")
+            lines.append(f"circuit.add_gate(RZ({w[1]}, -{p[0]}/2))")
+            lines.append(f"circuit.add_gate(CNOT({w[0]}, {w[1]}))")
         elif g == "rx":
             lines.append(f"circuit.add_gate(RX({w[0]}, {p[0]}))")
         elif g == "ry":
@@ -530,11 +555,11 @@ def generate_qasm_code(
             lines.append(f"cz q[{w[0]}],q[{w[1]}];")
         elif g == "cy":
             lines.append(f"cy q[{w[0]}],q[{w[1]}];")
-        elif g == "crx":
+        elif g in ("crx", "controlled-rx"):
             lines.append(f"crx({p[0]}) q[{w[0]}],q[{w[1]}];")
-        elif g == "cry":
+        elif g in ("cry", "controlled-ry"):
             lines.append(f"cry({p[0]}) q[{w[0]}],q[{w[1]}];")
-        elif g == "crz":
+        elif g in ("crz", "controlled-rz"):
             lines.append(f"crz({p[0]}) q[{w[0]}],q[{w[1]}];")
         elif g == "rx":
             lines.append(f"rx({p[0]}) q[{w[0]}];")
@@ -590,15 +615,29 @@ def generate_latex_code(
         # Check if it's close to a simple fraction of pi
         simple_fractions = [
             (0, "0"),
+            (0.125, "\\pi/8"),
             (0.25, "\\pi/4"),
+            (0.375, "3\\pi/8"),
             (0.5, "\\pi/2"),
+            (0.625, "5\\pi/8"),
             (0.75, "3\\pi/4"),
+            (0.875, "7\\pi/8"),
             (1, "\\pi"),
-            (-0.25, "-\\pi/4"),
-            (-0.5, "-\\pi/2"),
-            (-0.75, "-3\\pi/4"),
-            (-1, "-\\pi"),
+            (1.25, "5\\pi/4"),
+            (1.5, "3\\pi/2"),
+            (1.75, "7\\pi/4"),
             (2, "2\\pi"),
+            (-0.125, "-\\pi/8"),
+            (-0.25, "-\\pi/4"),
+            (-0.375, "-3\\pi/8"),
+            (-0.5, "-\\pi/2"),
+            (-0.625, "-5\\pi/8"),
+            (-0.75, "-3\\pi/4"),
+            (-0.875, "-7\\pi/8"),
+            (-1, "-\\pi"),
+            (-1.25, "-5\\pi/4"),
+            (-1.5, "-3\\pi/2"),
+            (-1.75, "-7\\pi/4"),
             (-2, "-2\\pi"),
         ]
 
@@ -703,7 +742,7 @@ def generate_latex_code(
             for between in range(min_w + 1, max_w):
                 if grid[between][col_idx] is None:
                     grid[between][col_idx] = "\\qwx"
-        elif g == "crx":
+        elif g in ("crx", "controlled-rx"):
             angle_str = format_angle(p[0])
             ctrl, targ = w[0], w[1]
             grid[ctrl][col_idx] = f"\\ctrl{{{targ - ctrl}}}"
@@ -713,7 +752,7 @@ def generate_latex_code(
             for between in range(min_w + 1, max_w):
                 if grid[between][col_idx] is None:
                     grid[between][col_idx] = "\\qwx"
-        elif g == "cry":
+        elif g in ("cry", "controlled-ry"):
             angle_str = format_angle(p[0])
             ctrl, targ = w[0], w[1]
             grid[ctrl][col_idx] = f"\\ctrl{{{targ - ctrl}}}"
@@ -723,7 +762,7 @@ def generate_latex_code(
             for between in range(min_w + 1, max_w):
                 if grid[between][col_idx] is None:
                     grid[between][col_idx] = "\\qwx"
-        elif g == "crz":
+        elif g in ("crz", "controlled-rz"):
             angle_str = format_angle(p[0])
             ctrl, targ = w[0], w[1]
             grid[ctrl][col_idx] = f"\\ctrl{{{targ - ctrl}}}"

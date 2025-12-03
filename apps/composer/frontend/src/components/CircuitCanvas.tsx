@@ -1620,15 +1620,33 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
     const pi = Math.PI;
     const tolerance = 0.001;
 
-    // Common angle values
+    // Common angle values (more comprehensive)
     const commonAngles = [
       { value: 0, text: '0' },
       { value: pi / 8, text: 'π/8' },
       { value: pi / 4, text: 'π/4' },
+      { value: 3 * pi / 8, text: '3π/8' },
       { value: pi / 2, text: 'π/2' },
+      { value: 5 * pi / 8, text: '5π/8' },
+      { value: 3 * pi / 4, text: '3π/4' },
+      { value: 7 * pi / 8, text: '7π/8' },
       { value: pi, text: 'π' },
+      { value: 5 * pi / 4, text: '5π/4' },
       { value: 3 * pi / 2, text: '3π/2' },
+      { value: 7 * pi / 4, text: '7π/4' },
       { value: 2 * pi, text: '2π' },
+      { value: -pi / 8, text: '-π/8' },
+      { value: -pi / 4, text: '-π/4' },
+      { value: -3 * pi / 8, text: '-3π/8' },
+      { value: -pi / 2, text: '-π/2' },
+      { value: -5 * pi / 8, text: '-5π/8' },
+      { value: -3 * pi / 4, text: '-3π/4' },
+      { value: -7 * pi / 8, text: '-7π/8' },
+      { value: -pi, text: '-π' },
+      { value: -5 * pi / 4, text: '-5π/4' },
+      { value: -3 * pi / 2, text: '-3π/2' },
+      { value: -7 * pi / 4, text: '-7π/4' },
+      { value: -2 * pi, text: '-2π' },
     ];
 
     for (const common of commonAngles) {
