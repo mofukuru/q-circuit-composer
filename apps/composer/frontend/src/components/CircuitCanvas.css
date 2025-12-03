@@ -42,6 +42,11 @@
   background-color: var(--color-bg-tertiary);
 }
 
+body.dark-theme .canvas-container.drag-over {
+  background-color: rgba(127, 90, 240, 0.05);
+  box-shadow: inset 0 0 0 2px rgba(127, 90, 240, 0.3);
+}
+
 .empty-canvas-message {
   position: absolute;
   top: 50%;

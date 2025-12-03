@@ -15,7 +15,12 @@ const api = axios.create({
 export const apiService = {
   async executeCircuit(circuitData: CircuitRequest): Promise<CircuitResponse> {
     try {
-      const response = await api.post<CircuitResponse>('/execute', circuitData);
+      // Default to requesting all code formats if not specified
+      const payload = {
+        ...circuitData,
+        code_formats: circuitData.code_formats ?? ['pennylane','qiskit','qulacs','qasm','latex'],
+      };
+      const response = await api.post<CircuitResponse>('/execute', payload);
       return response.data;
     } catch (error: any) {
       console.error('Error executing circuit:', error);

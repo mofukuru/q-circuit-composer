@@ -69,6 +69,11 @@
   background: var(--color-bg-secondary);
 }
 
+body.dark-theme .gate-item:hover {
+  background: var(--color-bg-primary);
+  box-shadow: 0 6px 12px -2px rgba(127, 90, 240, 0.3), var(--shadow-md);
+}
+
 .gate-item:active {
   cursor: grabbing;
   transform: scale(0.95);

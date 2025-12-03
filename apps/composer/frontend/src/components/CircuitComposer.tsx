@@ -50,10 +50,15 @@ const CircuitComposer: React.FC = () => {
     setError(null);
 
     try {
+      // Sort operations by X position to ensure correct execution order
+      const sortedOperations = [...circuitState.operations].sort((a, b) => 
+        a.position.x - b.position.x
+      );
+
       const circuitRequest = {
         qubits: circuitState.qubits,
         shots: circuitState.shots,
-        circuit: circuitState.operations.map(op => ({
+        circuit: sortedOperations.map(op => ({
           gate: op.gate,
           wires: op.wires,
           params: op.params,

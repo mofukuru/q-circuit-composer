@@ -1,6 +1,6 @@
-fastapi
-uvicorn[standard]
-pydantic
-pennylane
-pennylane-lightning
-python-multipart
+fastapi>=0.104.0,<1.0.0
+uvicorn[standard]>=0.24.0,<1.0.0
+pydantic>=2.0.0,<3.0.0
+pennylane>=0.32.0,<1.0.0
+pennylane-lightning>=0.32.0,<1.0.0
+python-multipart>=0.0.6,<1.0.0

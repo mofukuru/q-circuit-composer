@@ -43,46 +43,52 @@
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
+body.dark-theme {
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 8px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 20px -3px rgba(0, 0, 0, 0.5), 0 4px 8px -2px rgba(0, 0, 0, 0.4);
+}
+
 html, body, #root {
   height: 100%;
 }
 
 body.dark-theme {
   /* Dark Theme */
-  --color-bg-primary: #121212;
-  --color-bg-secondary: #1e1e1e;
-  --color-bg-tertiary: #2c2c2c;
+  --color-bg-primary: #0f1419;
+  --color-bg-secondary: #1a1f2e;
+  --color-bg-tertiary: #252d3d;
   --color-bg-interactive: #7f5af0;
   --color-bg-interactive-hover: #9d7fee;
 
-  --color-text-primary: #f7fafc;
-  --color-text-secondary: #e2e8f0;
-  --color-text-muted: #a0aec0;
+  --color-text-primary: #e6edf3;
+  --color-text-secondary: #c9d1d9;
+  --color-text-muted: #8b949e;
 
-  --color-border-primary: #4a5568;
-  --color-border-secondary: #2d3748;
+  --color-border-primary: #3d4553;
+  --color-border-secondary: #2a3040;
 
   --color-accent-primary: #7f5af0;
   --color-accent-secondary: #9d7fee;
   
-  --color-success: #38a169;
-  --color-error: #e53e3e;
+  --color-success: #3fb950;
+  --color-error: #f85149;
   --color-warning: #f6ad55;
 
-  --color-grid-line: #4a5568; /* ダークテーマ用の点線色 */
+  --color-grid-line: #555f70; /* ダークテーマ用の点線色 - より明るく */
 
   /* Quantum Gate Colors - Dark Theme */
-  --color-gate-bg: #2d3748;
-  --color-gate-border: #e2e8f0;
-  --color-gate-text: #f7fafc;
-  --color-gate-param: #a0aec0;
+  --color-gate-bg: #252d3d;
+  --color-gate-border: #c9d1d9;
+  --color-gate-text: #e6edf3;
+  --color-gate-param: #8b949e;
   
   /* --color-cnot-line: #fc8181; */
-  --color-cnot-line: #f7fafc;
-  --color-cnot-control: #f7fafc;
-  --color-cnot-target-bg: #2d3748;
-  --color-cnot-target-border: #e2e8f0;
-  --color-cnot-target-cross: #f7fafc;
+  --color-cnot-line: #c9d1d9;
+  --color-cnot-control: #c9d1d9;
+  --color-cnot-target-bg: #252d3d;
+  --color-cnot-target-border: #c9d1d9;
+  --color-cnot-target-cross: #e6edf3;
 }
 
 body {

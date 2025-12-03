@@ -30,6 +30,7 @@ export interface CircuitRequest {
     params?: number[];
   }>;
   result_mode?: 'probs' | 'expval';
+  code_formats?: Array<'pennylane' | 'qiskit' | 'qulacs' | 'qasm' | 'latex'>;
 }
 
 export interface CircuitResponse {
@@ -41,4 +42,9 @@ export interface CircuitResponse {
   measured_wires?: number[];
   measured_bases?: { [wire: number]: 'Z' | 'X' | 'Y' };
   expectations?: { [wire: number]: number };
+  pennylane_code?: string;
+  qiskit_code?: string;
+  qulacs_code?: string;
+  qasm_code?: string;
+  latex_code?: string;
 }
