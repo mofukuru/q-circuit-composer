@@ -25,38 +25,83 @@ app.add_middleware(
 
 
 def create_circuit_function(
-    circuit_operations: list, num_qubits: int, result_mode: str = "probs"
+    circuit_operations: list,
+    num_qubits: int,
+    num_classical_bits: int = 0,
+    result_mode: str = "probs",
 ):
     """Dynamically create a quantum circuit function from operations.
 
-    Measurement gates (MeasureZ/MeasureX/MeasureY) are treated as
-    readout-basis selection markers. We record the chosen basis per wire
-    and, at the end of the circuit, rotate into that basis before
-    returning qml.probs over all wires. If multiple measurement gates are
-    placed on the same wire, the last one wins. Wires without an explicit
-    measurement gate are measured in Z basis by default.
+    Supports dynamic quantum circuits with:
+    - Mid-circuit measurements: Store measurement results in classical
+      bits
+    - Conditional gates: Apply gates based on classical bit values
+    - Terminal measurements: Traditional end-of-circuit measurements
+
+    Measurement gates (MeasureZ/MeasureX/MeasureY) can be:
+    1. Mid-circuit (with classical_store): Perform measurement and
+       store result
+    2. Terminal (without classical_store): Mark readout basis for
+       final measurement
     """
 
-    # default all wires to Z basis for rotation purposes
-    # and record explicitly measured wires separately
+    # Track measurement basis for terminal measurements
     measurement_basis = {w: "Z" for w in range(num_qubits)}
     explicit_measured = set()
 
+    # Track which wires have been mid-circuit measured
+    mid_circuit_measured = set()
+
     def circuit():
+        # Dictionary to store classical bit values (for conditional operations)
+        classical_bits = {}
+
         for operation in circuit_operations:
             gate = operation.gate.lower()
             wires = operation.wires
             params = operation.params or []
 
+            # Check if this operation is conditional
+            condition = getattr(operation, "condition", None)
+            if condition:
+                # Skip this operation if condition is not met
+                classical_bit = condition.classical_bit
+                expected_value = condition.value
+                if classical_bit not in classical_bits:
+                    logger.warning(
+                        f"Classical bit {classical_bit} not yet "
+                        "measured, skipping conditional gate"
+                    )
+                    continue
+                if classical_bits[classical_bit] != expected_value:
+                    continue  # Condition not met, skip this gate
+
+            # Check if this is a mid-circuit measurement
+            classical_store = getattr(operation, "classical_store", None)
+            is_mid_circuit_meas = classical_store is not None
+
             try:
+                # Helper to wrap gates with conditional execution
+                def apply_gate_op(gate_func):
+                    """Apply gate with conditional execution if needed."""
+                    if condition:
+                        # Use PennyLane's conditional execution
+                        qml.cond(
+                            classical_bits[condition.classical_bit]
+                            == condition.value,
+                            gate_func,
+                        )()
+                    else:
+                        gate_func()
+
                 if gate == "hadamard" or gate == "h":
-                    qml.Hadamard(wires=wires[0])
+                    apply_gate_op(lambda: qml.Hadamard(wires=wires[0]))
                 elif gate == "paulix" or gate == "x":
-                    qml.PauliX(wires=wires[0])
+                    apply_gate_op(lambda: qml.PauliX(wires=wires[0]))
                 elif gate == "pauliy" or gate == "y":
-                    qml.PauliY(wires=wires[0])
+                    apply_gate_op(lambda: qml.PauliY(wires=wires[0]))
                 elif gate == "pauliz" or gate == "z":
-                    qml.PauliZ(wires=wires[0])
+                    apply_gate_op(lambda: qml.PauliZ(wires=wires[0]))
                 elif gate == "swap":
                     # SWAP gate - order can be either direction
                     if len(wires) != 2:
@@ -64,31 +109,31 @@ def create_circuit_function(
                             "SWAP gate requires exactly 2 wires, "
                             + f"got {len(wires)}"
                         )
-                    qml.SWAP(wires=[wires[0], wires[1]])
+                    apply_gate_op(lambda: qml.SWAP(wires=[wires[0], wires[1]]))
                 elif gate == "cnot" or gate == "cx":
-                    # CNOT gate - wires[0] = control, wires[1] = target (order matters)
+                    # CNOT - wires[0]=control, wires[1]=target
                     if len(wires) != 2:
                         raise ValueError(
                             "CNOT gate requires exactly 2 wires, "
                             + f"got {len(wires)}"
                         )
-                    qml.CNOT(wires=[wires[0], wires[1]])
+                    apply_gate_op(lambda: qml.CNOT(wires=[wires[0], wires[1]]))
                 elif gate == "cz":
-                    # CZ gate - wires[0] = control, wires[1] = target (order matters)
+                    # CZ - wires[0]=control, wires[1]=target
                     if len(wires) != 2:
                         raise ValueError(
                             "CZ gate requires exactly 2 wires, "
                             + f"got {len(wires)}"
                         )
-                    qml.CZ(wires=[wires[0], wires[1]])
+                    apply_gate_op(lambda: qml.CZ(wires=[wires[0], wires[1]]))
                 elif gate == "cy":
-                    # CY gate - wires[0] = control, wires[1] = target (order matters)
+                    # CY - wires[0]=control, wires[1]=target
                     if len(wires) != 2:
                         raise ValueError(
                             "CY gate requires exactly 2 wires, "
                             + f"got {len(wires)}"
                         )
-                    qml.CY(wires=[wires[0], wires[1]])
+                    apply_gate_op(lambda: qml.CY(wires=[wires[0], wires[1]]))
                 elif gate in ("crx", "controlled-rx"):
                     if not params or len(params) == 0:
                         raise ValueError(
@@ -99,7 +144,7 @@ def create_circuit_function(
                             "CRX gate requires exactly 2 wires, got "
                             f"{len(wires)}"
                         )
-                    qml.CRX(params[0], wires=wires)
+                    apply_gate_op(lambda: qml.CRX(params[0], wires=wires))
                 elif gate in ("cry", "controlled-ry"):
                     if not params or len(params) == 0:
                         raise ValueError(
@@ -110,7 +155,7 @@ def create_circuit_function(
                             "CRY gate requires exactly 2 wires, got "
                             f"{len(wires)}"
                         )
-                    qml.CRY(params[0], wires=wires)
+                    apply_gate_op(lambda: qml.CRY(params[0], wires=wires))
                 elif gate in ("crz", "controlled-rz"):
                     if not params or len(params) == 0:
                         raise ValueError(
@@ -121,53 +166,86 @@ def create_circuit_function(
                             "CRZ gate requires exactly 2 wires, got "
                             f"{len(wires)}"
                         )
-                    qml.CRZ(params[0], wires=wires)
+                    apply_gate_op(lambda: qml.CRZ(params[0], wires=wires))
                 elif gate == "rx":
                     if not params or len(params) == 0:
                         raise ValueError(
                             "RX gate requires rotation angle parameter"
                         )
-                    qml.RX(params[0], wires=wires[0])
+                    apply_gate_op(lambda: qml.RX(params[0], wires=wires[0]))
                 elif gate == "ry":
                     if not params or len(params) == 0:
                         raise ValueError(
                             "RY gate requires rotation angle parameter"
                         )
-                    qml.RY(params[0], wires=wires[0])
+                    apply_gate_op(lambda: qml.RY(params[0], wires=wires[0]))
                 elif gate == "rz":
                     if not params or len(params) == 0:
                         raise ValueError(
                             "RZ gate requires rotation angle parameter"
                         )
-                    qml.RZ(params[0], wires=wires[0])
+                    apply_gate_op(lambda: qml.RZ(params[0], wires=wires[0]))
                 elif gate == "phase" or gate == "s":
-                    qml.S(wires=wires[0])
+                    apply_gate_op(lambda: qml.S(wires=wires[0]))
                 elif gate == "t":
-                    qml.T(wires=wires[0])
+                    apply_gate_op(lambda: qml.T(wires=wires[0]))
                 elif gate == "toffoli" or gate == "ccx":
-                    # Toffoli gate - wires[0] = control1, wires[1] = control2, wires[2] = target
+                    # Toffoli - c1=wires[0], c2=wires[1], t=wires[2]
                     if len(wires) != 3:
                         raise ValueError(
                             "Toffoli gate requires exactly 3 wires, "
                             + f"got {len(wires)}"
                         )
-                    qml.Toffoli(wires=[wires[0], wires[1], wires[2]])
+                    apply_gate_op(
+                        lambda: qml.Toffoli(
+                            wires=[wires[0], wires[1], wires[2]]
+                        )
+                    )
                 elif gate in ("measurez", "mz", "measure_z"):
-                    # Mark wire for Z basis (no-op for circuit; before probs)
                     if len(wires) != 1:
                         raise ValueError("MeasureZ requires exactly 1 wire")
-                    measurement_basis[wires[0]] = "Z"
-                    explicit_measured.add(wires[0])
+
+                    if is_mid_circuit_meas:
+                        # Mid-circuit: measure and store in classical
+                        # For Z-basis, no rotation needed
+                        m = qml.measure(wires[0])
+                        classical_bits[classical_store] = m
+                        mid_circuit_measured.add(wires[0])
+                    else:
+                        # Terminal: mark basis for final readout
+                        measurement_basis[wires[0]] = "Z"
+                        explicit_measured.add(wires[0])
+
                 elif gate in ("measurex", "mx", "measure_x"):
                     if len(wires) != 1:
                         raise ValueError("MeasureX requires exactly 1 wire")
-                    measurement_basis[wires[0]] = "X"
-                    explicit_measured.add(wires[0])
+
+                    if is_mid_circuit_meas:
+                        # Mid-circuit in X basis: H, measure
+                        qml.Hadamard(wires=wires[0])
+                        m = qml.measure(wires[0])
+                        classical_bits[classical_store] = m
+                        mid_circuit_measured.add(wires[0])
+                    else:
+                        # Terminal: mark basis for final readout
+                        measurement_basis[wires[0]] = "X"
+                        explicit_measured.add(wires[0])
+
                 elif gate in ("measurey", "my", "measure_y"):
                     if len(wires) != 1:
                         raise ValueError("MeasureY requires exactly 1 wire")
-                    measurement_basis[wires[0]] = "Y"
-                    explicit_measured.add(wires[0])
+
+                    if is_mid_circuit_meas:
+                        # Mid-circuit in Y: S†H, measure
+                        qml.adjoint(qml.S)(wires=wires[0])
+                        qml.Hadamard(wires=wires[0])
+                        m = qml.measure(wires[0])
+                        classical_bits[classical_store] = m
+                        mid_circuit_measured.add(wires[0])
+                    else:
+                        # Terminal: mark basis for final readout
+                        measurement_basis[wires[0]] = "Y"
+                        explicit_measured.add(wires[0])
                 else:
                     logger.warning(f"Unknown gate: {gate}")
 
@@ -213,7 +291,8 @@ def generate_pennylane_code(
     lines.append("")
     lines.append(f"# Create a quantum device with {num_qubits} qubit(s)")
     lines.append(
-        f'dev = qml.device("default.qubit", wires={num_qubits}, shots={num_shots})'
+        f'dev = qml.device("default.qubit", '
+        f"wires={num_qubits}, shots={num_shots})"
     )
     lines.append("")
     lines.append("# Define the quantum circuit")
@@ -315,7 +394,8 @@ def generate_pennylane_code(
     if result_mode == "expval":
         lines.append("    # Return expectation values")
         lines.append(
-            f"    return [qml.expval(qml.PauliZ(wires={w})) for w in {measured_wires}]"
+            f"    return [qml.expval(qml.PauliZ(wires={w})) "
+            f"for w in {measured_wires}]"
         )
     else:
         lines.append("    # Return probabilities")
@@ -457,25 +537,26 @@ def generate_qulacs_code(
             lines.append(f"circuit.add_gate(CZ({w[0]}, {w[1]}))")
         elif g == "cy":
             lines.append(
-                f"# CY gate (Qulacs may not have native CY, use decomposition)"
+                "# CY gate (Qulacs may not have native CY, use "
+                "decomposition)"
             )
             lines.append(f"circuit.add_gate(Sdag({w[1]}))")
             lines.append(f"circuit.add_gate(CNOT({w[0]}, {w[1]}))")
             lines.append(f"circuit.add_gate(S({w[1]}))")
         elif g in ("crx", "controlled-rx"):
-            lines.append(f"# CRX gate (use decomposition)")
+            lines.append("# CRX gate (use decomposition)")
             lines.append(f"circuit.add_gate(RX({w[1]}, {p[0]}/2))")
             lines.append(f"circuit.add_gate(CNOT({w[0]}, {w[1]}))")
             lines.append(f"circuit.add_gate(RX({w[1]}, -{p[0]}/2))")
             lines.append(f"circuit.add_gate(CNOT({w[0]}, {w[1]}))")
         elif g in ("cry", "controlled-ry"):
-            lines.append(f"# CRY gate (use decomposition)")
+            lines.append("# CRY gate (use decomposition)")
             lines.append(f"circuit.add_gate(RY({w[1]}, {p[0]}/2))")
             lines.append(f"circuit.add_gate(CNOT({w[0]}, {w[1]}))")
             lines.append(f"circuit.add_gate(RY({w[1]}, -{p[0]}/2))")
             lines.append(f"circuit.add_gate(CNOT({w[0]}, {w[1]}))")
         elif g in ("crz", "controlled-rz"):
-            lines.append(f"# CRZ gate (use decomposition)")
+            lines.append("# CRZ gate (use decomposition)")
             lines.append(f"circuit.add_gate(RZ({w[1]}, {p[0]}/2))")
             lines.append(f"circuit.add_gate(CNOT({w[0]}, {w[1]}))")
             lines.append(f"circuit.add_gate(RZ({w[1]}, -{p[0]}/2))")
@@ -513,7 +594,8 @@ def generate_qulacs_code(
     lines.append("circuit.update_quantum_state(state)")
     lines.append("print(state.get_vector())  # amplitudes")
     lines.append(
-        "# To obtain probabilities, square amplitudes or sample via repeated runs."
+        "# To obtain probabilities, square amplitudes or sample via "
+        "repeated runs."
     )
 
     return "\n".join(lines)
@@ -603,7 +685,8 @@ def generate_latex_code(
     num_shots: int,
     result_mode: str = "probs",
 ):
-    """Generate standalone LaTeX code using quantikz package for the circuit."""
+    """Generate standalone LaTeX code using quantikz package for
+    the circuit."""
 
     def format_angle(radians):
         """Format angle in radians to a nice LaTeX representation."""
@@ -889,14 +972,31 @@ async def execute_circuit(request: CircuitRequest):
                 detail="Number of shots must be between 1 and 100,000",
             )
 
-        # Create PennyLane device
-        device = qml.device(
-            "default.qubit", wires=request.qubits, shots=request.shots
+        # Check if circuit uses dynamic features
+        has_dynamic_features = any(
+            (hasattr(op, "classical_store") and op.classical_store is not None)
+            or (hasattr(op, "condition") and op.condition is not None)
+            for op in request.circuit
         )
+
+        # Create PennyLane device with appropriate settings
+        if has_dynamic_features:
+            # Dynamic circuits with mid-circuit measurement
+            device = qml.device(
+                "default.qubit", wires=request.qubits, shots=request.shots
+            )
+        else:
+            # Standard circuits
+            device = qml.device(
+                "default.qubit", wires=request.qubits, shots=request.shots
+            )
 
         # Create the circuit function
         circuit_func = create_circuit_function(
-            request.circuit, request.qubits, request.result_mode
+            request.circuit,
+            request.qubits,
+            request.classical_bits,
+            request.result_mode,
         )
 
         # Create QNode

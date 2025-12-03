@@ -5,11 +5,13 @@ A web-based graphical user interface for designing and simulating quantum circui
 ## Features
 
 - **Visual Circuit Design**: Drag and drop quantum gates onto a canvas
+- **Dynamic Quantum Circuits**: Mid-circuit measurements with classical feedback
 - **Multi-Framework Code Generation**: Generate executable code for:
   - PennyLane
   - Qiskit
   - Qulacs
   - OpenQASM 2.0
+  - LaTeX (quantikz package)
 - **Real-time Simulation**: Execute circuits using PennyLane backend
 - **Interactive Results**: Visualize probability distributions and measurement outcomes
 - **Rich Gate Library**: Support for single-qubit, two-qubit, and three-qubit gates
@@ -22,6 +24,40 @@ A web-based graphical user interface for designing and simulating quantum circui
 - **Two-qubit gates**: CNOT, CZ, CY, SWAP, CRX, CRY, CRZ (controlled rotations)
 - **Three-qubit gates**: Toffoli (CCX)
 - **Measurement gates**: MeasureZ, MeasureX, MeasureY (basis selection)
+
+## Dynamic Quantum Circuits
+
+This application supports **mid-circuit measurements** and **conditional operations** for building advanced quantum algorithms:
+
+### Mid-circuit Measurements
+Store measurement results in classical registers during circuit execution:
+1. Add a measurement gate (MZ, MX, or MY) to your circuit
+2. **Double-click** the gate to open properties
+3. Enable "Store result in classical bit"
+4. Select which classical bit (c[0], c[1], etc.) to store the result
+
+### Conditional Gates
+Apply quantum gates based on classical measurement outcomes:
+1. Add any quantum gate to your circuit
+2. **Double-click** the gate to open properties
+3. Enable "Apply gate conditionally"
+4. Select the classical bit to check
+5. Choose the expected value (0 or 1)
+
+### Use Cases
+- **Quantum teleportation**: Measure qubits and apply corrections based on results
+- **Quantum error correction**: Detect and correct errors using syndrome measurements
+- **Adaptive algorithms**: Modify circuit behavior based on intermediate measurements
+- **Reset operations**: Measure and reinitialize qubits during computation
+
+### Example Workflow
+```
+1. H gate on qubit 0
+2. CNOT gate (control: 0, target: 1)
+3. MeasureZ on qubit 0 → store in c[0]
+4. X gate on qubit 1 (conditional: if c[0] == 1)
+   → This implements a simple Bell state measurement with correction
+```
 
 ## Project Structure
 
@@ -86,16 +122,19 @@ npm start
    - Drag quantum gates from the palette onto the circuit canvas
    - Configure gate parameters (angles for rotation gates)
    - Swap control/target qubits for two-qubit gates by dragging
+   - **Double-click gates** to set mid-circuit measurements or conditional execution
 4. **Configure Execution**: 
    - Set the number of qubits (1-10)
+   - Set the number of classical bits (1-10)
    - Set the number of shots (1-100,000)
+   - Choose result mode (Probabilities or Expectation values)
 5. **Execute**: Click "Run Circuit" to simulate with PennyLane
 6. **View Results**: 
    - Toggle between Results and Code views
    - See probability distributions in chart format
    - View detailed probability tables
 7. **Export Code**: 
-   - Select your preferred framework (PennyLane/Qiskit/Qulacs/OpenQASM)
+   - Select your preferred framework (PennyLane/Qiskit/Qulacs/OpenQASM/LaTeX)
    - Copy the generated code to use in your own projects
 
 ## Code Generation

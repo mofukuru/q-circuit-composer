@@ -7,8 +7,10 @@ import Tooltip from './Tooltip';
 interface ControlPanelProps {
   qubits: number;
   shots: number;
+  classicalBits: number;
   onQubitCountChange: (count: number) => void;
   onShotsChange: (shots: number) => void;
+  onClassicalBitsChange: (count: number) => void;
   onExecute: () => void;
   onClear: () => void;
   isLoading: boolean;
@@ -19,8 +21,10 @@ interface ControlPanelProps {
 const ControlPanel: React.FC<ControlPanelProps> = ({
   qubits,
   shots,
+  classicalBits,
   onQubitCountChange,
   onShotsChange,
+  onClassicalBitsChange,
   onExecute,
   onClear,
   isLoading,
@@ -63,6 +67,36 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           </button>
         </div>
         <small>{t('qubitRange')}</small>
+      </div>
+
+      <div className="control-group">
+        <label htmlFor="classical-bits">{t('classicalBits')}</label>
+        <div className="input-with-buttons">
+          <button 
+            onClick={() => onClassicalBitsChange(classicalBits - 1)}
+            disabled={classicalBits <= 1}
+            className="adjust-btn"
+          >
+            −
+          </button>
+          <input
+            id="classical-bits"
+            type="number"
+            min="1"
+            max="10"
+            value={classicalBits}
+            onChange={(e) => onClassicalBitsChange(parseInt(e.target.value) || 1)}
+            className="number-input"
+          />
+          <button 
+            onClick={() => onClassicalBitsChange(classicalBits + 1)}
+            disabled={classicalBits >= 10}
+            className="adjust-btn"
+          >
+            +
+          </button>
+        </div>
+        <small>{t('classicalBitsRange')}</small>
       </div>
 
       <div className="control-group">

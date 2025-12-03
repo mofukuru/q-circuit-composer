@@ -2,6 +2,8 @@
   "controlPanel": "Control Panel",
   "qubits": "Number of Qubits:",
   "qubitRange": "Range: 1-10 qubits",
+  "classicalBits": "Number of Classical Bits:",
+  "classicalBitsRange": "Range: 1-10 classical bits",
   "shots": "Number of Shots:",
   "shotRange": "Range: 1-100,000 shots",
   "resultsMode": "Results Mode:",

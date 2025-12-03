@@ -5,6 +5,7 @@ import { useDrop, useDrag } from 'react-dnd';
 import { Stage, Layer, Line, Text, Rect, Circle, Group } from 'react-konva';
 import { CircuitState, GateOperation, Gate } from '../types';
 import GateParameterModal from './GateParameterModal';
+import GatePropertyModal from './GatePropertyModal';
 import './CircuitCanvas.css';
 
 interface CircuitCanvasProps {
@@ -28,6 +29,10 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
     qubitIndex: number;
     x: number;
   } | null>(null);
+
+  // State for property modal (dynamic circuit features)
+  const [showPropertyModal, setShowPropertyModal] = useState(false);
+  const [editingGate, setEditingGate] = useState<GateOperation | null>(null);
 
   // Theme detection
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -620,6 +625,13 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
         removeGate(operation.id);
       };
 
+      // Double-click to edit properties (dynamic circuit features)
+      const handleDblClick = (e: any) => {
+        e.evt.preventDefault();
+        setEditingGate(operation);
+        setShowPropertyModal(true);
+      };
+
       const colors = getThemeColors();
 
   if (operation.gate === 'CNOT') {
@@ -632,7 +644,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
         const targetId = `tgt-${operation.id}`;
         const lineId = `conn-${operation.id}`;
         elements.push(
-          <Group key={`${operation.id}-group`} onContextMenu={handleRightClick}>
+          <Group key={`${operation.id}-group`} onContextMenu={handleRightClick} onDblClick={handleDblClick}>
             {/* Connection Line */}
             <Line
               points={[controlX, controlY, targetX, targetY]}
@@ -834,7 +846,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
         const lineId = `conn-${operation.id}`;
 
         elements.push(
-          <Group key={`${operation.id}-group`} onContextMenu={handleRightClick}>
+          <Group key={`${operation.id}-group`} onContextMenu={handleRightClick} onDblClick={handleDblClick}>
             {/* Connection Line */}
             <Line
               points={[controlX, controlY, targetX, targetY]}
@@ -1001,7 +1013,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
         );
 
         elements.push(
-          <Group key={`${operation.id}-group`} onContextMenu={handleRightClick}>
+          <Group key={`${operation.id}-group`} onContextMenu={handleRightClick} onDblClick={handleDblClick}>
             <Line
               points={[controlX, controlY, targetX, targetY]}
               stroke={colors.cnotLine}
@@ -1152,7 +1164,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
   const tId = `tof-t-${operation.id}`;
 
         elements.push(
-          <Group key={`${operation.id}-group`} onContextMenu={handleRightClick}>
+          <Group key={`${operation.id}-group`} onContextMenu={handleRightClick} onDblClick={handleDblClick}>
             {/* Vertical connection */}
             <Line id={lineId} points={[x, minY, x, maxY]} stroke={colors.cnotLine} strokeWidth={3} listening={false} />
 
@@ -1304,7 +1316,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
         const lineId = `conn-${operation.id}`;
 
         elements.push(
-          <Group key={`${operation.id}-group`} onContextMenu={handleRightClick}>
+          <Group key={`${operation.id}-group`} onContextMenu={handleRightClick} onDblClick={handleDblClick}>
             {/* Connection Line */}
             <Line
               points={[controlX, controlY, targetX, targetY]}
@@ -1568,6 +1580,7 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
             }}
             onDragEnd={handleDragEnd}
             onContextMenu={handleRightClick}
+            onDblClick={handleDblClick}
           >
             <Rect
               x={-25}
@@ -1770,6 +1783,28 @@ const CircuitCanvas: React.FC<CircuitCanvasProps> = ({
           currentParams={pendingGate.gate.params > 0 ? [Math.PI / 2] : []}
           onConfirm={handleParameterConfirm}
           onCancel={handleParameterCancel}
+        />
+      )}
+
+      {/* Property Modal for Dynamic Circuits */}
+      {showPropertyModal && editingGate && (
+        <GatePropertyModal
+          gate={editingGate}
+          classicalBits={circuitState.classical_bits}
+          onClose={() => {
+            setShowPropertyModal(false);
+            setEditingGate(null);
+          }}
+          onSave={(updatedGate) => {
+            onStateChange({
+              ...circuitState,
+              operations: circuitState.operations.map((op) =>
+                op.id === updatedGate.id ? updatedGate : op
+              ),
+            });
+            setShowPropertyModal(false);
+            setEditingGate(null);
+          }}
         />
       )}
     </div>

@@ -15,6 +15,7 @@ const CircuitComposer: React.FC = () => {
     qubits: 3,
     operations: [],
     shots: 1024,
+    classical_bits: 3, // Default: same as qubits
   });
 
   
@@ -62,7 +63,10 @@ const CircuitComposer: React.FC = () => {
           gate: op.gate,
           wires: op.wires,
           params: op.params,
+          classical_store: op.classical_store,
+          condition: op.condition,
         })),
+        classical_bits: circuitState.classical_bits,
         result_mode: resultMode,
       };
 
@@ -88,6 +92,7 @@ const CircuitComposer: React.FC = () => {
     setCircuitState(prev => ({
       ...prev,
       qubits: Math.max(1, Math.min(10, newCount)),
+      classical_bits: Math.max(1, Math.min(10, newCount)), // Update classical bits too
       operations: prev.operations.filter(op => 
         op.wires.every(wire => wire < newCount)
       ),
@@ -101,6 +106,13 @@ const CircuitComposer: React.FC = () => {
     }));
   };
 
+  const updateClassicalBits = (newCount: number) => {
+    setCircuitState(prev => ({
+      ...prev,
+      classical_bits: Math.max(1, Math.min(10, newCount)),
+    }));
+  };
+
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="circuit-composer">
@@ -109,8 +121,10 @@ const CircuitComposer: React.FC = () => {
             <ControlPanel
               qubits={circuitState.qubits}
               shots={circuitState.shots}
+              classicalBits={circuitState.classical_bits}
               onQubitCountChange={updateQubitCount}
               onShotsChange={updateShots}
+              onClassicalBitsChange={updateClassicalBits}
               onExecute={executeCircuit}
               onClear={clearCircuit}
               isLoading={isLoading}

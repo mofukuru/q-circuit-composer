@@ -2,6 +2,8 @@
   "controlPanel": "コントロールパネル",
   "qubits": "量子ビット数:",
   "qubitRange": "範囲: 1-10 量子ビット",
+  "classicalBits": "古典ビット数:",
+  "classicalBitsRange": "範囲: 1-10 古典ビット",
   "shots": "ショット数:",
   "shotRange": "範囲: 1-100,000 ショット",
   "resultsMode": "結果モード:",
