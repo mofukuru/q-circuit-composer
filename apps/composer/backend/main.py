@@ -195,6 +195,379 @@ def create_circuit_function(
     return circuit
 
 
+def generate_pennylane_code(
+    circuit_operations: list,
+    num_qubits: int,
+    num_shots: int,
+    result_mode: str = "probs",
+) -> str:
+    """Generate PennyLane Python source code for the circuit."""
+
+    lines = []
+    lines.append("import pennylane as qml")
+    lines.append("import numpy as np")
+    lines.append("")
+    lines.append(f"# Create a quantum device with {num_qubits} qubit(s)")
+    lines.append(
+        f'dev = qml.device("default.qubit", wires={num_qubits}, shots={num_shots})'
+    )
+    lines.append("")
+    lines.append("# Define the quantum circuit")
+    lines.append("@qml.qnode(dev)")
+    lines.append("def circuit():")
+
+    # Track measurement bases
+    measurement_basis = {w: "Z" for w in range(num_qubits)}
+    explicit_measured = set()
+
+    # Generate circuit operations
+    has_ops = False
+    for operation in circuit_operations:
+        gate = operation.gate.lower()
+        wires = operation.wires
+        params = operation.params or []
+
+        if gate == "hadamard" or gate == "h":
+            lines.append(f"    qml.Hadamard(wires={wires[0]})")
+            has_ops = True
+        elif gate == "paulix" or gate == "x":
+            lines.append(f"    qml.PauliX(wires={wires[0]})")
+            has_ops = True
+        elif gate == "pauliy" or gate == "y":
+            lines.append(f"    qml.PauliY(wires={wires[0]})")
+            has_ops = True
+        elif gate == "pauliz" or gate == "z":
+            lines.append(f"    qml.PauliZ(wires={wires[0]})")
+            has_ops = True
+        elif gate == "swap":
+            lines.append(f"    qml.SWAP(wires={wires})")
+            has_ops = True
+        elif gate == "cnot" or gate == "cx":
+            lines.append(f"    qml.CNOT(wires={wires})")
+            has_ops = True
+        elif gate == "cz":
+            lines.append(f"    qml.CZ(wires={wires})")
+            has_ops = True
+        elif gate == "cy":
+            lines.append(f"    qml.CY(wires={wires})")
+            has_ops = True
+        elif gate == "crx":
+            lines.append(f"    qml.CRX({params[0]}, wires={wires})")
+            has_ops = True
+        elif gate == "cry":
+            lines.append(f"    qml.CRY({params[0]}, wires={wires})")
+            has_ops = True
+        elif gate == "crz":
+            lines.append(f"    qml.CRZ({params[0]}, wires={wires})")
+            has_ops = True
+        elif gate == "rx":
+            lines.append(f"    qml.RX({params[0]}, wires={wires[0]})")
+            has_ops = True
+        elif gate == "ry":
+            lines.append(f"    qml.RY({params[0]}, wires={wires[0]})")
+            has_ops = True
+        elif gate == "rz":
+            lines.append(f"    qml.RZ({params[0]}, wires={wires[0]})")
+            has_ops = True
+        elif gate == "phase" or gate == "s":
+            lines.append(f"    qml.S(wires={wires[0]})")
+            has_ops = True
+        elif gate == "t":
+            lines.append(f"    qml.T(wires={wires[0]})")
+            has_ops = True
+        elif gate == "toffoli" or gate == "ccx":
+            lines.append(f"    qml.Toffoli(wires={wires})")
+            has_ops = True
+        elif gate in ("measurez", "mz", "measure_z"):
+            measurement_basis[wires[0]] = "Z"
+            explicit_measured.add(wires[0])
+            lines.append(f"    # Measure qubit {wires[0]} in Z basis")
+        elif gate in ("measurex", "mx", "measure_x"):
+            measurement_basis[wires[0]] = "X"
+            explicit_measured.add(wires[0])
+            lines.append(f"    # Measure qubit {wires[0]} in X basis")
+        elif gate in ("measurey", "my", "measure_y"):
+            measurement_basis[wires[0]] = "Y"
+            explicit_measured.add(wires[0])
+            lines.append(f"    # Measure qubit {wires[0]} in Y basis")
+
+    if not has_ops:
+        lines.append("    pass  # Empty circuit")
+
+    lines.append("")
+    lines.append("    # Apply basis rotations for measurement")
+    for w, b in measurement_basis.items():
+        if b == "X":
+            lines.append(f"    qml.Hadamard(wires={w})")
+        elif b == "Y":
+            lines.append(f"    qml.adjoint(qml.S)(wires={w})")
+            lines.append(f"    qml.Hadamard(wires={w})")
+
+    lines.append("")
+    measured_wires = sorted(explicit_measured)
+    if not measured_wires:
+        measured_wires = list(range(num_qubits))
+
+    if result_mode == "expval":
+        lines.append("    # Return expectation values")
+        lines.append(
+            f"    return [qml.expval(qml.PauliZ(wires={w})) for w in {measured_wires}]"
+        )
+    else:
+        lines.append("    # Return probabilities")
+        lines.append(f"    return qml.probs(wires={measured_wires})")
+
+    lines.append("")
+    lines.append("# Execute the circuit")
+    lines.append("result = circuit()")
+    lines.append("print(result)")
+
+    return "\n".join(lines)
+
+
+def generate_qiskit_code(
+    circuit_operations: list,
+    num_qubits: int,
+    num_shots: int,
+    result_mode: str = "probs",
+):
+    """Generate Qiskit Python source code for the circuit."""
+    lines = []
+    lines.append(
+        "from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister"
+    )
+    lines.append("from qiskit_aer import AerSimulator")
+    lines.append("")
+    lines.append(f"qr = QuantumRegister({num_qubits}, 'q')")
+    lines.append(f"cr = ClassicalRegister({num_qubits}, 'c')")
+    lines.append("qc = QuantumCircuit(qr, cr)")
+    lines.append("")
+
+    measurement_basis = {w: "Z" for w in range(num_qubits)}
+    explicit_measured = set()
+
+    for op in circuit_operations:
+        gate = op.gate.lower()
+        w = op.wires
+        p = op.params or []
+        if gate in ("hadamard", "h"):
+            lines.append(f"qc.h({w[0]})")
+        elif gate in ("paulix", "x"):
+            lines.append(f"qc.x({w[0]})")
+        elif gate in ("pauliy", "y"):
+            lines.append(f"qc.y({w[0]})")
+        elif gate in ("pauliz", "z"):
+            lines.append(f"qc.z({w[0]})")
+        elif gate == "swap":
+            lines.append(f"qc.swap({w[0]}, {w[1]})")
+        elif gate in ("cnot", "cx"):
+            lines.append(f"qc.cx({w[0]}, {w[1]})")
+        elif gate == "cz":
+            lines.append(f"qc.cz({w[0]}, {w[1]})")
+        elif gate == "cy":
+            lines.append(f"qc.cy({w[0]}, {w[1]})")
+        elif gate == "crx":
+            lines.append(f"qc.crx({p[0]}, {w[0]}, {w[1]})")
+        elif gate == "cry":
+            lines.append(f"qc.cry({p[0]}, {w[0]}, {w[1]})")
+        elif gate == "crz":
+            lines.append(f"qc.crz({p[0]}, {w[0]}, {w[1]})")
+        elif gate == "rx":
+            lines.append(f"qc.rx({p[0]}, {w[0]})")
+        elif gate == "ry":
+            lines.append(f"qc.ry({p[0]}, {w[0]})")
+        elif gate == "rz":
+            lines.append(f"qc.rz({p[0]}, {w[0]})")
+        elif gate in ("phase", "s"):
+            lines.append(f"qc.s({w[0]})")
+        elif gate == "t":
+            lines.append(f"qc.t({w[0]})")
+        elif gate in ("toffoli", "ccx"):
+            lines.append(f"qc.ccx({w[0]}, {w[1]}, {w[2]})")
+        elif gate in ("measurez", "mz", "measure_z"):
+            measurement_basis[w[0]] = "Z"
+            explicit_measured.add(w[0])
+        elif gate in ("measurex", "mx", "measure_x"):
+            measurement_basis[w[0]] = "X"
+            explicit_measured.add(w[0])
+        elif gate in ("measurey", "my", "measure_y"):
+            measurement_basis[w[0]] = "Y"
+            explicit_measured.add(w[0])
+
+    # Basis rotation before measurement (approximate with H and Sdg+H)
+    for w, b in measurement_basis.items():
+        if b == "X":
+            lines.append(f"qc.h({w})")
+        elif b == "Y":
+            lines.append(f"qc.sdg({w})")
+            lines.append(f"qc.h({w})")
+
+    measured_wires = sorted(explicit_measured) or list(range(num_qubits))
+    for w in measured_wires:
+        lines.append(f"qc.measure({w}, {w})")
+
+    lines.append("")
+    lines.append("backend = AerSimulator()")
+    lines.append(f"job = backend.run(qc, shots={num_shots})")
+    lines.append("result = job.result().get_counts(qc)")
+    lines.append("print(result)")
+
+    return "\n".join(lines)
+
+
+def generate_qulacs_code(
+    circuit_operations: list,
+    num_qubits: int,
+    num_shots: int,
+    result_mode: str = "probs",
+):
+    """Generate Qulacs Python source code for the circuit (basic gates)."""
+    lines = []
+    lines.append("from qulacs import QuantumState, QuantumCircuit")
+    lines.append("from qulacs.gate import *")
+    lines.append("")
+    lines.append(f"state = QuantumState({num_qubits})")
+    lines.append(f"circuit = QuantumCircuit({num_qubits})")
+    lines.append("")
+
+    measurement_basis = {w: "Z" for w in range(num_qubits)}
+    explicit_measured = set()
+
+    for op in circuit_operations:
+        g = op.gate.lower()
+        w = op.wires
+        p = op.params or []
+        if g in ("hadamard", "h"):
+            lines.append(f"circuit.add_gate(H({w[0]}))")
+        elif g in ("paulix", "x"):
+            lines.append(f"circuit.add_gate(X({w[0]}))")
+        elif g in ("pauliy", "y"):
+            lines.append(f"circuit.add_gate(Y({w[0]}))")
+        elif g in ("pauliz", "z"):
+            lines.append(f"circuit.add_gate(Z({w[0]}))")
+        elif g == "swap":
+            lines.append(f"circuit.add_gate(SWAP({w[0]}, {w[1]}))")
+        elif g in ("cnot", "cx"):
+            lines.append(f"circuit.add_gate(CNOT({w[0]}, {w[1]}))")
+        elif g == "cz":
+            lines.append(f"circuit.add_gate(CZ({w[0]}, {w[1]}))")
+        elif g == "rx":
+            lines.append(f"circuit.add_gate(RX({w[0]}, {p[0]}))")
+        elif g == "ry":
+            lines.append(f"circuit.add_gate(RY({w[0]}, {p[0]}))")
+        elif g == "rz":
+            lines.append(f"circuit.add_gate(RZ({w[0]}, {p[0]}))")
+        elif g in ("phase", "s"):
+            lines.append(f"circuit.add_gate(S({w[0]}))")
+        elif g == "t":
+            lines.append(f"circuit.add_gate(T({w[0]}))")
+        elif g in ("toffoli", "ccx"):
+            lines.append(f"circuit.add_gate(TOFFOLI({w[0]}, {w[1]}, {w[2]}))")
+        elif g in ("measurez", "mz", "measure_z"):
+            measurement_basis[w[0]] = "Z"
+            explicit_measured.add(w[0])
+        elif g in ("measurex", "mx", "measure_x"):
+            measurement_basis[w[0]] = "X"
+            explicit_measured.add(w[0])
+        elif g in ("measurey", "my", "measure_y"):
+            measurement_basis[w[0]] = "Y"
+            explicit_measured.add(w[0])
+
+    # Basis rotation (approximate)
+    for w, b in measurement_basis.items():
+        if b == "X":
+            lines.append(f"circuit.add_gate(H({w}))")
+        elif b == "Y":
+            lines.append(f"circuit.add_gate(Sdag({w}))")
+            lines.append(f"circuit.add_gate(H({w}))")
+
+    lines.append("circuit.update_quantum_state(state)")
+    lines.append("print(state.get_vector())  # amplitudes")
+    lines.append(
+        "# To obtain probabilities, square amplitudes or sample via repeated runs."
+    )
+
+    return "\n".join(lines)
+
+
+def generate_qasm_code(
+    circuit_operations: list,
+    num_qubits: int,
+    num_shots: int,
+    result_mode: str = "probs",
+):
+    """Generate OpenQASM 2.0 source code for the circuit."""
+    lines = []
+    lines.append("OPENQASM 2.0;")
+    lines.append('include "qelib1.inc";')
+    lines.append(f"qreg q[{num_qubits}];")
+    lines.append(f"creg c[{num_qubits}];")
+
+    measurement_basis = {w: "Z" for w in range(num_qubits)}
+    explicit_measured = set()
+
+    for op in circuit_operations:
+        g = op.gate.lower()
+        w = op.wires
+        p = op.params or []
+        if g in ("hadamard", "h"):
+            lines.append(f"h q[{w[0]}];")
+        elif g in ("paulix", "x"):
+            lines.append(f"x q[{w[0]}];")
+        elif g in ("pauliy", "y"):
+            lines.append(f"y q[{w[0]}];")
+        elif g in ("pauliz", "z"):
+            lines.append(f"z q[{w[0]}];")
+        elif g == "swap":
+            lines.append(f"swap q[{w[0]}],q[{w[1]}];")
+        elif g in ("cnot", "cx"):
+            lines.append(f"cx q[{w[0]}],q[{w[1]}];")
+        elif g == "cz":
+            lines.append(f"cz q[{w[0]}],q[{w[1]}];")
+        elif g == "cy":
+            lines.append(f"cy q[{w[0]}],q[{w[1]}];")
+        elif g == "crx":
+            lines.append(f"crx({p[0]}) q[{w[0]}],q[{w[1]}];")
+        elif g == "cry":
+            lines.append(f"cry({p[0]}) q[{w[0]}],q[{w[1]}];")
+        elif g == "crz":
+            lines.append(f"crz({p[0]}) q[{w[0]}],q[{w[1]}];")
+        elif g == "rx":
+            lines.append(f"rx({p[0]}) q[{w[0]}];")
+        elif g == "ry":
+            lines.append(f"ry({p[0]}) q[{w[0]}];")
+        elif g == "rz":
+            lines.append(f"rz({p[0]}) q[{w[0]}];")
+        elif g in ("phase", "s"):
+            lines.append(f"s q[{w[0]}];")
+        elif g == "t":
+            lines.append(f"t q[{w[0]}];")
+        elif g in ("toffoli", "ccx"):
+            lines.append(f"ccx q[{w[0]}],q[{w[1]}],q[{w[2]}];")
+        elif g in ("measurez", "mz", "measure_z"):
+            measurement_basis[w[0]] = "Z"
+            explicit_measured.add(w[0])
+        elif g in ("measurex", "mx", "measure_x"):
+            measurement_basis[w[0]] = "X"
+            explicit_measured.add(w[0])
+        elif g in ("measurey", "my", "measure_y"):
+            measurement_basis[w[0]] = "Y"
+            explicit_measured.add(w[0])
+
+    for w, b in measurement_basis.items():
+        if b == "X":
+            lines.append(f"h q[{w}];")
+        elif b == "Y":
+            lines.append(f"sdg q[{w}];")
+            lines.append(f"h q[{w}];")
+
+    measured_wires = sorted(explicit_measured) or list(range(num_qubits))
+    for w in measured_wires:
+        lines.append(f"measure q[{w}] -> c[{w}];")
+
+    return "\n".join(lines)
+
+
 @app.get("/")
 async def root():
     """Root endpoint with API information."""
@@ -249,6 +622,42 @@ async def execute_circuit(request: CircuitRequest):
         # Execute the circuit
         result_raw = qnode()
 
+        # Generate code outputs
+        requested = set((request.code_formats or ["pennylane"]))
+        pennylane_code = None
+        qiskit_code = None
+        qulacs_code = None
+        qasm_code = None
+
+        if "pennylane" in requested:
+            pennylane_code = generate_pennylane_code(
+                request.circuit,
+                request.qubits,
+                request.shots,
+                request.result_mode,
+            )
+        if "qiskit" in requested:
+            qiskit_code = generate_qiskit_code(
+                request.circuit,
+                request.qubits,
+                request.shots,
+                request.result_mode,
+            )
+        if "qulacs" in requested:
+            qulacs_code = generate_qulacs_code(
+                request.circuit,
+                request.qubits,
+                request.shots,
+                request.result_mode,
+            )
+        if "qasm" in requested:
+            qasm_code = generate_qasm_code(
+                request.circuit,
+                request.qubits,
+                request.shots,
+                request.result_mode,
+            )
+
         # Decide labeling width (if measured subset, width = len(measured))
         # Reconstruct explicit measured wires/bases like in circuit build
         measurement_basis = {w: "Z" for w in range(request.qubits)}
@@ -289,6 +698,10 @@ async def execute_circuit(request: CircuitRequest):
                 measured_wires=measured_wires if has_subset else None,
                 measured_bases=measurement_basis if has_subset else None,
                 expectations=expectations,
+                pennylane_code=pennylane_code,
+                qiskit_code=qiskit_code,
+                qulacs_code=qulacs_code,
+                qasm_code=qasm_code,
             )
         else:
             # probs mode
@@ -309,6 +722,10 @@ async def execute_circuit(request: CircuitRequest):
                 marginal_probabilities=marginal,
                 measured_wires=measured_wires if has_subset else None,
                 measured_bases=measurement_basis if has_subset else None,
+                pennylane_code=pennylane_code,
+                qiskit_code=qiskit_code,
+                qulacs_code=qulacs_code,
+                qasm_code=qasm_code,
             )
 
     except ValueError as ve:

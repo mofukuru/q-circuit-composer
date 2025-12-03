@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CircuitResponse } from '../types';
 import {
@@ -11,7 +11,7 @@ import {
   Legend,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
-import { BarChart3, Zap, CheckCircle } from 'lucide-react';
+import { BarChart3, Zap, CheckCircle, Code, Copy, Check, Cpu, Layers, Box, FileCode } from 'lucide-react';
 import './ResultsPanel.css';
 
 ChartJS.register(
@@ -39,7 +39,29 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
   resultMode = 'probs'
 }) => {
 
-  const  { t, i18n } = useTranslation();
+  const  { t } = useTranslation();
+  const [viewMode, setViewMode] = useState<'results' | 'code'>('results');
+  const [copied, setCopied] = useState(false);
+  const [codeLang, setCodeLang] = useState<'pennylane' | 'qiskit' | 'qulacs' | 'qasm'>('pennylane');
+
+  const handleCopyCode = () => {
+    let codeText = '';
+    if (codeLang === 'pennylane') {
+      codeText = results?.pennylane_code || '';
+    } else if (codeLang === 'qiskit') {
+      codeText = results?.qiskit_code || '';
+    } else if (codeLang === 'qulacs') {
+      codeText = results?.qulacs_code || '';
+    } else if (codeLang === 'qasm') {
+      codeText = results?.qasm_code || '';
+    }
+    
+    if (codeText) {
+      navigator.clipboard.writeText(codeText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -151,26 +173,64 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
         <div className="panel-header">
           <h3><BarChart3 size={20} /> {t('results')}</h3>
           <div className="header-actions">
+            <button 
+              className={`view-mode-btn ${viewMode === 'results' ? 'active' : ''}`}
+              onClick={() => setViewMode('results')}
+              title={t('results')}
+              aria-label={t('results')}
+            >
+              <BarChart3 size={16} />
+            </button>
+            <button 
+              className={`view-mode-btn ${viewMode === 'code' ? 'active' : ''}`}
+              onClick={() => setViewMode('code')}
+              title={t('pennylaneCode')}
+              aria-label={t('pennylaneCode')}
+            >
+              <Code size={16} />
+            </button>
             <div className="success-indicator"><CheckCircle size={16} /> {t('status')}</div>
           </div>
         </div>
-        {hasMeasured && wires.length > 0 && (
-          <div className="panel-subtitle">Wires: {wires.map(w => `${w}:${effMeasuredBases[w] ?? 'Z'}`).join(', ')}</div>
-        )}
-        <div className="chart-container">
-          <Bar data={chartDataExp} options={chartOptionsExp} />
-        </div>
-        <div className="probability-table">
-          <h4>{t('expValue')}</h4>
-          <div className="table-container">
-            {wires.map((w, idx) => (
-              <div key={w} className="table-row">
-                <span className="state">q{w}</span>
-                <span className="probability">{values[idx].toFixed(6)}</span>
-              </div>
-            ))}
+
+        {viewMode === 'code' && results.pennylane_code ? (
+          <div className="code-view">
+            <div className="code-header">
+              <span>{t('pennylaneCode')}</span>
+              <button 
+                className="copy-btn"
+                onClick={handleCopyCode}
+                title={copied ? t('codeCopied') : t('copyCode')}
+              >
+                {copied ? <Check size={14} /> : <Copy size={14} />}
+                {copied ? t('codeCopied') : t('copyCode')}
+              </button>
+            </div>
+            <pre className="code-block">
+              <code>{results.pennylane_code}</code>
+            </pre>
           </div>
-        </div>
+        ) : (
+          <>
+            {hasMeasured && wires.length > 0 && (
+              <div className="panel-subtitle">Wires: {wires.map(w => `${w}:${effMeasuredBases[w] ?? 'Z'}`).join(', ')}</div>
+            )}
+            <div className="chart-container">
+              <Bar data={chartDataExp} options={chartOptionsExp} />
+            </div>
+            <div className="probability-table">
+              <h4>{t('expValue')}</h4>
+              <div className="table-container">
+                {wires.map((w, idx) => (
+                  <div key={w} className="table-row">
+                    <span className="state">q{w}</span>
+                    <span className="probability">{values[idx].toFixed(6)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     );
   }
@@ -263,44 +323,126 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       <div className="panel-header">
         <h3><BarChart3 size={20} /> {t('results')}</h3>
         <div className="header-actions">
+          <button 
+            className={`view-mode-btn ${viewMode === 'results' ? 'active' : ''}`}
+            onClick={() => setViewMode('results')}
+            title={t('results')}
+            aria-label={t('results')}
+          >
+            <BarChart3 size={16} />
+          </button>
+          <button 
+            className={`view-mode-btn ${viewMode === 'code' ? 'active' : ''}`}
+            onClick={() => setViewMode('code')}
+            title={t('pennylaneCode')}
+            aria-label={t('pennylaneCode')}
+          >
+            <Code size={16} />
+          </button>
           <div className="success-indicator"><CheckCircle size={16} /> {t('status')}</div>
         </div>
       </div>
-      {subtitle && (
-        <div className="panel-subtitle">{subtitle}</div>
-      )}
-      {bitOrderLabel && (
-        <div className="panel-subtitle">{bitOrderLabel}</div>
-      )}
 
-      <div className="chart-container">
-  <Bar data={chartData} options={chartOptions} />
-      </div>
-
-      <div className="results-summary">
-        <div className="summary-item">
-          <span className="label">{t('mlsState')}</span>
-          <span className="value">|{maxProbState}⟩</span>
+      {viewMode === 'code' ? (
+        <div className="code-view">
+          <div className="code-lang-select code-lang-select--top">
+            <button 
+              className={`lang-btn ${codeLang==='pennylane'?'active':''}`} 
+              onClick={()=>setCodeLang('pennylane')} 
+              title="PennyLane"
+              aria-label="PennyLane"
+            >
+              <Zap size={16} />
+            </button>
+            <button 
+              className={`lang-btn ${codeLang==='qiskit'?'active':''}`} 
+              onClick={()=>setCodeLang('qiskit')} 
+              title="Qiskit"
+              aria-label="Qiskit"
+            >
+              <Cpu size={16} />
+            </button>
+            <button 
+              className={`lang-btn ${codeLang==='qulacs'?'active':''}`} 
+              onClick={()=>setCodeLang('qulacs')} 
+              title="Qulacs"
+              aria-label="Qulacs"
+            >
+              <Layers size={16} />
+            </button>
+            <button 
+              className={`lang-btn ${codeLang==='qasm'?'active':''}`} 
+              onClick={()=>setCodeLang('qasm')} 
+              title="OpenQASM"
+              aria-label="OpenQASM"
+            >
+              <FileCode size={16} />
+            </button>
+          </div>
+          <div className="code-header">
+            <span>
+              {codeLang === 'pennylane' && 'PennyLane Code'}
+              {codeLang === 'qiskit' && 'Qiskit Code'}
+              {codeLang === 'qulacs' && 'Qulacs Code'}
+              {codeLang === 'qasm' && 'OpenQASM Code'}
+            </span>
+            <button 
+              className="copy-btn"
+              onClick={handleCopyCode}
+              title={copied ? t('codeCopied') : t('copyCode')}
+            >
+              {copied ? <Check size={14} /> : <Copy size={14} />}
+              {copied ? t('codeCopied') : t('copyCode')}
+            </button>
+          </div>
+          <pre className="code-block">
+            <code>{
+              codeLang==='pennylane' ? (results.pennylane_code || '') :
+              codeLang==='qiskit' ? (results.qiskit_code || '') :
+              codeLang==='qulacs' ? (results.qulacs_code || '') :
+              (results.qasm_code || '')
+            }</code>
+          </pre>
         </div>
-        <div className="summary-item">
-          <span className="label">{t('probValue')}</span>
-          <span className="value">{(maxProb * 100).toFixed(2)}%</span>
-        </div>
-      </div>
+      ) : (
+        <>
+          {subtitle && (
+            <div className="panel-subtitle">{subtitle}</div>
+          )}
+          {bitOrderLabel && (
+            <div className="panel-subtitle">{bitOrderLabel}</div>
+          )}
 
-      <div className="probability-table">
-        <h4>{t('allProb')}</h4>
-        <div className="table-container">
-          {states.map((state, i) => (
-            <div key={state} className="table-row">
-              <span className="state">|{state}⟩</span>
-              <span className="probability">
-                {(probabilities[state] * 100).toFixed(3)}%
-              </span>
+          <div className="chart-container">
+            <Bar data={chartData} options={chartOptions} />
+          </div>
+
+          <div className="results-summary">
+            <div className="summary-item">
+              <span className="label">{t('mlsState')}</span>
+              <span className="value">|{maxProbState}⟩</span>
             </div>
-          ))}
-        </div>
-      </div>
+            <div className="summary-item">
+              <span className="label">{t('probValue')}</span>
+              <span className="value">{(maxProb * 100).toFixed(2)}%</span>
+            </div>
+          </div>
+
+          <div className="probability-table">
+            <h4>{t('allProb')}</h4>
+            <div className="table-container">
+              {states.map((state, i) => (
+                <div key={state} className="table-row">
+                  <span className="state">|{state}⟩</span>
+                  <span className="probability">
+                    {(probabilities[state] * 100).toFixed(3)}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
