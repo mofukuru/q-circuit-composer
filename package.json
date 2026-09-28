@@ -1,0 +1,20 @@
+{
+  "name": "q-circuit-composer",
+  "private": true,
+  "license": "MIT",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "npm run dev -w @qcc/web",
+    "build": "npm run build -w @qcc/web",
+    "preview": "npm run preview -w @qcc/web",
+    "test": "npm test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present"
+  }
+}
