@@ -5,3 +5,5 @@ export * from './simulator';
 export * from './codegen';
 export * from './edit';
 export * from './io';
+export * from './render/math';
+export * from './render/svg';

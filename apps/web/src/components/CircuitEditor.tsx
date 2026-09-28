@@ -17,7 +17,8 @@ import { Gauge, Minus, Plus } from 'lucide-react';
 import { type MouseEvent, type ReactNode, useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CELL, cellId, type Cell, type DragItem, DropPreview, LABEL_WIDTH } from '../drag';
-import { latexToText, prettyAngle } from '../pretty';
+import { prettyAngle } from '../pretty';
+import MathText from './MathText';
 import { useStore } from '../store';
 import { boxLabel, gateTone } from './gateStyle';
 
@@ -141,7 +142,9 @@ function OperationView({ op }: { op: Operation }) {
           className={`mt-1.5 flex w-11 items-center justify-center rounded-md border font-mono text-sm font-semibold shadow-sm ${gateTone('CUSTOM')}`}
           style={{ height }}
         >
-          <span className="truncate px-0.5">{latexToText(customLabel(circuit, op))}</span>
+          <span className="truncate px-0.5">
+            <MathText latex={customLabel(circuit, op)} />
+          </span>
         </div>
       </Part>
     );
@@ -231,7 +234,7 @@ function WireLabel({ wire }: { wire: number }) {
       className="absolute left-0 truncate rounded px-1 text-right font-serif text-base hover:bg-surface-2"
       style={style}
     >
-      {latexToText(label)}
+      <MathText latex={label} />
     </button>
   );
 }

@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 import { latexToText } from '../pretty';
+import CircuitPreview from './CircuitPreview';
 import { type OutputTab, useStore } from '../store';
 
 const MAX_BARS = 64;
@@ -270,6 +271,7 @@ function Latex() {
   const result = useMemo(() => generateCode(circuit, 'latex', { standalone }), [circuit, standalone]);
   return (
     <div className="space-y-3">
+      <CircuitPreview />
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" checked={standalone} onChange={(e) => set({ latexStandalone: e.target.checked })} className="size-4 " />
         {t('output.standalone')}
