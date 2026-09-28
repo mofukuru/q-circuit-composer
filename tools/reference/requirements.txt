@@ -1,5 +1,5 @@
 pennylane>=0.42
 # Optional: verify_codegen.py also runs the generated Qiskit, OpenQASM and Qulacs code when these are installed.
 qiskit>=2.0
-qiskit-aer>=0.17
+qiskit-aer>=0.17.2
 qulacs>=0.6
