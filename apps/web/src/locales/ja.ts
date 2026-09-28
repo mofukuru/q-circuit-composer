@@ -80,6 +80,7 @@ const ja: Messages = {
     topStates: '確率の高い {{count}} 状態を表示',
     empty: 'ゲートを追加すると結果が表示されます。',
     cannotSimulate: 'シミュレーションするには次を修正してください:',
+    preview: 'プレビュー（コンパイル後の図のイメージ）',
     standalone: '単体でコンパイルできる文書',
     latexNote: 'quantikz パッケージを使います。プリアンブルに \\usepackage{quantikz} を追加してください。',
     probability: '確率',

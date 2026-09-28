@@ -78,6 +78,7 @@ const en = {
     topStates: 'Showing the {{count}} most likely states',
     empty: 'Add gates to see results.',
     cannotSimulate: 'Fix these to simulate:',
+    preview: 'Preview (as the compiled figure will look)',
     standalone: 'Standalone document',
     latexNote: 'Uses the quantikz package: add \\usepackage{quantikz} to your preamble.',
     probability: 'Probability',

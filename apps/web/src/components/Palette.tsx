@@ -1,10 +1,10 @@
 import { useDraggable } from '@dnd-kit/core';
 import { addCustomGate, GATES, type GateName, removeCustomGate } from '@qcc/core';
 import { Plus, X } from 'lucide-react';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { DragItem } from '../drag';
-import { latexToText } from '../pretty';
+import MathText from './MathText';
 import { useStore } from '../store';
 import { gateTone } from './gateStyle';
 
@@ -14,7 +14,7 @@ const GROUPS: { key: 'single' | 'multi' | 'measure'; gates: GateName[] }[] = [
   { key: 'measure', gates: ['MEASURE'] },
 ];
 
-function PaletteItem({ gate, customId, label, title }: { gate: GateName; customId?: string; label: string; title: string }) {
+function PaletteItem({ gate, customId, label, title }: { gate: GateName; customId?: string; label: ReactNode; title: string }) {
   const item: DragItem = { kind: 'palette', gate, customId };
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: `palette:${gate}:${customId ?? ''}`, data: item });
   const tool = useStore((s) => s.tool);
@@ -55,7 +55,7 @@ function CustomGates() {
       <div className="flex flex-wrap gap-1.5">
         {circuit.customGates.map((g) => (
           <div key={g.id} className="flex items-center gap-0.5">
-            <PaletteItem gate="CUSTOM" customId={g.id} label={latexToText(g.label)} title={g.label} />
+            <PaletteItem gate="CUSTOM" customId={g.id} label={<MathText latex={g.label} />} title={g.label} />
             <button
               type="button"
               onClick={() => commit(removeCustomGate(circuit, g.id))}
