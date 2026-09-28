@@ -4,21 +4,37 @@ Thanks for your interest in q-circuit-composer! Issues and pull requests are wel
 
 ## Reporting bugs and requesting features
 
-Open an [issue](../../issues). For bugs, include the app (Composer or qcircuit2latex), steps to reproduce, what you expected, and what happened. A screenshot or the circuit you built helps a lot.
+Open an [issue](../../issues). For bugs, include steps to reproduce, what you expected, and what happened. A share link (the link button in the toolbar) or a saved JSON of the circuit helps a lot.
 
 ## Development setup
 
-See the [Quick start](README.md#quick-start) in the README. Each app is independent and has its own dependencies:
+Requires Node.js 20 or later.
 
-| App | Directory | Checks to run before a PR |
-|---|---|---|
-| Composer frontend | `apps/composer/frontend` | `npx tsc --noEmit` and `npm run build` |
-| Composer backend | `apps/composer/backend` | start the server and try `POST /execute` |
-| qcircuit2latex | `apps/latex` | `npm run lint` and `npm run build` |
+```bash
+npm install
+npm run dev
+```
+
+| Path | What lives there |
+|---|---|
+| `packages/core` | Circuit model, editing operations, simulator, code generators. Pure TypeScript with unit tests (Vitest). |
+| `apps/web` | The React app. UI only: logic that can be tested without a browser belongs in `core`. |
+| `tools/reference` | Python scripts that check `core` against PennyLane, Qiskit and Qulacs. |
+
+## Before opening a pull request
+
+```bash
+npm test
+npm run typecheck
+npm run lint
+npm run build
+```
+
+If you change the simulator or a code generator, also run the reference checks described in [tools/reference/README.md](tools/reference/README.md). If you add a gate, add it to `generate_fixtures.py` and regenerate the fixtures.
 
 ## Pull requests
 
-1. Fork the repository and create a branch from `main` (e.g. `feat/latex-export-png`, `fix/cnot-drag`).
+1. Fork the repository and create a branch from `main` (e.g. `feat/latex-png-export`, `fix/cnot-drag`).
 2. Keep each PR focused on one change.
 3. Make sure the checks above pass.
 4. Describe what changed and why, and link the related issue (`Closes #123`).
