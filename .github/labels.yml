@@ -1,0 +1,56 @@
+# Repository labels, synced by .github/workflows/labels.yml on every push to main.
+# Edit this file (not the GitHub UI) to add or change labels.
+
+# Kind
+- name: bug
+  color: b04a4a
+  description: Something does not work as expected
+- name: enhancement
+  color: 3f7fa8
+  description: New feature or improvement
+- name: documentation
+  color: 5b7a99
+  description: README, CONTRIBUTING or code comments
+- name: question
+  color: 8a7fa8
+  description: Needs more information or discussion
+- name: dependencies
+  color: 6f7f8f
+  description: Dependency updates (Dependabot)
+
+# Area
+- name: 'area: editor'
+  color: c9d8e6
+  description: Circuit grid, drag and drop, inspector
+- name: 'area: simulator'
+  color: c9e3d6
+  description: State-vector simulation and results
+- name: 'area: codegen'
+  color: dcd5ee
+  description: PennyLane, Qiskit, Qulacs and OpenQASM output
+- name: 'area: latex'
+  color: efdfcb
+  description: quantikz output and the circuit preview
+- name: 'area: ui'
+  color: e3e0d8
+  description: Layout, theme, i18n, accessibility
+- name: 'area: ci'
+  color: d8d8d8
+  description: GitHub Actions, tooling, releases
+
+# Status
+- name: good first issue
+  color: 5e8c6a
+  description: Small, well-scoped task for new contributors
+- name: help wanted
+  color: 4f8a8b
+  description: Contributions welcome
+- name: duplicate
+  color: bdbdbd
+  description: Already reported
+- name: wontfix
+  color: 9e9e9e
+  description: Will not be changed
+- name: invalid
+  color: c7c7a8
+  description: Not a problem with this project

@@ -4,7 +4,11 @@ Thanks for your interest in q-circuit-composer! Issues and pull requests are wel
 
 ## Reporting bugs and requesting features
 
-Open an [issue](../../issues). For bugs, include steps to reproduce, what you expected, and what happened. A share link (the link button in the toolbar) or a saved JSON of the circuit helps a lot.
+Open an [issue](../../issues) and pick the bug report or feature request form. For bugs, a share link (the link button in the toolbar) or a saved JSON of the circuit helps a lot.
+
+Security problems go through [private vulnerability reporting](SECURITY.md), not public issues.
+
+Labels are defined in [`.github/labels.yml`](.github/labels.yml) and synced by a workflow; change them there rather than in the GitHub UI.
 
 ## Development setup
 
