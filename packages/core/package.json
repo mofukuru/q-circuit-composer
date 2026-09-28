@@ -13,7 +13,7 @@
     "export-cases": "vitest run test/export-cases.test.ts"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
+    "@types/node": "^26.6.2",
     "typescript": "~5.9.3",
     "vitest": "^5.0.2"
   }
