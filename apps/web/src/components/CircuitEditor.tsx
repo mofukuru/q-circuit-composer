@@ -1,6 +1,7 @@
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import {
   addOperation,
+  circuitDepth,
   createOperation,
   customLabel,
   type Operation,
@@ -267,6 +268,9 @@ export default function CircuitEditor() {
         <div className="flex flex-wrap items-center gap-4">
           <Stepper label={t('editor.qubits')} value={circuit.numQubits} min={1} max={MAX_QUBITS} onChange={(n) => commit(setNumQubits(circuit, n))} />
           <Stepper label={t('editor.steps')} value={circuit.numColumns} min={1} max={MAX_COLUMNS} onChange={(n) => commit(setNumColumns(circuit, n))} />
+          <span className="text-sm text-slate-600 dark:text-slate-300" title={t('editor.depthHelp')}>
+            {t('editor.depth')} <span className="font-mono tabular-nums">{circuitDepth(circuit)}</span>
+          </span>
         </div>
       </div>
       {tool && (

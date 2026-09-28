@@ -32,6 +32,11 @@ interface State extends Settings {
   notify: (message: string) => void;
   /** Applies an edit and records it for undo. Returns false (and changes nothing) for a null edit. */
   commit: (next: Circuit | null) => boolean;
+  /** Shows an edit without recording it, e.g. while a slider is dragged. `settle` records it as one undo step. */
+  preview: (next: Circuit) => void;
+  settle: () => void;
+  /** The circuit before the current run of previews started. */
+  draftBase: Circuit | null;
   undo: () => void;
   redo: () => void;
   select: (id: string | null) => void;
@@ -104,26 +109,34 @@ export const useStore = create<State>((set, get) => ({
       if (get().toast === message) set({ toast: null });
     }, 2500);
   },
+  draftBase: null,
   commit: (next) => {
     if (!next) return false;
-    const { circuit, past, selectedId } = get();
+    const { circuit, past, selectedId, draftBase } = get();
     set({
       circuit: next,
-      past: [...past, circuit].slice(-HISTORY_LIMIT),
+      past: [...past, draftBase ?? circuit].slice(-HISTORY_LIMIT),
       future: [],
+      draftBase: null,
       selectedId: next.operations.some((o) => o.id === selectedId) ? selectedId : null,
     });
     return true;
   },
+  preview: (next) => set((s) => ({ circuit: next, draftBase: s.draftBase ?? s.circuit })),
+  settle: () => {
+    const { draftBase, circuit, commit } = get();
+    if (draftBase && draftBase !== circuit) commit(circuit);
+    else set({ draftBase: null });
+  },
   undo: () => {
     const { circuit, past, future } = get();
     const prev = past.at(-1);
-    if (prev) set({ circuit: prev, past: past.slice(0, -1), future: [circuit, ...future] });
+    if (prev) set({ circuit: prev, past: past.slice(0, -1), future: [circuit, ...future], draftBase: null });
   },
   redo: () => {
     const { circuit, past, future } = get();
     const [next, ...rest] = future;
-    if (next) set({ circuit: next, past: [...past, circuit], future: rest });
+    if (next) set({ circuit: next, past: [...past, circuit], future: rest, draftBase: null });
   },
   select: (selectedId) => set({ selectedId }),
   setTool: (tool) => set({ tool }),

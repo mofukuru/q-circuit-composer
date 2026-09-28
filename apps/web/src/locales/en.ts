@@ -33,7 +33,9 @@ const en = {
   editor: {
     title: 'Circuit',
     qubits: 'Qubits',
-    steps: 'Steps',
+    steps: 'Columns',
+    depth: 'Depth',
+    depthHelp: 'Circuit depth: the number of layers after packing gates as early as possible',
     add: 'Add',
     remove: 'Remove',
     hint: 'Click a gate to edit it · drag to move · drag a control or target to rewire · right-click or Delete to remove',
@@ -44,6 +46,7 @@ const en = {
     title: 'Selected gate',
     none: 'Select a gate in the circuit to edit its angle, wires or basis.',
     angle: 'Angle',
+    angleSlider: 'Angle slider (steps of π/16)',
     angleHelp: 'e.g. pi/2, -3pi/4, 0.5, or a symbol like \\theta (LaTeX only)',
     symbolic: 'Symbolic: shown in LaTeX, needs a number to simulate',
     controls: 'Control',
@@ -52,7 +55,7 @@ const en = {
     customGate: 'Definition',
     size: 'Wires covered',
     delete: 'Delete gate',
-    step: 'Step {{n}}',
+    step: 'Column {{n}}',
   },
   output: {
     results: 'Results',

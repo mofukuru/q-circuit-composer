@@ -36,7 +36,8 @@ function useShortcuts() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
-      if (target.closest('input, textarea, select, [contenteditable]')) return;
+      // Leave keys to text fields; sliders and checkboxes have no undo of their own.
+      if (target.closest('input:not([type=range]):not([type=checkbox]), textarea, select, [contenteditable]')) return;
       const { undo, redo, selectedId, circuit, commit, select, setTool } = useStore.getState();
       const mod = e.ctrlKey || e.metaKey;
       if (mod && e.key.toLowerCase() === 'z') {

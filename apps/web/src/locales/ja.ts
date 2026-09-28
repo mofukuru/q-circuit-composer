@@ -35,7 +35,9 @@ const ja: Messages = {
   editor: {
     title: '回路',
     qubits: '量子ビット',
-    steps: 'ステップ',
+    steps: '列',
+    depth: '深さ',
+    depthHelp: '回路の深さ: ゲートをできるだけ左に詰めたときの層の数',
     add: '追加',
     remove: '削除',
     hint: 'クリックで編集 · ドラッグで移動 · 制御点やターゲットをドラッグして配線変更 · 右クリックか Delete で削除',
@@ -46,6 +48,7 @@ const ja: Messages = {
     title: '選択中のゲート',
     none: '回路のゲートを選択すると、角度・配線・測定基底を編集できます。',
     angle: '角度',
+    angleSlider: '角度スライダー（π/16 刻み）',
     angleHelp: '例: pi/2, -3pi/4, 0.5、または \\theta のような記号（LaTeX のみ）',
     symbolic: '記号: LaTeX には出力されます。シミュレーションには数値が必要です',
     controls: '制御',
@@ -54,7 +57,7 @@ const ja: Messages = {
     customGate: '定義',
     size: '対象の量子ビット数',
     delete: 'ゲートを削除',
-    step: 'ステップ {{n}}',
+    step: '{{n}} 列目',
   },
   output: {
     results: '結果',

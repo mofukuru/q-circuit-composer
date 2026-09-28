@@ -61,6 +61,21 @@ export function orderedOperations(circuit: Circuit): Operation[] {
   return [...circuit.operations].sort((a, b) => a.column - b.column || spanOf(a)[0] - spanOf(b)[0]);
 }
 
+/**
+ * Circuit depth: the number of layers when every operation is pushed as early
+ * as its wires allow. Empty columns do not count, and gates on disjoint wires
+ * share a layer even if they were drawn in different columns.
+ */
+export function circuitDepth(circuit: Circuit): number {
+  const level = new Array<number>(circuit.numQubits).fill(0);
+  for (const op of orderedOperations(circuit)) {
+    const wires = wiresOf(op);
+    const layer = Math.max(...wires.map((w) => level[w] ?? 0)) + 1;
+    for (const w of wires) level[w] = layer;
+  }
+  return Math.max(0, ...level);
+}
+
 /** Readout basis per explicitly measured wire; the last measurement on a wire wins. */
 export function measurementBases(circuit: Circuit): Map<number, Basis> {
   const bases = new Map<number, Basis>();

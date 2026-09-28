@@ -3,6 +3,7 @@ import {
   addCustomGate,
   addOperation,
   type Circuit,
+  circuitDepth,
   createCircuit,
   createOperation,
   decodeCircuit,
@@ -78,6 +79,19 @@ describe('editing', () => {
     const smaller = setNumQubits(circuit, 2);
     expect(smaller.operations).toEqual([]);
     expect(smaller.qubitLabels).toHaveLength(2);
+  });
+});
+
+describe('circuitDepth', () => {
+  it('counts layers, ignoring empty columns and packing disjoint gates', () => {
+    expect(circuitDepth(createCircuit(3))).toBe(0);
+    let c = place(createCircuit(3, 12), 'H', 5, 0).circuit;
+    c = place(c, 'H', 9, 2).circuit;
+    expect(circuitDepth(c)).toBe(1);
+    c = place(c, 'CNOT', 10, 0).circuit; // q0 -> q1, after H on q0
+    expect(circuitDepth(c)).toBe(2);
+    c = place(c, 'X', 11, 1).circuit;
+    expect(circuitDepth(c)).toBe(3);
   });
 });
 
