@@ -17,6 +17,7 @@ const ja: Messages = {
     import: 'JSON を開く',
     importError: 'ファイルを開けませんでした: {{message}}',
     language: '言語',
+    more: 'その他',
     theme: 'テーマ',
     themes: { light: 'ライト', dark: 'ダーク', system: 'システム' },
   },
