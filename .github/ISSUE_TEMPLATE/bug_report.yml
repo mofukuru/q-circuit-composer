@@ -1,0 +1,46 @@
+name: Bug report / 不具合の報告
+description: Something does not work as expected. / 期待どおりに動かない
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! English or Japanese is fine. / 日本語でも英語でも大丈夫です。
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened? / 何が起きましたか
+      description: Include what you expected to happen. / 期待していた動作も書いてください。
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce / 再現手順
+      placeholder: |
+        1. Place H on q0
+        2. ...
+    validations:
+      required: true
+  - type: input
+    id: circuit
+    attributes:
+      label: Share link / 共有リンク
+      description: Toolbar → "Copy share link". It lets us open your exact circuit. / ツールバーの「共有リンクをコピー」で回路をそのまま共有できます。
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where? / どの部分ですか
+      options:
+        - Editor / エディタ
+        - Simulation results / シミュレーション結果
+        - Code output (PennyLane, Qiskit, Qulacs, OpenQASM) / コード出力
+        - LaTeX output or preview / LaTeX 出力・プレビュー
+        - Other / その他
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and OS / ブラウザと OS
+      placeholder: Chrome 140 on Windows 11
