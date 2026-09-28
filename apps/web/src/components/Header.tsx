@@ -2,7 +2,7 @@ import { clearOperations, encodeCircuit, parseCircuit, serializeCircuit } from '
 import { Code, FolderOpen, Link2, Monitor, Moon, Redo2, Save, Sun, Trash2, Undo2 } from 'lucide-react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { type Look, type Theme, useStore } from '../store';
+import { type Theme, useStore } from '../store';
 
 export const REPO_URL = 'https://github.com/mofukuru/q-circuit-composer';
 
@@ -17,7 +17,6 @@ export default function Header() {
   const canUndo = useStore((s) => s.past.length > 0);
   const canRedo = useStore((s) => s.future.length > 0);
   const theme = useStore((s) => s.theme);
-  const look = useStore((s) => s.look);
   const { undo, redo, set, notify } = useStore.getState();
   const fileInput = useRef<HTMLInputElement>(null);
   const ThemeIcon = THEME_ICON[theme];
@@ -58,21 +57,6 @@ export default function Header() {
           </div>
         </div>
         <nav className="flex flex-wrap items-center gap-0.5">
-          {/* Temporary: compare design options A and B. Remove once one is chosen. */}
-          <div role="radiogroup" aria-label={t('toolbar.look')} title={t('toolbar.look')} className="mr-2 inline-flex rounded-lg border border-line-strong p-0.5">
-            {(['lab', 'obsidian'] as Look[]).map((l) => (
-              <button
-                key={l}
-                type="button"
-                role="radio"
-                aria-checked={look === l}
-                onClick={() => set({ look: l })}
-                className={`rounded-md px-2 py-0.5 text-xs font-medium ${look === l ? 'accent-fill' : 'text-muted hover:bg-surface-2'}`}
-              >
-                {t(`toolbar.looks.${l}`)}
-              </button>
-            ))}
-          </div>
           <button type="button" className={iconBtn} onClick={undo} disabled={!canUndo} title={`${t('toolbar.undo')} (Ctrl+Z)`} aria-label={t('toolbar.undo')}>
             <Undo2 size={18} />
           </button>

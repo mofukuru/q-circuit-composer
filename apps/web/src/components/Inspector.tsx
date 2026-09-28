@@ -100,7 +100,7 @@ function AngleInput({ op, index }: { op: Operation; index: number }) {
             onClick={() => useStore.getState().commit(withParam(piFraction(k)))}
             className={`flex-1 rounded border px-1 py-0.5 font-mono text-xs ${
               param === piFraction(k)
-                ? 'accent-fill border-transparent'
+                ? 'border-transparent bg-accent text-accent-ink'
                 : 'border-line-strong hover:bg-surface-2'
             }`}
           >
@@ -169,7 +169,7 @@ function BasisPicker({ op }: { op: Operation }) {
             onClick={() => setBasis(b)}
             className={`flex-1 rounded-md border px-2 py-1 font-mono text-sm ${
               (op.basis ?? 'Z') === b
-                ? 'accent-fill border-transparent'
+                ? 'border-transparent bg-accent text-accent-ink'
                 : 'border-line-strong hover:bg-surface-2'
             }`}
           >

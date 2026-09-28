@@ -3,11 +3,10 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * Design tokens. Components only use these names; each look (data-look on
- * <html>) and color scheme (.dark) supplies the values.
- *
- *   lab      - calm, paper-like, textbook-figure gates (option A)
- *   obsidian - deep dark glass, gradient gates with glow (option B)
+ * Design tokens. Components only use these names; :root and .dark supply
+ * the values. The look is calm and paper-like, with gates drawn like
+ * textbook figures: pale fills, ink outlines, no gradients or glow, and a
+ * narrow saturation range so nothing competes with the circuit.
  */
 @theme inline {
   --font-sans: var(--font-ui);
@@ -35,16 +34,13 @@
   --color-code-line: var(--code-line);
 }
 
-/* ---------- A: lab notebook ---------- */
-:root,
-:root[data-look='lab'] {
+:root {
   --font-ui: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
   --font-code: 'IBM Plex Mono', ui-monospace, monospace;
   --font-label: 'STIX Two Text', 'Times New Roman', serif;
   --radius: 10px;
 
   --canvas: #f6f5f1;
-  --canvas-image: none;
   --surface: #fffefb;
   --surface-2: #efede7;
   --field: #fffefb;
@@ -54,7 +50,6 @@
   --muted: #625d53;
   --faint: #969083;
   --accent: #1f5f8b;
-  --accent-fill: #1f5f8b;
   --accent-ink: #ffffff;
   --accent-soft: #1f5f8b;
   --wire: #8f8a7d;
@@ -65,7 +60,6 @@
   --code-ink: #eceae3;
   --code-line: #3a3833;
   --panel-shadow: 0 1px 2px rgb(40 36 28 / 0.06);
-  --panel-blur: none;
 
   --g-single: #e6eff8;
   --g-single-fg: #163a5c;
@@ -82,12 +76,10 @@
   --g-custom: #f6ece1;
   --g-custom-fg: #5a3514;
   --g-custom-line: #9a6a3a;
-  --g-glow: none;
   --g-border: 1.5px;
 }
 
-:root.dark,
-:root[data-look='lab'].dark {
+:root.dark {
   --canvas: #141412;
   --surface: #1c1c19;
   --surface-2: #272622;
@@ -98,7 +90,6 @@
   --muted: #a8a397;
   --faint: #767165;
   --accent: #8dbde3;
-  --accent-fill: #8dbde3;
   --accent-ink: #0e1a24;
   --accent-soft: #9fc8ea;
   --wire: #6b675c;
@@ -127,84 +118,9 @@
   --g-custom-line: #c8955f;
 }
 
-/* ---------- B: obsidian ---------- */
-:root[data-look='obsidian'] {
-  --font-ui: 'Geist', 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-code: 'Geist Mono', ui-monospace, monospace;
-  --font-label: 'Geist', ui-sans-serif, sans-serif;
-  --radius: 14px;
-
-  --canvas: #f3f3f7;
-  --canvas-image: radial-gradient(60rem 40rem at 0% 0%, rgb(139 92 246 / 0.12), transparent 60%),
-    radial-gradient(50rem 40rem at 100% 100%, rgb(6 182 212 / 0.1), transparent 60%);
-  --surface: rgb(255 255 255 / 0.66);
-  --surface-2: rgb(20 20 40 / 0.05);
-  --field: rgb(255 255 255 / 0.85);
-  --line: rgb(20 20 40 / 0.09);
-  --line-strong: rgb(20 20 40 / 0.16);
-  --ink: #15151d;
-  --muted: #5a5a6c;
-  --faint: #8d8d9e;
-  --accent: #7c3aed;
-  --accent-fill: linear-gradient(135deg, #7c3aed, #4f46e5 55%, #0891b2);
-  --accent-ink: #ffffff;
-  --accent-soft: #6d28d9;
-  --wire: rgb(20 20 40 / 0.22);
-  --ctrl: #7c3aed;
-  --ctrl-ink: #ffffff;
-  --sel: #f59e0b;
-  --code-bg: #0d0d14;
-  --code-ink: #e7e7f0;
-  --code-line: rgb(255 255 255 / 0.08);
-  --panel-shadow: 0 1px 0 rgb(255 255 255 / 0.6) inset, 0 8px 30px rgb(30 20 60 / 0.08);
-  --panel-blur: blur(16px);
-
-  --g-single: linear-gradient(135deg, #3b82f6, #06b6d4);
-  --g-single-fg: #ffffff;
-  --g-single-line: rgb(255 255 255 / 0.25);
-  --g-rot: linear-gradient(135deg, #10b981, #0d9488);
-  --g-rot-fg: #ffffff;
-  --g-rot-line: rgb(255 255 255 / 0.25);
-  --g-multi: linear-gradient(135deg, #8b5cf6, #6366f1);
-  --g-multi-fg: #ffffff;
-  --g-multi-line: rgb(255 255 255 / 0.25);
-  --g-meas: linear-gradient(135deg, #52525b, #27272a);
-  --g-meas-fg: #ffffff;
-  --g-meas-line: rgb(255 255 255 / 0.2);
-  --g-custom: linear-gradient(135deg, #ec4899, #f43f5e);
-  --g-custom-fg: #ffffff;
-  --g-custom-line: rgb(255 255 255 / 0.25);
-  --g-glow: 0 4px 14px -4px var(--glow, rgb(99 102 241 / 0.55));
-  --g-border: 1px;
-}
-
-:root[data-look='obsidian'].dark {
-  --canvas: #07070b;
-  --canvas-image: radial-gradient(60rem 40rem at 0% 0%, rgb(139 92 246 / 0.18), transparent 60%),
-    radial-gradient(50rem 40rem at 100% 100%, rgb(6 182 212 / 0.12), transparent 60%);
-  --surface: rgb(22 22 32 / 0.62);
-  --surface-2: rgb(255 255 255 / 0.05);
-  --field: rgb(10 10 16 / 0.7);
-  --line: rgb(255 255 255 / 0.08);
-  --line-strong: rgb(255 255 255 / 0.16);
-  --ink: #ececf2;
-  --muted: #a0a0b2;
-  --faint: #6c6c7e;
-  --accent: #a78bfa;
-  --accent-ink: #ffffff;
-  --accent-soft: #c4b5fd;
-  --wire: rgb(255 255 255 / 0.2);
-  --ctrl: #a78bfa;
-  --code-bg: rgb(5 5 9 / 0.8);
-  --code-line: rgb(255 255 255 / 0.07);
-  --panel-shadow: 0 1px 0 rgb(255 255 255 / 0.05) inset, 0 20px 50px rgb(0 0 0 / 0.45);
-}
-
-/* ---------- shared component styles ---------- */
+/* ---------- component styles ---------- */
 body {
   background-color: var(--canvas);
-  background-image: var(--canvas-image);
-  background-attachment: fixed;
   color: var(--ink);
   font-family: var(--font-ui);
   -webkit-font-smoothing: antialiased;
@@ -215,49 +131,36 @@ body {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--panel-shadow);
-  backdrop-filter: var(--panel-blur);
-  -webkit-backdrop-filter: var(--panel-blur);
-}
-
-.accent-fill {
-  background: var(--accent-fill);
-  color: var(--accent-ink);
 }
 
 .gate {
   border-style: solid;
   border-width: var(--g-border);
-  box-shadow: var(--g-glow);
 }
 .gate-single {
   background: var(--g-single);
   color: var(--g-single-fg);
   border-color: var(--g-single-line);
-  --glow: rgb(59 130 246 / 0.55);
 }
 .gate-rotation {
   background: var(--g-rot);
   color: var(--g-rot-fg);
   border-color: var(--g-rot-line);
-  --glow: rgb(16 185 129 / 0.5);
 }
 .gate-multi {
   background: var(--g-multi);
   color: var(--g-multi-fg);
   border-color: var(--g-multi-line);
-  --glow: rgb(139 92 246 / 0.55);
 }
 .gate-measure {
   background: var(--g-meas);
   color: var(--g-meas-fg);
   border-color: var(--g-meas-line);
-  --glow: rgb(0 0 0 / 0.35);
 }
 .gate-custom {
   background: var(--g-custom);
   color: var(--g-custom-fg);
   border-color: var(--g-custom-line);
-  --glow: rgb(236 72 153 / 0.5);
 }
 
 input[type='range'] {

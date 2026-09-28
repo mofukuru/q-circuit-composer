@@ -23,10 +23,6 @@ import { useStore } from './store';
 
 function useTheme() {
   const theme = useStore((s) => s.theme);
-  const look = useStore((s) => s.look);
-  useEffect(() => {
-    document.documentElement.dataset.look = look;
-  }, [look]);
   useEffect(() => {
     const media = matchMedia('(prefers-color-scheme: dark)');
     const apply = () => document.documentElement.classList.toggle('dark', theme === 'dark' || (theme === 'system' && media.matches));

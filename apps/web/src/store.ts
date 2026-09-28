@@ -4,8 +4,6 @@ import { create } from 'zustand';
 export type ResultMode = 'probs' | 'expval';
 export type OutputTab = 'results' | 'code' | 'latex';
 export type Theme = 'light' | 'dark' | 'system';
-/** Visual design being compared: A (lab notebook) or B (obsidian). */
-export type Look = 'lab' | 'obsidian';
 
 /** A gate chosen in the palette with a click, waiting to be placed with a click on a cell. */
 export interface Tool {
@@ -21,7 +19,6 @@ interface Settings {
   codeFormat: Exclude<CodeFormat, 'latex'>;
   latexStandalone: boolean;
   theme: Theme;
-  look: Look;
 }
 
 interface State extends Settings {
@@ -60,7 +57,6 @@ const DEFAULT_SETTINGS: Settings = {
   codeFormat: 'pennylane',
   latexStandalone: false,
   theme: 'system',
-  look: 'lab',
 };
 
 // Browser storage can be unavailable (private windows, blocked site data), so every access is guarded.

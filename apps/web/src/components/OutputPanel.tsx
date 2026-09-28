@@ -18,7 +18,7 @@ function Segmented<T extends string>({ value, options, onChange, label }: { valu
           role="radio"
           aria-checked={value === o.value}
           onClick={() => onChange(o.value)}
-          className={`rounded-md px-2.5 py-1 text-sm ${value === o.value ? 'accent-fill' : 'text-muted hover:bg-surface-2'}`}
+          className={`rounded-md px-2.5 py-1 text-sm ${value === o.value ? 'bg-accent text-accent-ink' : 'text-muted hover:bg-surface-2'}`}
         >
           {o.label}
         </button>
@@ -72,7 +72,7 @@ function Bars({ entries, format }: { entries: [string, number][]; format: (v: nu
         <li key={state} className="grid grid-cols-[auto_1fr_4.5rem] items-center gap-2 text-sm">
           <span className="font-mono text-ink">|{state}⟩</span>
           <div className="h-4 overflow-hidden rounded bg-surface-2">
-            <div className="h-full accent-fill rounded transition-[width] duration-300" style={{ width: `${Math.max(0, Math.min(1, value)) * 100}%` }} />
+            <div className="h-full rounded bg-accent transition-[width] duration-300" style={{ width: `${Math.max(0, Math.min(1, value)) * 100}%` }} />
           </div>
           <span className="text-right font-mono text-xs tabular-nums text-muted">{format(value)}</span>
         </li>
@@ -90,7 +90,7 @@ function ExpectationBars({ values, labels }: { values: [number, number][]; label
           <div className="relative h-4 rounded bg-surface-2">
             <div className="absolute inset-y-0 left-1/2 w-px bg-wire" />
             <div
-              className="absolute inset-y-0 accent-fill rounded"
+              className="absolute inset-y-0 rounded bg-accent"
               style={v >= 0 ? { left: '50%', width: `${v * 50}%` } : { right: '50%', width: `${-v * 50}%` }}
             />
           </div>
