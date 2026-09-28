@@ -1,0 +1,168 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Design tokens. Components only use these names; :root and .dark supply
+ * the values. The look is calm and paper-like, with gates drawn like
+ * textbook figures: pale fills, ink outlines, no gradients or glow, and a
+ * narrow saturation range so nothing competes with the circuit.
+ */
+@theme inline {
+  --font-sans: var(--font-ui);
+  --font-mono: var(--font-code);
+  --font-serif: var(--font-label);
+
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-field: var(--field);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-wire: var(--wire);
+  --color-ctrl: var(--ctrl);
+  --color-ctrl-ink: var(--ctrl-ink);
+  --color-sel: var(--sel);
+  --color-code: var(--code-bg);
+  --color-code-ink: var(--code-ink);
+  --color-code-line: var(--code-line);
+}
+
+:root {
+  --font-ui: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-code: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-label: 'STIX Two Text', 'Times New Roman', serif;
+  --radius: 10px;
+
+  --canvas: #f6f5f1;
+  --surface: #fffefb;
+  --surface-2: #efede7;
+  --field: #fffefb;
+  --line: #e4e1d8;
+  --line-strong: #cfcabd;
+  --ink: #1f1d1a;
+  --muted: #625d53;
+  --faint: #969083;
+  --accent: #1f5f8b;
+  --accent-ink: #ffffff;
+  --accent-soft: #1f5f8b;
+  --wire: #8f8a7d;
+  --ctrl: #1f1d1a;
+  --ctrl-ink: #ffffff;
+  --sel: #d97706;
+  --code-bg: #23221f;
+  --code-ink: #eceae3;
+  --code-line: #3a3833;
+  --panel-shadow: 0 1px 2px rgb(40 36 28 / 0.06);
+
+  --g-single: #e6eff8;
+  --g-single-fg: #163a5c;
+  --g-single-line: #2f5f8f;
+  --g-rot: #e3f1ea;
+  --g-rot-fg: #174a38;
+  --g-rot-line: #2e7a5c;
+  --g-multi: #ece8f6;
+  --g-multi-fg: #33285e;
+  --g-multi-line: #5a4a9a;
+  --g-meas: #efede7;
+  --g-meas-fg: #1f1d1a;
+  --g-meas-line: #4b473f;
+  --g-custom: #f6ece1;
+  --g-custom-fg: #5a3514;
+  --g-custom-line: #9a6a3a;
+  --g-border: 1.5px;
+}
+
+:root.dark {
+  --canvas: #141412;
+  --surface: #1c1c19;
+  --surface-2: #272622;
+  --field: #161614;
+  --line: #33322d;
+  --line-strong: #47453e;
+  --ink: #ebe8e0;
+  --muted: #a8a397;
+  --faint: #767165;
+  --accent: #8dbde3;
+  --accent-ink: #0e1a24;
+  --accent-soft: #9fc8ea;
+  --wire: #6b675c;
+  --ctrl: #ebe8e0;
+  --ctrl-ink: #141412;
+  --sel: #f59e0b;
+  --code-bg: #0f0f0d;
+  --code-ink: #e6e3da;
+  --code-line: #2b2a26;
+  --panel-shadow: none;
+
+  --g-single: #1d2c3a;
+  --g-single-fg: #d3e5f6;
+  --g-single-line: #6a9ccc;
+  --g-rot: #1b2f28;
+  --g-rot-fg: #d1efe2;
+  --g-rot-line: #62b394;
+  --g-multi: #272238;
+  --g-multi-fg: #e0d9f8;
+  --g-multi-line: #9d8ee0;
+  --g-meas: #272622;
+  --g-meas-fg: #ebe8e0;
+  --g-meas-line: #8f8a7d;
+  --g-custom: #33261a;
+  --g-custom-fg: #f3dcc3;
+  --g-custom-line: #c8955f;
+}
+
+/* ---------- component styles ---------- */
+body {
+  background-color: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--panel-shadow);
+}
+
+.gate {
+  border-style: solid;
+  border-width: var(--g-border);
+}
+.gate-single {
+  background: var(--g-single);
+  color: var(--g-single-fg);
+  border-color: var(--g-single-line);
+}
+.gate-rotation {
+  background: var(--g-rot);
+  color: var(--g-rot-fg);
+  border-color: var(--g-rot-line);
+}
+.gate-multi {
+  background: var(--g-multi);
+  color: var(--g-multi-fg);
+  border-color: var(--g-multi-line);
+}
+.gate-measure {
+  background: var(--g-meas);
+  color: var(--g-meas-fg);
+  border-color: var(--g-meas-line);
+}
+.gate-custom {
+  background: var(--g-custom);
+  color: var(--g-custom-fg);
+  border-color: var(--g-custom-line);
+}
+
+input[type='range'] {
+  accent-color: var(--accent);
+}

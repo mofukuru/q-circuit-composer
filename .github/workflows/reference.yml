@@ -1,0 +1,44 @@
+name: Reference check
+
+# Runs the code that @qcc/core generates with the real frameworks
+# (PennyLane, Qiskit, Qulacs) and compares it with the reference results.
+on:
+  pull_request:
+    paths:
+      - packages/core/**
+      - tools/reference/**
+      - .github/workflows/reference.yml
+  push:
+    branches: [main]
+    paths:
+      - packages/core/**
+      - tools/reference/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Generated code matches PennyLane
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/reference/requirements.txt
+      - run: npm ci
+      - run: pip install -r tools/reference/requirements.txt
+      - name: Export generated code
+        run: npx vitest run test/codegen.test.ts
+        working-directory: packages/core
+        env:
+          QCC_EXPORT: ${{ runner.temp }}/generated.json
+      - name: Run it with PennyLane, Qiskit and Qulacs
+        run: python tools/reference/verify_codegen.py "$RUNNER_TEMP/generated.json"

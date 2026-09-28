@@ -1,76 +1,74 @@
 # q-circuit-composer
 
-Browser-based tools for building quantum circuits visually.
+Build quantum circuits in your browser, simulate them, and export code or LaTeX. Everything runs client-side, with no server or account.
 
 [日本語](#日本語)
 
-| App | What it does | Path |
-|---|---|---|
-| **Composer** | Drag-and-drop circuit editor with simulation and code generation for PennyLane, Qiskit, Qulacs and OpenQASM 2.0 | [`apps/composer`](apps/composer) |
-| **qcircuit2latex** | Drag-and-drop circuit editor that exports [quantikz](https://ctan.org/pkg/quantikz) LaTeX code for papers and reports | [`apps/latex`](apps/latex) |
+## Features
+
+- **Visual editor**: drag gates onto a grid, rewire controls and targets by dragging, undo/redo
+- **In-browser simulation**: exact probabilities, sampled counts, or per-wire ⟨Z⟩, up to 16 qubits
+- **Code export** for PennyLane, Qiskit, Qulacs and OpenQASM 2.0
+- **LaTeX export** with [quantikz](https://ctan.org/pkg/quantikz), including symbolic angles (`\theta/2`), custom gates and qubit labels
+- **Share links** and JSON save/load
+- English and Japanese UI, light and dark themes
+
+### Gates
+
+| Kind | Gates |
+|---|---|
+| Single-qubit | H, X, Y, Z, S, T, RX, RY, RZ |
+| Multi-qubit | CNOT, CY, CZ, CRX, CRY, CRZ, SWAP, Toffoli (CCX), Fredkin (CSWAP) |
+| Measurement | Readout in the Z, X or Y basis |
+| Custom | Labelled boxes over one or more wires (LaTeX only) |
+
+Angles accept expressions such as `pi/2`, `-3pi/4` or `0.25`. Symbols like `\theta` are kept in LaTeX and declared as variables in the Python outputs; simulation needs numeric angles.
+
+Measurements set the readout basis of their wire and are applied at the end of the circuit. Mid-circuit measurement is not supported yet.
 
 ## Repository layout
 
 ```
-apps/
-├── composer/
-│   ├── frontend/   # React + TypeScript (Create React App)
-│   └── backend/    # FastAPI + PennyLane simulation API
-└── latex/          # Next.js + Tailwind CSS + Zustand
+apps/web/          # the web app: Vite + React + TypeScript + Tailwind CSS
+packages/core/     # circuit model, simulator and code generators (no UI dependencies)
+tools/reference/   # Python scripts that check core against PennyLane, Qiskit and Qulacs
 ```
 
-## Quick start
+## Development
 
-Requirements: Node.js 20+ and Python 3.10+ (Composer backend only).
-
-### Composer
+Requires Node.js 20.19+ or 22.12+ (see `.nvmrc`).
 
 ```bash
-# backend (http://localhost:8000)
-cd apps/composer/backend
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
-
-# frontend (http://localhost:3000), in another terminal
-cd apps/composer/frontend
-npm ci
-npm start
+npm install
+npm run dev        # http://localhost:5173
+npm test           # core unit tests, including the PennyLane reference cases
+npm run typecheck
+npm run lint
+npm run build      # static site in apps/web/dist
 ```
 
-### qcircuit2latex
-
-```bash
-cd apps/latex
-npm ci
-npm run dev   # http://localhost:3000
-```
-
-See each app's README for details.
-
-## Roadmap
-
-- Publish both apps on GitHub Pages
-- In-browser simulator for Composer, so it runs without a Python server
-- CI for lint, type checking, build and tests
+The simulator is checked against results computed with PennyLane, and the generated code is executed with the real frameworks. See [tools/reference](tools/reference/README.md).
 
 ## Contributing
 
-Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md).
+Issues and pull requests are welcome in English or Japanese. See [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## License
 
 [MIT](LICENSE) © mofukuru
 
-The LaTeX output uses the [quantikz](https://ctan.org/pkg/quantikz) package, which you install in your own TeX distribution; it is not bundled with this project.
+LaTeX output uses the [quantikz](https://ctan.org/pkg/quantikz) package from your own TeX distribution; it is not bundled with this project.
 
 ---
 
 ## 日本語
 
-量子回路をブラウザ上で視覚的に組み立てるためのツール群です。
+量子回路をブラウザ上で組み立てて、シミュレーションし、コードや LaTeX として出力できるツールです。すべてブラウザ内で動くので、サーバーやアカウントは不要です。
 
-- **Composer**（`apps/composer`）: ドラッグ＆ドロップで回路を作成し、シミュレーション結果の表示と PennyLane / Qiskit / Qulacs / OpenQASM 2.0 のコード生成を行います。
-- **qcircuit2latex**（`apps/latex`）: ドラッグ＆ドロップで作成した回路を、論文・レポート向けの quantikz 形式 LaTeX コードとして出力します。
+- **回路エディタ**：ゲートをグリッドにドラッグして配置します。制御点やターゲットをドラッグすると配線を変えられます。元に戻す／やり直しに対応しています。
+- **ブラウザ内シミュレーション**：厳密な確率、サンプリング結果、各量子ビットの ⟨Z⟩ を表示します（最大 16 量子ビット）。
+- **コード出力**：PennyLane / Qiskit / Qulacs / OpenQASM 2.0
+- **LaTeX 出力**：quantikz 形式。`\theta/2` のような記号の角度、カスタムゲート、量子ビットのラベルに対応しています。
+- **共有リンク**と JSON での保存・読み込み。日本語・英語の表示、ライト・ダークテーマ。
 
-起動方法は上記の Quick start を参照してください。Issue や Pull Request は日本語でも英語でも歓迎します。
+開発環境の起動方法は上の Development を参照してください。Issue や Pull Request は日本語でも英語でも歓迎します。
