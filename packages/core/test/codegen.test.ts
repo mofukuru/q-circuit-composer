@@ -92,13 +92,23 @@ describe('generateCode', () => {
       [
         '\\begin{quantikz}',
         '  \\lstick{$|q_{0}\\rangle$} & \\gate{H} & \\ctrl{2} & \\qw & \\gate[2]{U_f} & \\meter{X} \\\\',
-        '  \\lstick{$|q_{1}\\rangle$} & \\qw & \\qw & \\swap{1} & \\qw & \\qw \\\\',
-        '  \\lstick{$|q_{2}\\rangle$} & \\qw & \\targ{} & \\targX{} & \\gate{R_y(\\theta/2)} & \\qw',
+        '  \\lstick{$|q_{1}\\rangle$} & \\qw & \\qw & \\swap{1} & \\qw & \\qw & \\qw \\\\',
+        '  \\lstick{$|q_{2}\\rangle$} & \\qw & \\targ{} & \\targX{} & \\gate{R_y(\\theta/2)} & \\qw & \\qw',
         '\\end{quantikz}',
         '',
       ].join('\n'),
     );
     expect(generateCode(c, 'pennylane').issues.some((i) => /Custom/.test(i.message))).toBe(true);
+  });
+
+  it('LaTeX pads wires on the right and ends measured wires at the meter', () => {
+    const c = circuitOf(2, [
+      { gate: 'MEASURE', targets: [0] },
+      { gate: 'X', targets: [1] },
+    ]);
+    const lines = generateCode(c, 'latex').code.split('\n');
+    expect(lines[1]).toBe('  \\lstick{$|q_{0}\\rangle$} & \\meter{} \\\\');
+    expect(lines[2]).toBe('  \\lstick{$|q_{1}\\rangle$} & \\qw & \\gate{X} & \\qw');
   });
 
   it('LaTeX standalone document compiles as a unit', () => {

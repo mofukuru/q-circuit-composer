@@ -63,7 +63,13 @@ export function generateLatex(circuit: Circuit, opts: CodegenOptions = {}): Code
 
   const rows = grid.map((cells, q) => {
     const label = circuit.qubitLabels[q] ?? `q_{${q}}`;
-    return [`\\lstick{$${label}$}`, ...(cells.length > 0 ? cells : ['\\qw'])].join(' & ');
+    // A wire ends at its measurement: later empty cells stay blank. Other wires
+    // get one extra \qw so the last gate does not sit at the very edge.
+    const lastMeter = cells.findLastIndex((c) => c.startsWith('\\meter'));
+    const trailing = cells.map((c, i) => (lastMeter >= 0 && i > lastMeter && c === '\\qw' ? '' : c));
+    while (trailing.at(-1) === '') trailing.pop();
+    const padded = lastMeter >= 0 ? trailing : [...trailing, '\\qw'];
+    return [`\\lstick{$${label}$}`, ...padded].join(' & ');
   });
   const body = ['\\begin{quantikz}', ...rows.map((r, i) => `  ${r}${i < rows.length - 1 ? ' \\\\' : ''}`), '\\end{quantikz}'];
 
