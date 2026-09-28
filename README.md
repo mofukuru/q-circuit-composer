@@ -36,7 +36,7 @@ tools/reference/   # Python scripts that check core against PennyLane, Qiskit an
 
 ## Development
 
-Requires Node.js 20 or later.
+Requires Node.js 20.19+ or 22.12+ (see `.nvmrc`).
 
 ```bash
 npm install

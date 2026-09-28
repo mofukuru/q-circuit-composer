@@ -8,7 +8,7 @@ Open an [issue](../../issues). For bugs, include steps to reproduce, what you ex
 
 ## Development setup
 
-Requires Node.js 20 or later.
+Requires Node.js 20.19+ or 22.12+ (see `.nvmrc`).
 
 ```bash
 npm install
