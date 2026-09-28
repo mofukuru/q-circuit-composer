@@ -15,6 +15,8 @@ const en = {
     import: 'Open JSON',
     importError: 'Could not open the file: {{message}}',
     language: 'Language',
+    look: 'Design (comparing options)',
+    looks: { lab: 'A · Lab', obsidian: 'B · Obsidian' },
     theme: 'Theme',
     themes: { light: 'Light', dark: 'Dark', system: 'System' },
   },

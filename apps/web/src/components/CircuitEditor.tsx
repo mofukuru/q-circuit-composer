@@ -87,24 +87,24 @@ function Part({ op, item, row, children, className = '' }: { op: Operation; item
       style={cellStyle(row, op.column)}
       className={`absolute z-10 flex touch-none items-center justify-center select-none ${isDragging ? 'opacity-30' : ''}`}
     >
-      <div className={`flex items-center justify-center ${selected ? 'rounded-md ring-2 ring-amber-400 ring-offset-1 ring-offset-white dark:ring-offset-slate-900' : ''} ${className}`}>
+      <div className={`flex items-center justify-center ${selected ? 'rounded-md ring-2 ring-sel ring-offset-1 ring-offset-canvas' : ''} ${className}`}>
         {children}
       </div>
     </div>
   );
 }
 
-const Dot = () => <div className="size-3.5 rounded-full bg-indigo-600 dark:bg-indigo-400" />;
+const Dot = () => <div className="size-3.5 rounded-full bg-ctrl" />;
 
 const Oplus = () => (
-  <svg viewBox="0 0 28 28" className="size-7 text-indigo-600 dark:text-indigo-400">
+  <svg viewBox="0 0 28 28" className="size-7 text-ctrl">
     <circle cx="14" cy="14" r="12" fill="currentColor" />
-    <path d="M14 6v16M6 14h16" stroke="white" strokeWidth="2.5" />
+    <path d="M14 6v16M6 14h16" className="stroke-ctrl-ink" strokeWidth="2.5" />
   </svg>
 );
 
 const Cross = () => (
-  <svg viewBox="0 0 20 20" className="size-5 text-indigo-600 dark:text-indigo-400">
+  <svg viewBox="0 0 20 20" className="size-5 text-ctrl">
     <path d="M4 4l12 12M16 4L4 16" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
   </svg>
 );
@@ -128,7 +128,7 @@ function OperationView({ op }: { op: Operation }) {
   const angle = op.params[0] !== undefined ? prettyAngle(op.params[0]) : undefined;
   const line = hi > lo && op.gate !== 'CUSTOM' && (
     <div
-      className={`absolute w-0.5 ${selected ? 'bg-amber-400' : 'bg-indigo-600 dark:bg-indigo-400'}`}
+      className={`absolute w-0.5 ${selected ? 'bg-amber-400' : 'bg-ctrl'}`}
       style={{ left: x - 1, top: HEADER + lo * CELL + CELL / 2, height: (hi - lo) * CELL }}
     />
   );
@@ -215,7 +215,7 @@ function WireLabel({ wire }: { wire: number }) {
           if (e.key === 'Escape') setEditing(false);
         }}
         aria-label={t('editor.editLabel', { wire })}
-        className="absolute left-0 rounded border border-indigo-400 bg-white px-1 font-mono text-xs dark:bg-slate-900"
+        className="absolute left-0 rounded border border-accent bg-field px-1 font-mono text-xs"
         style={{ ...style, top: style.top + (CELL - 32) / 2, height: 32 }}
       />
     );
@@ -228,7 +228,7 @@ function WireLabel({ wire }: { wire: number }) {
         setEditing(true);
       }}
       title={t('editor.editLabel', { wire })}
-      className="absolute left-0 truncate rounded px-1 text-right font-serif text-base hover:bg-slate-200/70 dark:hover:bg-slate-800"
+      className="absolute left-0 truncate rounded px-1 text-right font-serif text-base hover:bg-surface-2"
       style={style}
     >
       {latexToText(label)}
@@ -238,10 +238,10 @@ function WireLabel({ wire }: { wire: number }) {
 
 function Stepper({ label, value, min, max, onChange }: { label: string; value: number; min: number; max: number; onChange: (n: number) => void }) {
   const { t } = useTranslation();
-  const btn = 'rounded p-1 hover:bg-slate-200 disabled:opacity-30 dark:hover:bg-slate-800';
+  const btn = 'rounded p-1 hover:bg-surface-2 disabled:opacity-30';
   return (
     <div className="flex items-center gap-1 text-sm">
-      <span className="text-slate-600 dark:text-slate-300">{label}</span>
+      <span className="text-muted">{label}</span>
       <button type="button" className={btn} disabled={value <= min} onClick={() => onChange(value - 1)} aria-label={`${t('editor.remove')} ${label}`}>
         <Minus size={14} />
       </button>
@@ -262,13 +262,13 @@ export default function CircuitEditor() {
   const height = HEADER + circuit.numQubits * CELL;
 
   return (
-    <section className="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 py-2 dark:border-slate-800">
+    <section className="panel">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-2">
         <h2 className="font-semibold">{t('editor.title')}</h2>
         <div className="flex flex-wrap items-center gap-4">
           <Stepper label={t('editor.qubits')} value={circuit.numQubits} min={1} max={MAX_QUBITS} onChange={(n) => commit(setNumQubits(circuit, n))} />
           <Stepper label={t('editor.steps')} value={circuit.numColumns} min={1} max={MAX_COLUMNS} onChange={(n) => commit(setNumColumns(circuit, n))} />
-          <span className="text-sm text-slate-600 dark:text-slate-300" title={t('editor.depthHelp')}>
+          <span className="text-sm text-muted" title={t('editor.depthHelp')}>
             {t('editor.depth')} <span className="font-mono tabular-nums">{circuitDepth(circuit)}</span>
           </span>
         </div>
@@ -281,14 +281,14 @@ export default function CircuitEditor() {
       <div className="overflow-x-auto p-3">
         <div className="relative" style={{ width, height }} onClick={() => useStore.getState().select(null)}>
           {Array.from({ length: circuit.numColumns }, (_, col) => (
-            <div key={col} className="absolute text-center font-mono text-[10px] text-slate-400" style={{ left: LABEL_WIDTH + col * CELL, width: CELL, top: 2 }}>
+            <div key={col} className="absolute text-center font-mono text-[10px] text-faint" style={{ left: LABEL_WIDTH + col * CELL, width: CELL, top: 2 }}>
               {col + 1}
             </div>
           ))}
           {Array.from({ length: circuit.numQubits }, (_, row) => (
             <div key={row}>
               <div
-                className="absolute h-px bg-slate-400 dark:bg-slate-600"
+                className="absolute h-px bg-wire"
                 style={{ left: LABEL_WIDTH, right: 8, top: HEADER + row * CELL + CELL / 2 }}
               />
               <WireLabel key={circuit.qubitLabels[row]} wire={row} />
@@ -302,7 +302,7 @@ export default function CircuitEditor() {
           ))}
         </div>
       </div>
-      <p className="border-t border-slate-200 px-4 py-2 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">{t('editor.hint')}</p>
+      <p className="border-t border-line px-4 py-2 text-xs text-faint">{t('editor.hint')}</p>
     </section>
   );
 }

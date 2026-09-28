@@ -23,6 +23,10 @@ import { useStore } from './store';
 
 function useTheme() {
   const theme = useStore((s) => s.theme);
+  const look = useStore((s) => s.look);
+  useEffect(() => {
+    document.documentElement.dataset.look = look;
+  }, [look]);
   useEffect(() => {
     const media = matchMedia('(prefers-color-scheme: dark)');
     const apply = () => document.documentElement.classList.toggle('dark', theme === 'dark' || (theme === 'system' && media.matches));
@@ -64,7 +68,7 @@ function Toast() {
   const toast = useStore((s) => s.toast);
   if (!toast) return null;
   return (
-    <div role="status" className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-slate-900 px-4 py-2 text-sm text-white shadow-lg dark:bg-slate-100 dark:text-slate-900">
+    <div role="status" className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-ink px-4 py-2 text-sm text-canvas shadow-lg">
       {toast}
     </div>
   );
@@ -121,9 +125,9 @@ export default function App() {
         <div className="flex min-h-screen flex-col">
           <Header />
           <main className="mx-auto grid w-full max-w-[1600px] flex-1 gap-4 p-4 lg:grid-cols-[15rem_minmax(0,1fr)]">
-            <aside className="space-y-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm lg:self-start dark:border-slate-800 dark:bg-slate-900">
+            <aside className="space-y-6 panel p-4 lg:self-start">
               <Palette />
-              <hr className="border-slate-200 dark:border-slate-800" />
+              <hr className="border-line" />
               <Inspector />
             </aside>
             <div className="min-w-0 space-y-4">

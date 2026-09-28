@@ -30,7 +30,7 @@ function PaletteItem({ gate, customId, label, title }: { gate: GateName; customI
       title={title}
       aria-pressed={armed}
       onClick={() => setTool(armed ? null : { gate, customId })}
-      className={`flex h-10 min-w-10 touch-none items-center justify-center rounded-md border px-2 font-mono text-sm font-semibold shadow-sm transition select-none hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 ${gateTone(gate)} ${armed ? 'ring-2 ring-amber-400 ring-offset-2 ring-offset-white dark:ring-offset-slate-900' : ''} ${isDragging ? 'opacity-40' : ''}`}
+      className={`flex h-10 min-w-10 touch-none items-center justify-center rounded-md border px-2 font-mono text-sm font-semibold shadow-sm transition select-none hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${gateTone(gate)} ${armed ? 'ring-2 ring-sel ring-offset-2 ring-offset-canvas' : ''} ${isDragging ? 'opacity-40' : ''}`}
     >
       {label}
     </button>
@@ -59,7 +59,7 @@ function CustomGates() {
             <button
               type="button"
               onClick={() => commit(removeCustomGate(circuit, g.id))}
-              className="rounded p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+              className="rounded p-0.5 text-faint hover:bg-surface-2 hover:text-ink"
               aria-label={t('palette.removeCustom', { label: g.label })}
               title={t('palette.removeCustom', { label: g.label })}
             >
@@ -79,11 +79,11 @@ function CustomGates() {
           value={label}
           onChange={(e) => setLabel(e.target.value)}
           placeholder={t('palette.customPlaceholder')}
-          className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-2 py-1 font-mono text-sm dark:border-slate-700 dark:bg-slate-900"
+          className="min-w-0 flex-1 rounded-md border border-line-strong bg-field px-2 py-1 font-mono text-sm"
         />
         <button
           type="submit"
-          className="flex items-center gap-1 rounded-md border border-slate-300 px-2 py-1 text-sm hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+          className="flex items-center gap-1 rounded-md border border-line-strong px-2 py-1 text-sm hover:bg-surface-2"
         >
           <Plus size={14} />
           {t('palette.addCustom')}
@@ -98,12 +98,12 @@ export default function Palette() {
   return (
     <section className="space-y-4">
       <div>
-        <h2 className="text-sm font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">{t('palette.title')}</h2>
-        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{t('palette.hint')}</p>
+        <h2 className="text-sm font-semibold tracking-wide text-muted uppercase">{t('palette.title')}</h2>
+        <p className="mt-1 text-xs text-muted">{t('palette.hint')}</p>
       </div>
       {GROUPS.map((group) => (
         <div key={group.key}>
-          <h3 className="mb-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">{t(`palette.${group.key}`)}</h3>
+          <h3 className="mb-1.5 text-xs font-medium text-muted">{t(`palette.${group.key}`)}</h3>
           <div className="flex flex-wrap gap-1.5">
             {group.gates.map((gate) => (
               <PaletteItem key={gate} gate={gate} label={GATES[gate].label} title={GATES[gate].description} />
@@ -112,7 +112,7 @@ export default function Palette() {
         </div>
       ))}
       <div>
-        <h3 className="mb-1.5 text-xs font-medium text-slate-600 dark:text-slate-300">{t('palette.custom')}</h3>
+        <h3 className="mb-1.5 text-xs font-medium text-muted">{t('palette.custom')}</h3>
         <CustomGates />
       </div>
     </section>

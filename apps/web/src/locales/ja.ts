@@ -17,6 +17,8 @@ const ja: Messages = {
     import: 'JSON を開く',
     importError: 'ファイルを開けませんでした: {{message}}',
     language: '言語',
+    look: 'デザイン（比較中）',
+    looks: { lab: 'A · ラボ', obsidian: 'B · Obsidian' },
     theme: 'テーマ',
     themes: { light: 'ライト', dark: 'ダーク', system: 'システム' },
   },

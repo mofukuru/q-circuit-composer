@@ -2,12 +2,12 @@ import { clearOperations, encodeCircuit, parseCircuit, serializeCircuit } from '
 import { Code, FolderOpen, Link2, Monitor, Moon, Redo2, Save, Sun, Trash2, Undo2 } from 'lucide-react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { type Theme, useStore } from '../store';
+import { type Look, type Theme, useStore } from '../store';
 
 export const REPO_URL = 'https://github.com/mofukuru/q-circuit-composer';
 
 const iconBtn =
-  'rounded-md p-2 text-slate-600 hover:bg-slate-200 hover:text-slate-900 disabled:opacity-30 disabled:hover:bg-transparent dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white';
+  'rounded-md p-2 text-muted hover:bg-surface-2 hover:text-ink disabled:opacity-30 disabled:hover:bg-transparent';
 
 const THEME_ICON = { light: Sun, dark: Moon, system: Monitor };
 const NEXT_THEME: Record<Theme, Theme> = { system: 'light', light: 'dark', dark: 'system' };
@@ -17,6 +17,7 @@ export default function Header() {
   const canUndo = useStore((s) => s.past.length > 0);
   const canRedo = useStore((s) => s.future.length > 0);
   const theme = useStore((s) => s.theme);
+  const look = useStore((s) => s.look);
   const { undo, redo, set, notify } = useStore.getState();
   const fileInput = useRef<HTMLInputElement>(null);
   const ThemeIcon = THEME_ICON[theme];
@@ -47,16 +48,31 @@ export default function Header() {
   };
 
   return (
-    <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+    <header className="border-b border-line bg-surface backdrop-blur">
       <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-2 px-4 py-2.5">
         <div className="flex items-center gap-2.5">
           <img src="./favicon.svg" alt="" className="size-8" />
           <div>
             <h1 className="leading-tight font-semibold">{t('app.title')}</h1>
-            <p className="hidden text-xs text-slate-500 sm:block dark:text-slate-400">{t('app.tagline')}</p>
+            <p className="hidden text-xs text-muted sm:block">{t('app.tagline')}</p>
           </div>
         </div>
         <nav className="flex flex-wrap items-center gap-0.5">
+          {/* Temporary: compare design options A and B. Remove once one is chosen. */}
+          <div role="radiogroup" aria-label={t('toolbar.look')} title={t('toolbar.look')} className="mr-2 inline-flex rounded-lg border border-line-strong p-0.5">
+            {(['lab', 'obsidian'] as Look[]).map((l) => (
+              <button
+                key={l}
+                type="button"
+                role="radio"
+                aria-checked={look === l}
+                onClick={() => set({ look: l })}
+                className={`rounded-md px-2 py-0.5 text-xs font-medium ${look === l ? 'accent-fill' : 'text-muted hover:bg-surface-2'}`}
+              >
+                {t(`toolbar.looks.${l}`)}
+              </button>
+            ))}
+          </div>
           <button type="button" className={iconBtn} onClick={undo} disabled={!canUndo} title={`${t('toolbar.undo')} (Ctrl+Z)`} aria-label={t('toolbar.undo')}>
             <Undo2 size={18} />
           </button>
@@ -75,7 +91,7 @@ export default function Header() {
           >
             <Trash2 size={18} />
           </button>
-          <span className="mx-1 h-5 w-px bg-slate-300 dark:bg-slate-700" />
+          <span className="mx-1 h-5 w-px bg-line-strong" />
           <button type="button" className={iconBtn} onClick={share} title={t('toolbar.share')} aria-label={t('toolbar.share')}>
             <Link2 size={18} />
           </button>
@@ -96,12 +112,12 @@ export default function Header() {
               e.target.value = '';
             }}
           />
-          <span className="mx-1 h-5 w-px bg-slate-300 dark:bg-slate-700" />
+          <span className="mx-1 h-5 w-px bg-line-strong" />
           <select
             value={i18n.language.startsWith('ja') ? 'ja' : 'en'}
             onChange={(e) => void i18n.changeLanguage(e.target.value)}
             aria-label={t('toolbar.language')}
-            className="rounded-md border border-slate-300 bg-white px-1.5 py-1 text-sm dark:border-slate-700 dark:bg-slate-900"
+            className="rounded-md border border-line-strong bg-field px-1.5 py-1 text-sm"
           >
             <option value="en">English</option>
             <option value="ja">日本語</option>

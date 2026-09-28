@@ -7,12 +7,14 @@
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=STIX+Two+Text:ital@0;1&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
     <title>Q Circuit Composer</title>
     <script>
       // Apply the saved theme before first paint to avoid a flash.
       try {
-        var t = JSON.parse(localStorage.getItem('qcc:settings') || '{}').theme;
+        var s = JSON.parse(localStorage.getItem('qcc:settings') || '{}');
+        var t = s.theme;
+        document.documentElement.dataset.look = s.look === 'obsidian' ? 'obsidian' : 'lab';
         if (t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)) {
           document.documentElement.classList.add('dark');
         }

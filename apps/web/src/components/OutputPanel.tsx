@@ -10,7 +10,7 @@ const MAX_BARS = 64;
 
 function Segmented<T extends string>({ value, options, onChange, label }: { value: T; options: { value: T; label: string }[]; onChange: (v: T) => void; label: string }) {
   return (
-    <div role="radiogroup" aria-label={label} className="inline-flex rounded-lg border border-slate-300 p-0.5 dark:border-slate-700">
+    <div role="radiogroup" aria-label={label} className="inline-flex rounded-lg border border-line-strong p-0.5">
       {options.map((o) => (
         <button
           key={o.value}
@@ -18,7 +18,7 @@ function Segmented<T extends string>({ value, options, onChange, label }: { valu
           role="radio"
           aria-checked={value === o.value}
           onClick={() => onChange(o.value)}
-          className={`rounded-md px-2.5 py-1 text-sm ${value === o.value ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`}
+          className={`rounded-md px-2.5 py-1 text-sm ${value === o.value ? 'accent-fill' : 'text-muted hover:bg-surface-2'}`}
         >
           {o.label}
         </button>
@@ -70,11 +70,11 @@ function Bars({ entries, format }: { entries: [string, number][]; format: (v: nu
     <ul className="space-y-1">
       {entries.map(([state, value]) => (
         <li key={state} className="grid grid-cols-[auto_1fr_4.5rem] items-center gap-2 text-sm">
-          <span className="font-mono text-slate-700 dark:text-slate-300">|{state}⟩</span>
-          <div className="h-4 overflow-hidden rounded bg-slate-100 dark:bg-slate-800">
-            <div className="h-full rounded bg-indigo-500 transition-[width] duration-300" style={{ width: `${Math.max(0, Math.min(1, value)) * 100}%` }} />
+          <span className="font-mono text-ink">|{state}⟩</span>
+          <div className="h-4 overflow-hidden rounded bg-surface-2">
+            <div className="h-full accent-fill rounded transition-[width] duration-300" style={{ width: `${Math.max(0, Math.min(1, value)) * 100}%` }} />
           </div>
-          <span className="text-right font-mono text-xs tabular-nums text-slate-600 dark:text-slate-400">{format(value)}</span>
+          <span className="text-right font-mono text-xs tabular-nums text-muted">{format(value)}</span>
         </li>
       ))}
     </ul>
@@ -87,10 +87,10 @@ function ExpectationBars({ values, labels }: { values: [number, number][]; label
       {values.map(([wire, v]) => (
         <li key={wire} className="grid grid-cols-[4rem_1fr_4.5rem] items-center gap-2 text-sm">
           <span className="truncate font-serif">{latexToText(labels[wire])}</span>
-          <div className="relative h-4 rounded bg-slate-100 dark:bg-slate-800">
-            <div className="absolute inset-y-0 left-1/2 w-px bg-slate-400" />
+          <div className="relative h-4 rounded bg-surface-2">
+            <div className="absolute inset-y-0 left-1/2 w-px bg-wire" />
             <div
-              className="absolute inset-y-0 rounded bg-teal-500"
+              className="absolute inset-y-0 accent-fill rounded"
               style={v >= 0 ? { left: '50%', width: `${v * 50}%` } : { right: '50%', width: `${-v * 50}%` }}
             />
           </div>
@@ -158,10 +158,10 @@ function Results() {
                 max={1_000_000}
                 value={shots}
                 onChange={(e) => set({ shots: Math.max(1, Math.min(1_000_000, Math.round(Number(e.target.value) || 1))) })}
-                className="w-24 rounded-md border border-slate-300 bg-white px-2 py-1 font-mono text-sm dark:border-slate-700 dark:bg-slate-900"
+                className="w-24 rounded-md border border-line-strong bg-field px-2 py-1 font-mono text-sm"
               />
             </label>
-            <button type="button" onClick={resample} className="flex items-center gap-1 rounded-md px-2 py-1 text-sm hover:bg-slate-100 dark:hover:bg-slate-800">
+            <button type="button" onClick={resample} className="flex items-center gap-1 rounded-md px-2 py-1 text-sm hover:bg-surface-2">
               <RefreshCw size={14} />
               {t('output.resample')}
             </button>
@@ -173,7 +173,7 @@ function Results() {
 
       {result && (
         <>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-muted">
             {circuit.operations.some((o) => o.gate === 'MEASURE')
               ? `${t('output.measuredOn', { wires: result.wires.map((w) => latexToText(circuit.qubitLabels[w])).join(', ') })} · ${t('output.basisNote')}`
               : t('output.allWires')}
@@ -184,7 +184,7 @@ function Results() {
             <>
               <Bars entries={entries} format={(v) => (sampled ? `${Math.round(v * shots)}` : `${(v * 100).toFixed(2)}%`)} />
               {Object.keys(result.probabilities).length > entries.length && (
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted">
                   {entries.length === MAX_BARS
                     ? t('output.topStates', { count: MAX_BARS })
                     : t('output.hiddenStates', { count: Object.keys(result.probabilities).length - entries.length })}
@@ -216,10 +216,10 @@ function CodeBlock({ code, filename }: { code: string; filename: string }) {
     a.click();
     URL.revokeObjectURL(url);
   };
-  const btn = 'flex items-center gap-1 rounded-md px-2 py-1 text-xs text-slate-300 hover:bg-slate-700 hover:text-white';
+  const btn = 'flex items-center gap-1 rounded-md px-2 py-1 text-xs text-code-ink/70 hover:bg-white/10 hover:text-code-ink';
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-800 bg-slate-900">
-      <div className="flex justify-end gap-1 border-b border-slate-800 px-2 py-1">
+    <div className="overflow-hidden rounded-lg border border-code-line bg-code">
+      <div className="flex justify-end gap-1 border-b border-code-line px-2 py-1">
         <button type="button" onClick={copy} className={btn}>
           {copied ? <Check size={14} /> : <Copy size={14} />}
           {copied ? t('output.copied') : t('output.copy')}
@@ -229,7 +229,7 @@ function CodeBlock({ code, filename }: { code: string; filename: string }) {
           {t('output.download')}
         </button>
       </div>
-      <pre className="max-h-[28rem] overflow-auto p-3 font-mono text-[13px] leading-relaxed text-slate-100">
+      <pre className="max-h-[28rem] overflow-auto p-3 font-mono text-[13px] leading-relaxed text-code-ink">
         <code>{code}</code>
       </pre>
     </div>
@@ -271,12 +271,12 @@ function Latex() {
   return (
     <div className="space-y-3">
       <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" checked={standalone} onChange={(e) => set({ latexStandalone: e.target.checked })} className="size-4 accent-indigo-600" />
+        <input type="checkbox" checked={standalone} onChange={(e) => set({ latexStandalone: e.target.checked })} className="size-4 " />
         {t('output.standalone')}
       </label>
       <IssueList issues={result.issues} />
       {result.code && <CodeBlock code={result.code} filename="circuit.tex" />}
-      <p className="text-xs text-slate-500 dark:text-slate-400">{t('output.latexNote')}</p>
+      <p className="text-xs text-muted">{t('output.latexNote')}</p>
     </div>
   );
 }
@@ -288,8 +288,8 @@ export default function OutputPanel() {
   const tabs: OutputTab[] = ['results', 'code', 'latex'];
 
   return (
-    <section className="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div role="tablist" className="flex gap-1 border-b border-slate-200 px-2 dark:border-slate-800">
+    <section className="panel">
+      <div role="tablist" className="flex gap-1 border-b border-line px-2">
         {tabs.map((id) => (
           <button
             key={id}
@@ -299,8 +299,8 @@ export default function OutputPanel() {
             onClick={() => set({ tab: id })}
             className={`-mb-px border-b-2 px-3 py-2.5 text-sm font-medium ${
               tab === id
-                ? 'border-indigo-600 text-indigo-700 dark:border-indigo-400 dark:text-indigo-300'
-                : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+                ? 'border-accent text-accent-soft'
+                : 'border-transparent text-muted hover:text-ink'
             }`}
           >
             {t(`output.${id}`)}

@@ -16,7 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { latexToText, prettyAngle } from '../pretty';
 import { useStore } from '../store';
 
-const field = 'rounded-md border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-900';
+const field = 'rounded-md border border-line-strong bg-field px-2 py-1 text-sm';
 
 /** Slider resolution: multiples of pi/16 over [0, 2pi]. */
 const SLIDER_DIVISIONS = 16;
@@ -67,7 +67,7 @@ function AngleInput({ op, index }: { op: Operation; index: number }) {
 
   return (
     <div className="space-y-1.5">
-      <label className="text-xs font-medium text-slate-600 dark:text-slate-300" htmlFor={`angle-${op.id}-${index}`}>
+      <label className="text-xs font-medium text-muted" htmlFor={`angle-${op.id}-${index}`}>
         {t('inspector.angle')}
       </label>
       <input
@@ -83,9 +83,9 @@ function AngleInput({ op, index }: { op: Operation; index: number }) {
         onPointerUp={() => useStore.getState().settle()}
         onKeyUp={() => useStore.getState().settle()}
         onBlur={() => useStore.getState().settle()}
-        className="w-full accent-indigo-600 disabled:opacity-40"
+        className="w-full  disabled:opacity-40"
       />
-      <div className="flex justify-between font-mono text-[10px] text-slate-400">
+      <div className="flex justify-between font-mono text-[10px] text-faint">
         <span>0</span>
         <span>π/2</span>
         <span>π</span>
@@ -100,8 +100,8 @@ function AngleInput({ op, index }: { op: Operation; index: number }) {
             onClick={() => useStore.getState().commit(withParam(piFraction(k)))}
             className={`flex-1 rounded border px-1 py-0.5 font-mono text-xs ${
               param === piFraction(k)
-                ? 'border-indigo-600 bg-indigo-600 text-white'
-                : 'border-slate-300 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800'
+                ? 'accent-fill border-transparent'
+                : 'border-line-strong hover:bg-surface-2'
             }`}
           >
             {prettyAngle(piFraction(k))}
@@ -115,12 +115,12 @@ function AngleInput({ op, index }: { op: Operation; index: number }) {
         onBlur={apply}
         onKeyDown={(e) => e.key === 'Enter' && apply()}
         aria-invalid={!parsed.ok}
-        className={`${field} w-full font-mono ${parsed.ok ? '' : 'border-rose-500 dark:border-rose-500'}`}
+        className={`${field} w-full font-mono ${parsed.ok ? '' : 'border-rose-500'}`}
       />
-      <span className={`block text-xs ${parsed.ok ? 'text-slate-500 dark:text-slate-400' : 'text-rose-600 dark:text-rose-400'}`}>
+      <span className={`block text-xs ${parsed.ok ? 'text-muted' : 'text-rose-600 dark:text-rose-400'}`}>
         {!parsed.ok ? parsed.error : symbolic ? t('inspector.symbolic') : value.ok ? `= ${value.value.toFixed(6)} rad` : value.error}
       </span>
-      <span className="block text-[11px] text-slate-400">{t('inspector.angleHelp')}</span>
+      <span className="block text-[11px] text-faint">{t('inspector.angleHelp')}</span>
     </div>
   );
 }
@@ -135,7 +135,7 @@ function WireSelect({ op, role, index }: { op: Operation; role: 'controls' | 'ta
   };
   return (
     <label className="flex items-center justify-between gap-2 text-sm">
-      <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+      <span className="text-xs font-medium text-muted">
         {t(`inspector.${role}`)}
         {GATES[op.gate][role === 'controls' ? 'controls' : 'targets']! > 1 ? ` ${index + 1}` : ''}
       </span>
@@ -158,7 +158,7 @@ function BasisPicker({ op }: { op: Operation }) {
   };
   return (
     <div className="space-y-1">
-      <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{t('inspector.basis')}</span>
+      <span className="text-xs font-medium text-muted">{t('inspector.basis')}</span>
       <div className="flex gap-1" role="radiogroup">
         {(['Z', 'X', 'Y'] as const).map((b) => (
           <button
@@ -169,8 +169,8 @@ function BasisPicker({ op }: { op: Operation }) {
             onClick={() => setBasis(b)}
             className={`flex-1 rounded-md border px-2 py-1 font-mono text-sm ${
               (op.basis ?? 'Z') === b
-                ? 'border-indigo-600 bg-indigo-600 text-white'
-                : 'border-slate-300 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800'
+                ? 'accent-fill border-transparent'
+                : 'border-line-strong hover:bg-surface-2'
             }`}
           >
             {b}
@@ -189,7 +189,7 @@ function CustomFields({ op }: { op: Operation }) {
   return (
     <>
       <label className="flex items-center justify-between gap-2">
-        <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{t('inspector.customGate')}</span>
+        <span className="text-xs font-medium text-muted">{t('inspector.customGate')}</span>
         <select value={op.customId} onChange={(e) => commit(updateOperation(circuit, op.id, { customId: e.target.value }))} className={field}>
           {circuit.customGates.map((g) => (
             <option key={g.id} value={g.id}>
@@ -199,7 +199,7 @@ function CustomFields({ op }: { op: Operation }) {
         </select>
       </label>
       <label className="flex items-center justify-between gap-2">
-        <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{t('inspector.size')}</span>
+        <span className="text-xs font-medium text-muted">{t('inspector.size')}</span>
         <input
           type="number"
           min={1}
@@ -221,16 +221,16 @@ export default function Inspector() {
 
   return (
     <section className="space-y-3">
-      <h2 className="text-sm font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">{t('inspector.title')}</h2>
+      <h2 className="text-sm font-semibold tracking-wide text-muted uppercase">{t('inspector.title')}</h2>
       {!op ? (
-        <p className="text-xs text-slate-500 dark:text-slate-400">{t('inspector.none')}</p>
+        <p className="text-xs text-muted">{t('inspector.none')}</p>
       ) : (
         <div className="space-y-3" key={op.id}>
           <div className="flex items-baseline justify-between">
             <span className="font-mono font-semibold">{GATES[op.gate].label}</span>
-            <span className="text-xs text-slate-500">{t('inspector.step', { n: op.column + 1 })}</span>
+            <span className="text-xs text-muted">{t('inspector.step', { n: op.column + 1 })}</span>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400">{GATES[op.gate].description}</p>
+          <p className="text-xs text-muted">{GATES[op.gate].description}</p>
           {op.params.map((_, i) => (
             <AngleInput key={i} op={op} index={i} />
           ))}
