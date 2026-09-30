@@ -58,7 +58,7 @@ export const GATES: Record<GateName, GateSpec> = {
   SWAP: { name: 'SWAP', label: 'SWAP', description: 'SWAP', category: 'multi', controls: 0, targets: 2, params: 0, base: 'SWAP' },
   CCX: { name: 'CCX', label: 'CCX', description: 'Toffoli (CCX)', category: 'multi', controls: 2, targets: 1, params: 0, base: 'X' },
   CSWAP: { name: 'CSWAP', label: 'CSWAP', description: 'Fredkin (controlled SWAP)', category: 'multi', controls: 1, targets: 2, params: 0, base: 'SWAP' },
-  MEASURE: { name: 'MEASURE', label: 'M', description: 'Measurement (readout basis)', category: 'measure', controls: 0, targets: 1, params: 0 },
+  MEASURE: { name: 'MEASURE', label: 'M', description: 'Measurement', category: 'measure', controls: 0, targets: 1, params: 0 },
   CUSTOM: { name: 'CUSTOM', label: 'U', description: 'Custom gate (LaTeX only)', category: 'custom', controls: 0, targets: null, params: 0 },
 };
 

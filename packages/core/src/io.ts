@@ -1,4 +1,4 @@
-import { type Circuit, defaultQubitLabel, MAX_QUBITS, type Operation } from './circuit';
+import { type Circuit, defaultQubitLabel, isClbit, MAX_QUBITS, type Operation } from './circuit';
 import { GATES, type GateName } from './gates';
 
 export const FORMAT_VERSION = 1;
@@ -50,6 +50,11 @@ export function parseCircuit(json: string): Circuit {
     };
     if (o.basis === 'X' || o.basis === 'Y' || o.basis === 'Z') op.basis = o.basis;
     if (typeof o.customId === 'string') op.customId = o.customId;
+    if (isClbit(o.classicalTarget)) op.classicalTarget = o.classicalTarget;
+    const c = o.condition;
+    if (typeof c === 'object' && c !== null && isClbit(c.bit) && (c.value === 0 || c.value === 1)) {
+      op.condition = { bit: c.bit, value: c.value };
+    }
     return op;
   });
 

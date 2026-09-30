@@ -3,6 +3,8 @@ import {
   evalAngle,
   freeSymbols,
   GATES,
+  MAX_CLBITS,
+  numClbits,
   type Operation,
   parseExpr,
   removeOperation,
@@ -181,6 +183,66 @@ function BasisPicker({ op }: { op: Operation }) {
   );
 }
 
+/** The classical bit a measurement stores its outcome in: none, a bit already in use, or the next free one. */
+function ClassicalTargetSelect({ op }: { op: Operation }) {
+  const { t } = useTranslation();
+  const clbits = useStore((s) => numClbits(s.circuit));
+  const onChange = (value: string) => {
+    const { circuit, commit } = useStore.getState();
+    commit(updateOperation(circuit, op.id, { classicalTarget: value === '' ? undefined : Number(value) }));
+  };
+  return (
+    <div className="space-y-1">
+      <label className="flex items-center justify-between gap-2">
+        <span className="text-xs font-medium text-muted">{t('inspector.classicalTarget')}</span>
+        <select value={op.classicalTarget ?? ''} onChange={(e) => onChange(e.target.value)} className={`${field} font-mono`}>
+          <option value="">{t('inspector.notStored')}</option>
+          {Array.from({ length: Math.min(clbits + 1, MAX_CLBITS) }, (_, bit) => (
+            <option key={bit} value={bit}>
+              c{bit}
+            </option>
+          ))}
+        </select>
+      </label>
+      <span className="block text-[11px] text-faint">{t('inspector.classicalTargetHelp')}</span>
+    </div>
+  );
+}
+
+/** Classical control of a gate: always applied, or only when a classical bit is 0 or 1. */
+function ConditionSelect({ op }: { op: Operation }) {
+  const { t } = useTranslation();
+  const clbits = useStore((s) => numClbits(s.circuit));
+  const onChange = (value: string) => {
+    const { circuit, commit } = useStore.getState();
+    const [bit, bitValue] = value.split('=').map(Number);
+    commit(updateOperation(circuit, op.id, { condition: value === '' ? undefined : { bit, value: bitValue ? 1 : 0 } }));
+  };
+  return (
+    <div className="space-y-1">
+      <label className="flex items-center justify-between gap-2">
+        <span className="text-xs font-medium text-muted">{t('inspector.condition')}</span>
+        <select
+          value={op.condition ? `${op.condition.bit}=${op.condition.value}` : ''}
+          onChange={(e) => onChange(e.target.value)}
+          disabled={clbits === 0}
+          className={`${field} font-mono disabled:opacity-50`}
+        >
+          <option value="">{t('inspector.always')}</option>
+          {Array.from({ length: clbits }, (_, bit) =>
+            [1, 0].map((value) => (
+              <option key={`${bit}=${value}`} value={`${bit}=${value}`}>
+                {t('inspector.when', { bit, value })}
+              </option>
+            )),
+          )}
+        </select>
+      </label>
+      {clbits === 0 && <span className="block text-[11px] text-faint">{t('inspector.conditionHelp')}</span>}
+    </div>
+  );
+}
+
 function CustomFields({ op }: { op: Operation }) {
   const { t } = useTranslation();
   const circuit = useStore((s) => s.circuit);
@@ -235,6 +297,7 @@ export default function Inspector() {
             <AngleInput key={i} op={op} index={i} />
           ))}
           {op.gate === 'MEASURE' && <BasisPicker op={op} />}
+          {op.gate === 'MEASURE' ? <ClassicalTargetSelect op={op} /> : <ConditionSelect op={op} />}
           {op.gate === 'CUSTOM' ? (
             <CustomFields op={op} />
           ) : (

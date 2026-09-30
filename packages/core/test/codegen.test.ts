@@ -1,6 +1,6 @@
 import { writeFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { type Circuit, generateCode } from '../src';
+import { type Circuit, generateCode, midCircuitMeasurements } from '../src';
 import reference from './fixtures/reference.json';
 import { circuitOf } from './helpers';
 
@@ -111,6 +111,123 @@ describe('generateCode', () => {
     expect(lines[2]).toBe('  \\lstick{$|q_{1}\\rangle$} & \\qw & \\gate{X} & \\qw');
   });
 
+  describe('dynamic circuits', () => {
+    // Measure q0 in the X basis into c1, flip q1 when the outcome was 0, and keep using q0.
+    const dynamic = () =>
+      circuitOf(2, [
+        { gate: 'H', targets: [0] },
+        { gate: 'MEASURE', targets: [0], basis: 'X', classicalTarget: 1 },
+        { gate: 'X', targets: [1], condition: { bit: 1, value: 0 } },
+        { gate: 'Z', targets: [0] },
+        { gate: 'MEASURE', targets: [1] },
+      ]);
+    const body = (code: string, from: string, to: string) => {
+      const lines = code.split('\n');
+      return lines.slice(lines.findIndex((l) => l.startsWith(from)) + 1, lines.findIndex((l) => l.startsWith(to)));
+    };
+
+    it('PennyLane uses qml.measure and qml.cond', () => {
+      const code = generateCode(dynamic(), 'pennylane').code;
+      expect(code).toContain('@qml.qnode(dev, mcm_method="tree-traversal")');
+      expect(body(code, 'def circuit', '    return')).toEqual([
+        '    qml.Hadamard(wires=0)',
+        '    qml.Hadamard(wires=0)',
+        '    c1 = qml.measure(0)',
+        '    qml.Hadamard(wires=0)',
+        '    qml.cond(c1 == 0, qml.PauliX)(wires=1)',
+        '    qml.PauliZ(wires=0)',
+        '',
+      ]);
+      expect(code).toContain('return qml.probs(wires=[1])');
+    });
+
+    it('PennyLane keeps classical bits clear of free parameters', () => {
+      const c = dynamic();
+      c.operations[0] = { ...c.operations[0], gate: 'RX', params: ['c1'] };
+      expect(generateCode(c, 'pennylane').code).toContain('qml.cond(c1_ == 0, qml.PauliX)(wires=1)');
+    });
+
+    it('Qiskit uses if_test and drops the mid-circuit bits from the counts', () => {
+      const code = generateCode(dynamic(), 'qiskit').code;
+      expect(body(code, 'qc = ', 'counts = ')).toEqual([
+        'qc.h(0)',
+        'qc.h(0)',
+        'qc.measure(0, 1)',
+        'qc.h(0)',
+        'with qc.if_test((qc.clbits[1], 0)):',
+        '    qc.x(1)',
+        'qc.z(0)',
+        'qc.measure([1], [2])',
+        '',
+      ]);
+      expect(code).toContain('qc = QuantumCircuit(2, 3)');
+      expect(code).toContain('counts = marginal_counts(counts, indices=[2])');
+    });
+
+    it('OpenQASM gives each mid-circuit bit its own register', () => {
+      expect(generateCode(dynamic(), 'qasm').code.split('\n').slice(3)).toEqual([
+        'creg c[1];',
+        '// One register per mid-circuit result; c is the final readout.',
+        'creg c0[1];',
+        'creg c1[1];',
+        'h q[0];',
+        'h q[0];',
+        'measure q[0] -> c1[0];',
+        'h q[0];',
+        'if (c1==0) x q[1];',
+        'z q[0];',
+        'measure q[1] -> c[0];',
+        '',
+      ]);
+    });
+
+    it('OpenQASM defines gates used under a condition and gives unstored measurements a scratch bit', () => {
+      const c = circuitOf(2, [
+        { gate: 'MEASURE', targets: [0], classicalTarget: 0 },
+        { gate: 'CRX', controls: [0], targets: [1], params: ['0.5'], condition: { bit: 0, value: 1 } },
+        { gate: 'MEASURE', targets: [1] },
+        { gate: 'H', targets: [1] },
+      ]);
+      const code = generateCode(c, 'qasm').code;
+      expect(code).toContain('gate crx(theta) c, t');
+      expect(code).toContain('if (c0==1) crx(0.5) q[0], q[1];');
+      expect(code).toContain('measure q[1] -> c1[0];');
+    });
+
+    it('Qulacs follows every outcome as a branch', () => {
+      const code = generateCode(dynamic(), 'qulacs').code;
+      expect(code).toContain('from qulacs.gate import H, P0, P1, X, Z');
+      expect(body(code, '    branches = outcomes', '# Qulacs stores')).toEqual([
+        '',
+        '',
+        'apply(H(0))',
+        'apply(H(0))',
+        'measure(0, 1)',
+        'apply(H(0))',
+        'apply(X(1), 1, 0)',
+        'apply(Z(0))',
+        '',
+      ]);
+    });
+
+    it('LaTeX draws classical bits as wires below the qubits', () => {
+      expect(generateCode(dynamic(), 'latex').code.split('\n').slice(1, 5)).toEqual([
+        '  \\lstick{$|q_{0}\\rangle$} & \\gate{H} & \\meter{X} \\vcw{3} & \\qw & \\gate{Z} & \\qw & \\qw \\\\',
+        '  \\lstick{$|q_{1}\\rangle$} & \\qw & \\qw & \\gate{X} \\vcw{2} & \\qw & \\meter{} \\\\',
+        '  \\lstick{$c_{0}$} \\setwiretype{c} & \\cw & \\cw & \\cw & \\cw & \\cw & \\cw \\\\',
+        '  \\lstick{$c_{1}$} \\setwiretype{c} & \\cw & \\cw & \\ocontrol{} \\cw & \\cw & \\cw & \\cw',
+      ]);
+    });
+
+    it('static circuits are unchanged by an unused classical target', () => {
+      const plain = circuitOf(1, [{ gate: 'H', targets: [0] }, { gate: 'MEASURE', targets: [0] }]);
+      const stored = circuitOf(1, [{ gate: 'H', targets: [0] }, { gate: 'MEASURE', targets: [0], classicalTarget: 0 }]);
+      for (const format of ['pennylane', 'qiskit', 'qulacs', 'qasm'] as const) {
+        expect(generateCode(stored, format).code, format).toBe(generateCode(plain, format).code);
+      }
+    });
+  });
+
   it('LaTeX standalone document compiles as a unit', () => {
     const code = generateCode(bell(), 'latex', { standalone: true }).code;
     expect(code.startsWith('\\documentclass[border=2pt]{standalone}\n\\usepackage{quantikz}')).toBe(true);
@@ -127,6 +244,7 @@ describe.runIf(exportPath)('export generated code', () => {
       name,
       wires,
       probabilities,
+      dynamic: midCircuitMeasurements(circuit as Circuit).size > 0,
       pennylane: generateCode(circuit as Circuit, 'pennylane').code,
       qiskit: generateCode(circuit as Circuit, 'qiskit', { shots: 20000 }).code,
       qulacs: generateCode(circuit as Circuit, 'qulacs').code,

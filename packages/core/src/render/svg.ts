@@ -1,4 +1,13 @@
-import { type Circuit, customLabel, type Operation, orderedOperations, spanOf, validate } from '../circuit';
+import {
+  type Circuit,
+  customLabel,
+  measurementBases,
+  numClbits,
+  type Operation,
+  orderedOperations,
+  spanOf,
+  validate,
+} from '../circuit';
 import { parseExpr, toLatex } from '../expr';
 import { parseMath } from './math';
 
@@ -6,10 +15,13 @@ import { parseMath } from './math';
  * Draws the circuit as a standalone SVG in the style of a quantikz figure:
  * black on white, boxed gates, dots for controls. The layout matches the
  * LaTeX output: empty columns are dropped, wires get a little space after
- * the last gate, and measured wires end at their meter.
+ * the last gate, and wires that end in a measurement stop at their meter.
+ * Classical bits are double wires below the qubits.
  */
 
 const ROW = 56;
+const CLASSICAL_ROW = 40;
+const DOUBLE = 1.7; // half the gap between the two strokes of a classical wire
 const PAD = 14;
 const BOX_H = 34;
 const MIN_COL = 52;
@@ -90,13 +102,16 @@ export function renderCircuitSvg(circuit: Circuit): string {
   }
   const xEnd = x + 22;
   const width = Math.ceil(xEnd + PAD);
-  const height = PAD * 2 + circuit.numQubits * ROW;
+  const clbits = ops.length > 0 ? numClbits(circuit) : 0;
+  const height = PAD * 2 + circuit.numQubits * ROW + clbits * CLASSICAL_ROW;
   const y = (row: number) => PAD + row * ROW + ROW / 2;
+  const yBit = (bit: number) => PAD + circuit.numQubits * ROW + bit * CLASSICAL_ROW + CLASSICAL_ROW / 2;
 
-  // Wires end at the last meter on them; others run to the right edge.
+  // Wires end at their final meter; others run to the right edge.
+  const ends = measurementBases(circuit);
   const wireEnd = Array.from({ length: circuit.numQubits }, () => xEnd);
   for (const op of ops) {
-    if (op.gate === 'MEASURE') wireEnd[op.targets[0]] = Math.max(x0, centers[columns.indexOf(op.column)]);
+    if (op.gate === 'MEASURE' && ends.has(op.targets[0])) wireEnd[op.targets[0]] = Math.max(x0, centers[columns.indexOf(op.column)]);
   }
 
   const out: string[] = [];
@@ -112,6 +127,21 @@ export function renderCircuitSvg(circuit: Circuit): string {
     text(PAD + labelWidth, y(q), label, 'end');
     line(x0, y(q), wireEnd[q], y(q));
   });
+  for (let bit = 0; bit < clbits; bit++) {
+    text(PAD + labelWidth, yBit(bit), `c_{${bit}}`, 'end');
+    for (const d of [-DOUBLE, DOUBLE]) line(x0, yBit(bit) + d, xEnd, yBit(bit) + d);
+  }
+
+  // Classical links go first so that gates cover the lines passing behind them.
+  for (const op of ops) {
+    const bit = op.gate === 'MEASURE' ? op.classicalTarget : op.condition?.bit;
+    if (bit === undefined) continue;
+    const cx = centers[columns.indexOf(op.column)];
+    for (const d of [-DOUBLE, DOUBLE]) line(cx + d, y(spanOf(op)[1]), cx + d, yBit(bit));
+    if (op.condition) {
+      out.push(`<circle cx="${cx}" cy="${yBit(bit)}" r="4.5" fill="${op.condition.value ? '#000' : '#fff'}"${op.condition.value ? ' stroke="none"' : ''} />`);
+    }
+  }
 
   for (const op of ops) {
     const cx = centers[columns.indexOf(op.column)];

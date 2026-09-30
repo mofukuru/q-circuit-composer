@@ -1,4 +1,4 @@
-import { type CodeFormat, generateCode, hasErrors, type Issue, simulate, validate } from '@qcc/core';
+import { CircuitError, type CodeFormat, generateCode, hasErrors, type Issue, numClbits, simulate, validate } from '@qcc/core';
 import { AlertTriangle, Check, Copy, Download, Info, RefreshCw } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -112,7 +112,13 @@ function Results() {
   const outcome = useMemo(() => {
     const issues = validate(circuit, { numeric: true });
     if (hasErrors(issues)) return { issues, result: null };
-    return { issues, result: simulate(circuit, { shots: sampled ? shots : 0, seed }) };
+    try {
+      return { issues, result: simulate(circuit, { shots: sampled ? shots : 0, seed }) };
+    } catch (e) {
+      // Too many mid-circuit measurement outcomes only shows up while simulating.
+      if (e instanceof CircuitError) return { issues: e.issues, result: null };
+      throw e;
+    }
   }, [circuit, shots, sampled, seed]);
 
   const { result, issues } = outcome;
@@ -175,7 +181,7 @@ function Results() {
       {result && (
         <>
           <p className="text-xs text-muted">
-            {circuit.operations.some((o) => o.gate === 'MEASURE')
+            {Object.keys(result.bases).length > 0
               ? `${t('output.measuredOn', { wires: result.wires.map((w) => latexToText(circuit.qubitLabels[w])).join(', ') })} · ${t('output.basisNote')}`
               : t('output.allWires')}
           </p>
@@ -278,7 +284,10 @@ function Latex() {
       </label>
       <IssueList issues={result.issues} />
       {result.code && <CodeBlock code={result.code} filename="circuit.tex" />}
-      <p className="text-xs text-muted">{t('output.latexNote')}</p>
+      <p className="text-xs text-muted">
+        {t('output.latexNote')}
+        {numClbits(circuit) > 0 && ` ${t('output.latexClassicalNote')}`}
+      </p>
     </div>
   );
 }

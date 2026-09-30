@@ -41,6 +41,21 @@ describe('renderCircuitSvg', () => {
     expect(svg).toContain('<tspan>X</tspan></text>');
   });
 
+  it('runs a wire on after a mid-circuit measurement and draws classical bits', () => {
+    const svg = renderCircuitSvg(
+      circuitOf(2, [
+        { gate: 'MEASURE', targets: [0], classicalTarget: 0 },
+        { gate: 'X', targets: [1], condition: { bit: 0, value: 0 } },
+        { gate: 'H', targets: [0] },
+      ]),
+    );
+    const wires = [...svg.matchAll(/<line x1="([\d.]+)" y1="([\d.]+)" x2="([\d.]+)" y2="\2" \/>/g)].map((m) => Number(m[3]));
+    // two qubit wires and the double classical wire all reach the right edge
+    expect(new Set(wires.slice(0, 4)).size).toBe(1);
+    expect(svg).toContain('<tspan>c</tspan><tspan dy="5.1" font-size="11.9">0</tspan></text>');
+    expect(svg).toContain('r="4.5" fill="#fff" />'); // open control: condition on 0
+  });
+
   it('draws only wires for an invalid circuit', () => {
     const c = circuitOf(2, [{ gate: 'CNOT', controls: [0], targets: [1] }]);
     c.operations.push({ id: 'x', gate: 'X', column: 0, controls: [], targets: [1], params: [] });
