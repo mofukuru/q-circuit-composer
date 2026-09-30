@@ -4,6 +4,7 @@ import {
   circuitDepth,
   createOperation,
   customLabel,
+  numClbits,
   type Operation,
   removeOperation,
   setNumColumns,
@@ -23,6 +24,10 @@ import { useStore } from '../store';
 import { boxLabel, gateTone } from './gateStyle';
 
 const HEADER = 22;
+/** Height of a classical bit's row below the qubit wires. */
+const CLASSICAL_ROW = 28;
+
+const classicalY = (numQubits: number, bit: number) => HEADER + numQubits * CELL + bit * CLASSICAL_ROW + CLASSICAL_ROW / 2;
 
 const cellStyle = (row: number, col: number) => ({
   left: LABEL_WIDTH + col * CELL,
@@ -193,6 +198,43 @@ function OperationView({ op }: { op: Operation }) {
   );
 }
 
+/** The double line from a measurement, or a classically controlled gate, down to its classical bit. */
+function ClassicalLink({ op }: { op: Operation }) {
+  const numQubits = useStore((s) => s.circuit.numQubits);
+  const bit = op.gate === 'MEASURE' ? op.classicalTarget : op.condition?.bit;
+  if (bit === undefined) return null;
+  const x = LABEL_WIDTH + op.column * CELL + CELL / 2;
+  const top = HEADER + spanOf(op)[1] * CELL + CELL / 2;
+  const bottom = classicalY(numQubits, bit);
+  return (
+    <>
+      <div className="pointer-events-none absolute w-[5px] border-x border-ctrl" style={{ left: x - 2.5, top, height: bottom - top }} />
+      {op.condition && (
+        <div
+          className={`pointer-events-none absolute size-2.5 rounded-full border border-ctrl ${op.condition.value ? 'bg-ctrl' : 'bg-surface'}`}
+          style={{ left: x - 5, top: bottom - 5 }}
+        />
+      )}
+    </>
+  );
+}
+
+function ClassicalWire({ bit }: { bit: number }) {
+  const numQubits = useStore((s) => s.circuit.numQubits);
+  const y = classicalY(numQubits, bit);
+  return (
+    <>
+      <div className="absolute h-[5px] border-y border-wire" style={{ left: LABEL_WIDTH, right: 8, top: y - 2.5 }} />
+      <div
+        className="absolute left-0 flex items-center justify-end px-1 font-serif text-base"
+        style={{ top: y - CLASSICAL_ROW / 2, width: LABEL_WIDTH - 8, height: CLASSICAL_ROW }}
+      >
+        <MathText latex={`c_{${bit}}`} />
+      </div>
+    </>
+  );
+}
+
 function WireLabel({ wire }: { wire: number }) {
   const { t } = useTranslation();
   const label = useStore((s) => s.circuit.qubitLabels[wire]);
@@ -262,7 +304,8 @@ export default function CircuitEditor() {
   const commit = useStore((s) => s.commit);
   const tool = useStore((s) => s.tool);
   const width = LABEL_WIDTH + circuit.numColumns * CELL + 8;
-  const height = HEADER + circuit.numQubits * CELL;
+  const clbits = numClbits(circuit);
+  const height = HEADER + circuit.numQubits * CELL + clbits * CLASSICAL_ROW;
 
   return (
     <section className="panel">
@@ -299,6 +342,12 @@ export default function CircuitEditor() {
                 <GridCell key={col} row={row} col={col} />
               ))}
             </div>
+          ))}
+          {Array.from({ length: clbits }, (_, bit) => (
+            <ClassicalWire key={bit} bit={bit} />
+          ))}
+          {circuit.operations.map((op) => (
+            <ClassicalLink key={op.id} op={op} />
           ))}
           {circuit.operations.map((op) => (
             <OperationView key={op.id} op={op} />

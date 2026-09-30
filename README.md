@@ -8,6 +8,7 @@ Build quantum circuits in your browser, simulate them, and export code or LaTeX.
 
 - **Visual editor**: drag gates onto a grid, rewire controls and targets by dragging, undo/redo
 - **In-browser simulation**: exact probabilities, sampled counts, or per-wire ⟨Z⟩, up to 16 qubits
+- **Dynamic circuits**: mid-circuit measurement and gates controlled by the measured classical bits
 - **Code export** for PennyLane, Qiskit, Qulacs and OpenQASM 2.0
 - **LaTeX export** with [quantikz](https://ctan.org/pkg/quantikz), including symbolic angles (`\theta/2`), custom gates and qubit labels
 - **Share links** and JSON save/load
@@ -19,12 +20,15 @@ Build quantum circuits in your browser, simulate them, and export code or LaTeX.
 |---|---|
 | Single-qubit | H, X, Y, Z, S, T, RX, RY, RZ |
 | Multi-qubit | CNOT, CY, CZ, CRX, CRY, CRZ, SWAP, Toffoli (CCX), Fredkin (CSWAP) |
-| Measurement | Readout in the Z, X or Y basis |
+| Measurement | In the Z, X or Y basis, anywhere in the circuit; the result can be stored in a classical bit |
+| Classical control | Any gate can be applied only when a classical bit is 0 or 1 |
 | Custom | Labelled boxes over one or more wires (LaTeX only) |
 
 Angles accept expressions such as `pi/2`, `-3pi/4` or `0.25`. Symbols like `\theta` are kept in LaTeX and declared as variables in the Python outputs; simulation needs numeric angles.
 
-Measurements set the readout basis of their wire and are applied at the end of the circuit. Mid-circuit measurement is not supported yet.
+A measurement followed by more gates on its wire collapses the state where it is placed, and a gate can be conditioned on a stored result (select the gate and pick "If c0 = 1"). The result shows the wires that end in a measurement, or all wires when none do; exact probabilities are summed over every mid-circuit outcome.
+
+Dynamic circuits are exported as `qml.measure` and `qml.cond` (PennyLane), `if_test` (Qiskit) and `if (c==1)` (OpenQASM 2.0). Qulacs has no exact equivalent, so the generated script follows each measurement outcome as a separate branch. In LaTeX, classical bits are drawn as double wires below the qubits, which needs quantikz 1.0 or later.
 
 ## Repository layout
 
@@ -67,6 +71,7 @@ LaTeX output uses the [quantikz](https://ctan.org/pkg/quantikz) package from you
 
 - **回路エディタ**：ゲートをグリッドにドラッグして配置します。制御点やターゲットをドラッグすると配線を変えられます。元に戻す／やり直しに対応しています。
 - **ブラウザ内シミュレーション**：厳密な確率、サンプリング結果、各量子ビットの ⟨Z⟩ を表示します（最大 16 量子ビット）。
+- **動的回路**：回路途中の測定と、その結果（古典ビット）によるゲートの古典制御に対応しています。
 - **コード出力**：PennyLane / Qiskit / Qulacs / OpenQASM 2.0
 - **LaTeX 出力**：quantikz 形式。`\theta/2` のような記号の角度、カスタムゲート、量子ビットのラベルに対応しています。
 - **共有リンク**と JSON での保存・読み込み。日本語・英語の表示、ライト・ダークテーマ。

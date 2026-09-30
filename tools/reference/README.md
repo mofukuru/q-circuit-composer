@@ -4,8 +4,8 @@ Python scripts that check `@qcc/core` against real quantum frameworks. They are 
 
 | Script | What it does |
 |---|---|
-| `generate_fixtures.py` | Runs hand-written and random circuits in PennyLane and writes the exact probabilities to `packages/core/test/fixtures/reference.json`. The core tests compare the TypeScript simulator with this file. |
-| `verify_codegen.py` | Executes the PennyLane, Qiskit, OpenQASM and Qulacs code that `@qcc/core` generates for every fixture and checks that it gives the same probabilities. |
+| `generate_fixtures.py` | Runs hand-written and random circuits in PennyLane, including dynamic ones (mid-circuit measurement and classical control), and writes the exact probabilities to `packages/core/test/fixtures/reference.json`. The core tests compare the TypeScript simulator with this file. |
+| `verify_codegen.py` | Executes the PennyLane, Qiskit, OpenQASM and Qulacs code that `@qcc/core` generates for every fixture and checks that it gives the same probabilities. Dynamic OpenQASM is sampled with Qiskit Aer. |
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate

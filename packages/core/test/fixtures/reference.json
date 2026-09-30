@@ -5727,6 +5727,5305 @@
     "0": 0.14652587962282732,
     "1": 0.8534741203771723
    }
+  },
+  {
+   "name": "mid-circuit measurement dephases",
+   "circuit": {
+    "numQubits": 1,
+    "numColumns": 3,
+    "qubitLabels": [
+     "|q_{0}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "H",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": []
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": []
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "H",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": []
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0
+   ],
+   "probabilities": {
+    "0": 0.4999999999999998,
+    "1": 0.4999999999999998
+   }
+  },
+  {
+   "name": "conditional x",
+   "circuit": {
+    "numQubits": 2,
+    "numColumns": 3,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "H",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": []
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "classicalTarget": 0
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "X",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "condition": {
+       "bit": 0,
+       "value": 1
+      }
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0
+   ],
+   "probabilities": {
+    "0": 0.4999999999999999,
+    "1": 0.4999999999999999
+   }
+  },
+  {
+   "name": "condition on zero",
+   "circuit": {
+    "numQubits": 2,
+    "numColumns": 3,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "RY",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [
+       "0.8"
+      ]
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "classicalTarget": 0
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "H",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "condition": {
+       "bit": 0,
+       "value": 0
+      }
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0
+   ],
+   "probabilities": {
+    "0": 0.8483533546735825,
+    "1": 0.1516466453264173
+   }
+  },
+  {
+   "name": "active reset",
+   "circuit": {
+    "numQubits": 2,
+    "numColumns": 4,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "RX",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [
+       "1.3"
+      ]
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "CNOT",
+      "controls": [
+       0
+      ],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "classicalTarget": 0
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "X",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "condition": {
+       "bit": 0,
+       "value": 1
+      }
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0,
+    1
+   ],
+   "probabilities": {
+    "00": 0.6337494143122938,
+    "01": 0.3662505856877063,
+    "10": 0.0,
+    "11": 0.0
+   }
+  },
+  {
+   "name": "teleportation",
+   "circuit": {
+    "numQubits": 3,
+    "numColumns": 12,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle",
+     "|q_{2}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "RY",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [
+       "0.9"
+      ]
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "RZ",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [
+       "0.4"
+      ]
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "H",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "CNOT",
+      "controls": [
+       1
+      ],
+      "targets": [
+       2
+      ],
+      "params": []
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "CNOT",
+      "controls": [
+       0
+      ],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "H",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": []
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "classicalTarget": 0
+     },
+     {
+      "id": "op7",
+      "column": 7,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "classicalTarget": 1
+     },
+     {
+      "id": "op8",
+      "column": 8,
+      "gate": "X",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [],
+      "condition": {
+       "bit": 1,
+       "value": 1
+      }
+     },
+     {
+      "id": "op9",
+      "column": 9,
+      "gate": "Z",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [],
+      "condition": {
+       "bit": 0,
+       "value": 1
+      }
+     },
+     {
+      "id": "op10",
+      "column": 10,
+      "gate": "RZ",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [
+       "-0.4"
+      ]
+     },
+     {
+      "id": "op11",
+      "column": 11,
+      "gate": "RY",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [
+       "-0.9"
+      ]
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0,
+    1
+   ],
+   "probabilities": {
+    "00": 0.24999999999999994,
+    "01": 0.24999999999999994,
+    "10": 0.24999999999999994,
+    "11": 0.24999999999999994
+   }
+  },
+  {
+   "name": "mid-circuit x basis",
+   "circuit": {
+    "numQubits": 2,
+    "numColumns": 5,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "RY",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [
+       "0.6"
+      ]
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "basis": "X",
+      "classicalTarget": 0
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "RX",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [
+       "1.1"
+      ],
+      "condition": {
+       "bit": 0,
+       "value": 1
+      }
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "T",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": []
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "H",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": []
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0,
+    1
+   ],
+   "probabilities": {
+    "00": 0.6909220429638486,
+    "01": 0.008709217977938145,
+    "10": 0.24960769676027084,
+    "11": 0.05076104229794186
+   }
+  },
+  {
+   "name": "mid-circuit y basis",
+   "circuit": {
+    "numQubits": 2,
+    "numColumns": 4,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "RX",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [
+       "0.7"
+      ]
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "basis": "Y",
+      "classicalTarget": 1
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "CRY",
+      "controls": [
+       0
+      ],
+      "targets": [
+       1
+      ],
+      "params": [
+       "0.9"
+      ],
+      "condition": {
+       "bit": 1,
+       "value": 0
+      }
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "basis": "X"
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0
+   ],
+   "probabilities": {
+    "0": 0.4999999999999995,
+    "1": 0.4999999999999995
+   }
+  },
+  {
+   "name": "bit written twice",
+   "circuit": {
+    "numQubits": 2,
+    "numColumns": 7,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "H",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": []
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "classicalTarget": 0
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "X",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "condition": {
+       "bit": 0,
+       "value": 1
+      }
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "H",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": []
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "classicalTarget": 0
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "H",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "condition": {
+       "bit": 0,
+       "value": 1
+      }
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": []
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0,
+    1
+   ],
+   "probabilities": {
+    "00": 0.2499999999999999,
+    "01": 0.2499999999999999,
+    "10": 0.2499999999999999,
+    "11": 0.2499999999999999
+   }
+  },
+  {
+   "name": "conditional multi-qubit gates",
+   "circuit": {
+    "numQubits": 3,
+    "numColumns": 6,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle",
+     "|q_{2}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "H",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": []
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "classicalTarget": 0
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "H",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "CSWAP",
+      "controls": [
+       1
+      ],
+      "targets": [
+       0,
+       2
+      ],
+      "params": [],
+      "condition": {
+       "bit": 0,
+       "value": 1
+      }
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "CCX",
+      "controls": [
+       0,
+       1
+      ],
+      "targets": [
+       2
+      ],
+      "params": [],
+      "condition": {
+       "bit": 0,
+       "value": 0
+      }
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "SWAP",
+      "controls": [],
+      "targets": [
+       0,
+       2
+      ],
+      "params": [],
+      "condition": {
+       "bit": 0,
+       "value": 1
+      }
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0,
+    1,
+    2
+   ],
+   "probabilities": {
+    "000": 0.2499999999999999,
+    "001": 0.2499999999999999,
+    "010": 0.2499999999999999,
+    "011": 0.0,
+    "100": 0.0,
+    "101": 0.0,
+    "110": 0.2499999999999999,
+    "111": 0.0
+   }
+  },
+  {
+   "name": "random dynamic 0",
+   "circuit": {
+    "numQubits": 3,
+    "numColumns": 12,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle",
+     "|q_{2}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "RY",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [
+       "-1.208729"
+      ]
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "CRY",
+      "controls": [
+       0
+      ],
+      "targets": [
+       2
+      ],
+      "params": [
+       "0.41836"
+      ]
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "RZ",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [
+       "2.640547"
+      ]
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "CRY",
+      "controls": [
+       0
+      ],
+      "targets": [
+       2
+      ],
+      "params": [
+       "-0.016705"
+      ]
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "basis": "Y",
+      "classicalTarget": 2
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "Y",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 0
+     },
+     {
+      "id": "op7",
+      "column": 7,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "basis": "X",
+      "classicalTarget": 2
+     },
+     {
+      "id": "op8",
+      "column": 8,
+      "gate": "CSWAP",
+      "controls": [
+       1
+      ],
+      "targets": [
+       2,
+       0
+      ],
+      "params": []
+     },
+     {
+      "id": "op9",
+      "column": 9,
+      "gate": "CRX",
+      "controls": [
+       0
+      ],
+      "targets": [
+       1
+      ],
+      "params": [
+       "0.996636"
+      ]
+     },
+     {
+      "id": "op10",
+      "column": 10,
+      "gate": "H",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [],
+      "condition": {
+       "bit": 2,
+       "value": 1
+      }
+     },
+     {
+      "id": "op11",
+      "column": 11,
+      "gate": "CY",
+      "controls": [
+       0
+      ],
+      "targets": [
+       2
+      ],
+      "params": [],
+      "condition": {
+       "bit": 0,
+       "value": 1
+      }
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0,
+    1,
+    2
+   ],
+   "probabilities": {
+    "000": 0.0,
+    "001": 0.0,
+    "010": 0.16927603546202039,
+    "011": 0.5078281063860611,
+    "100": 0.05532054235882214,
+    "101": 0.018440180786274046,
+    "110": 0.18685135125511607,
+    "111": 0.062283783751705374
+   }
+  },
+  {
+   "name": "random dynamic 1",
+   "circuit": {
+    "numQubits": 3,
+    "numColumns": 10,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle",
+     "|q_{2}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "X",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": []
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "RZ",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [
+       "1.461383"
+      ]
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "X",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 1
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "basis": "X",
+      "classicalTarget": 1
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 0
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "CRX",
+      "controls": [
+       1
+      ],
+      "targets": [
+       2
+      ],
+      "params": [
+       "0.482482"
+      ],
+      "condition": {
+       "bit": 0,
+       "value": 1
+      }
+     },
+     {
+      "id": "op7",
+      "column": 7,
+      "gate": "X",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": []
+     },
+     {
+      "id": "op8",
+      "column": 8,
+      "gate": "CZ",
+      "controls": [
+       1
+      ],
+      "targets": [
+       0
+      ],
+      "params": []
+     },
+     {
+      "id": "op9",
+      "column": 9,
+      "gate": "SWAP",
+      "controls": [],
+      "targets": [
+       2,
+       0
+      ],
+      "params": [],
+      "condition": {
+       "bit": 1,
+       "value": 1
+      }
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0,
+    1,
+    2
+   ],
+   "probabilities": {
+    "000": 0.4999999999999998,
+    "001": 0.0,
+    "010": 0.47146151398892433,
+    "011": 0.014269243005537682,
+    "100": 0.0,
+    "101": 0.0,
+    "110": 0.014269243005537682,
+    "111": 0.0
+   }
+  },
+  {
+   "name": "random dynamic 2",
+   "circuit": {
+    "numQubits": 2,
+    "numColumns": 7,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "RZ",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [
+       "-0.543846"
+      ]
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "T",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "X",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "Y",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "T",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 1
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 0
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0,
+    1
+   ],
+   "probabilities": {
+    "00": 1.0,
+    "01": 0.0,
+    "10": 0.0,
+    "11": 0.0
+   }
+  },
+  {
+   "name": "random dynamic 3",
+   "circuit": {
+    "numQubits": 3,
+    "numColumns": 12,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle",
+     "|q_{2}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "CY",
+      "controls": [
+       0
+      ],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "RY",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [
+       "-2.409515"
+      ]
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "CCX",
+      "controls": [
+       2,
+       0
+      ],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "T",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": []
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "S",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": []
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "basis": "X",
+      "classicalTarget": 0
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "T",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op7",
+      "column": 7,
+      "gate": "RX",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [
+       "-2.663389"
+      ]
+     },
+     {
+      "id": "op8",
+      "column": 8,
+      "gate": "CRY",
+      "controls": [
+       0
+      ],
+      "targets": [
+       1
+      ],
+      "params": [
+       "1.14257"
+      ]
+     },
+     {
+      "id": "op9",
+      "column": 9,
+      "gate": "RY",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [
+       "1.689752"
+      ]
+     },
+     {
+      "id": "op10",
+      "column": 10,
+      "gate": "CRY",
+      "controls": [
+       1
+      ],
+      "targets": [
+       0
+      ],
+      "params": [
+       "-0.865724"
+      ]
+     },
+     {
+      "id": "op11",
+      "column": 11,
+      "gate": "S",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": []
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0,
+    1,
+    2
+   ],
+   "probabilities": {
+    "000": 0.035400998746157805,
+    "001": 0.0286521835226693,
+    "010": 0.012400762917573561,
+    "011": 0.010036692396255986,
+    "100": 0.24093967233542923,
+    "101": 0.19500714539574346,
+    "110": 0.26393990816401347,
+    "111": 0.21362263652215677
+   }
+  },
+  {
+   "name": "random dynamic 4",
+   "circuit": {
+    "numQubits": 4,
+    "numColumns": 12,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle",
+     "|q_{2}\\rangle",
+     "|q_{3}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "RZ",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [
+       "-1.699304"
+      ]
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "CCX",
+      "controls": [
+       1,
+       3
+      ],
+      "targets": [
+       2
+      ],
+      "params": []
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "CY",
+      "controls": [
+       0
+      ],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "CRY",
+      "controls": [
+       0
+      ],
+      "targets": [
+       1
+      ],
+      "params": [
+       "-2.007898"
+      ]
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "RX",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [
+       "-2.332553"
+      ]
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "SWAP",
+      "controls": [],
+      "targets": [
+       1,
+       2
+      ],
+      "params": []
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "Z",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": []
+     },
+     {
+      "id": "op7",
+      "column": 7,
+      "gate": "Z",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": []
+     },
+     {
+      "id": "op8",
+      "column": 8,
+      "gate": "CSWAP",
+      "controls": [
+       3
+      ],
+      "targets": [
+       0,
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op9",
+      "column": 9,
+      "gate": "CCX",
+      "controls": [
+       3,
+       2
+      ],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op10",
+      "column": 10,
+      "gate": "Z",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op11",
+      "column": 11,
+      "gate": "RX",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [
+       "-2.659093"
+      ]
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "probabilities": {
+    "0000": 0.9735789336774767,
+    "0001": 0.0,
+    "0010": 0.0,
+    "0011": 0.0,
+    "0100": 0.026421066322523334,
+    "0101": 0.0,
+    "0110": 0.0,
+    "0111": 0.0,
+    "1000": 0.0,
+    "1001": 0.0,
+    "1010": 0.0,
+    "1011": 0.0,
+    "1100": 0.0,
+    "1101": 0.0,
+    "1110": 0.0,
+    "1111": 0.0
+   }
+  },
+  {
+   "name": "random dynamic 5",
+   "circuit": {
+    "numQubits": 3,
+    "numColumns": 7,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle",
+     "|q_{2}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "CRX",
+      "controls": [
+       1
+      ],
+      "targets": [
+       0
+      ],
+      "params": [
+       "0.69512"
+      ]
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "basis": "X",
+      "classicalTarget": 2
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "CRX",
+      "controls": [
+       0
+      ],
+      "targets": [
+       1
+      ],
+      "params": [
+       "1.131815"
+      ],
+      "condition": {
+       "bit": 2,
+       "value": 0
+      }
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "CRY",
+      "controls": [
+       0
+      ],
+      "targets": [
+       2
+      ],
+      "params": [
+       "-1.804529"
+      ],
+      "condition": {
+       "bit": 2,
+       "value": 1
+      }
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 2
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [],
+      "basis": "Z"
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 0
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0,
+    1,
+    2
+   ],
+   "probabilities": {
+    "000": 0.4999999999999998,
+    "001": 0.0,
+    "010": 0.4999999999999998,
+    "011": 0.0,
+    "100": 0.0,
+    "101": 0.0,
+    "110": 0.0,
+    "111": 0.0
+   }
+  },
+  {
+   "name": "random dynamic 6",
+   "circuit": {
+    "numQubits": 4,
+    "numColumns": 11,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle",
+     "|q_{2}\\rangle",
+     "|q_{3}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "CNOT",
+      "controls": [
+       0
+      ],
+      "targets": [
+       3
+      ],
+      "params": []
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "CCX",
+      "controls": [
+       2,
+       0
+      ],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "T",
+      "controls": [],
+      "targets": [
+       3
+      ],
+      "params": []
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "CSWAP",
+      "controls": [
+       0
+      ],
+      "targets": [
+       2,
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "T",
+      "controls": [],
+      "targets": [
+       3
+      ],
+      "params": []
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "basis": "X",
+      "classicalTarget": 0
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "Z",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [],
+      "condition": {
+       "bit": 0,
+       "value": 0
+      }
+     },
+     {
+      "id": "op7",
+      "column": 7,
+      "gate": "X",
+      "controls": [],
+      "targets": [
+       3
+      ],
+      "params": [],
+      "condition": {
+       "bit": 0,
+       "value": 0
+      }
+     },
+     {
+      "id": "op8",
+      "column": 8,
+      "gate": "X",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "condition": {
+       "bit": 0,
+       "value": 1
+      }
+     },
+     {
+      "id": "op9",
+      "column": 9,
+      "gate": "CSWAP",
+      "controls": [
+       0
+      ],
+      "targets": [
+       3,
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op10",
+      "column": 10,
+      "gate": "CRZ",
+      "controls": [
+       1
+      ],
+      "targets": [
+       2
+      ],
+      "params": [
+       "-0.187463"
+      ]
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "probabilities": {
+    "0000": 0.2499999999999999,
+    "0001": 0.2499999999999999,
+    "0010": 0.0,
+    "0011": 0.0,
+    "0100": 0.0,
+    "0101": 0.0,
+    "0110": 0.0,
+    "0111": 0.0,
+    "1000": 0.2499999999999999,
+    "1001": 0.0,
+    "1010": 0.0,
+    "1011": 0.0,
+    "1100": 0.2499999999999999,
+    "1101": 0.0,
+    "1110": 0.0,
+    "1111": 0.0
+   }
+  },
+  {
+   "name": "random dynamic 7",
+   "circuit": {
+    "numQubits": 4,
+    "numColumns": 7,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle",
+     "|q_{2}\\rangle",
+     "|q_{3}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [],
+      "basis": "Y",
+      "classicalTarget": 1
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "Z",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": []
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "SWAP",
+      "controls": [],
+      "targets": [
+       0,
+       3
+      ],
+      "params": [],
+      "condition": {
+       "bit": 1,
+       "value": 0
+      }
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "Y",
+      "controls": [],
+      "targets": [
+       3
+      ],
+      "params": []
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "CRY",
+      "controls": [
+       1
+      ],
+      "targets": [
+       2
+      ],
+      "params": [
+       "-1.547387"
+      ]
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "CSWAP",
+      "controls": [
+       3
+      ],
+      "targets": [
+       1,
+       0
+      ],
+      "params": [],
+      "condition": {
+       "bit": 1,
+       "value": 1
+      }
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "Y",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [],
+      "condition": {
+       "bit": 1,
+       "value": 0
+      }
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "probabilities": {
+    "0000": 0.0,
+    "0001": 0.4999999999999998,
+    "0010": 0.0,
+    "0011": 0.4999999999999998,
+    "0100": 0.0,
+    "0101": 0.0,
+    "0110": 0.0,
+    "0111": 0.0,
+    "1000": 0.0,
+    "1001": 0.0,
+    "1010": 0.0,
+    "1011": 0.0,
+    "1100": 0.0,
+    "1101": 0.0,
+    "1110": 0.0,
+    "1111": 0.0
+   }
+  },
+  {
+   "name": "random dynamic 8",
+   "circuit": {
+    "numQubits": 2,
+    "numColumns": 11,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "RZ",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [
+       "0.78641"
+      ]
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "RX",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [
+       "-0.402657"
+      ]
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "T",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "CNOT",
+      "controls": [
+       0
+      ],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "CRY",
+      "controls": [
+       1
+      ],
+      "targets": [
+       0
+      ],
+      "params": [
+       "3.126363"
+      ]
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "CRZ",
+      "controls": [
+       1
+      ],
+      "targets": [
+       0
+      ],
+      "params": [
+       "1.596231"
+      ]
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "CRZ",
+      "controls": [
+       0
+      ],
+      "targets": [
+       1
+      ],
+      "params": [
+       "-0.879128"
+      ]
+     },
+     {
+      "id": "op7",
+      "column": 7,
+      "gate": "RZ",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [
+       "-2.099088"
+      ]
+     },
+     {
+      "id": "op8",
+      "column": 8,
+      "gate": "CRY",
+      "controls": [
+       0
+      ],
+      "targets": [
+       1
+      ],
+      "params": [
+       "-1.262161"
+      ]
+     },
+     {
+      "id": "op9",
+      "column": 9,
+      "gate": "CY",
+      "controls": [
+       0
+      ],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op10",
+      "column": 10,
+      "gate": "CRY",
+      "controls": [
+       1
+      ],
+      "targets": [
+       0
+      ],
+      "params": [
+       "0.770731"
+      ]
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0,
+    1
+   ],
+   "probabilities": {
+    "00": 0.9600115297515196,
+    "01": 0.03443750638485428,
+    "10": 1.5115192709442377e-06,
+    "11": 0.005549452344355326
+   }
+  },
+  {
+   "name": "random dynamic 9",
+   "circuit": {
+    "numQubits": 3,
+    "numColumns": 9,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle",
+     "|q_{2}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "Y",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": []
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "S",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": []
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [],
+      "basis": "X",
+      "classicalTarget": 0
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "CNOT",
+      "controls": [
+       2
+      ],
+      "targets": [
+       0
+      ],
+      "params": []
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "CRZ",
+      "controls": [
+       2
+      ],
+      "targets": [
+       1
+      ],
+      "params": [
+       "-2.63325"
+      ],
+      "condition": {
+       "bit": 0,
+       "value": 1
+      }
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "basis": "Y",
+      "classicalTarget": 0
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "CRY",
+      "controls": [
+       0
+      ],
+      "targets": [
+       1
+      ],
+      "params": [
+       "-2.819736"
+      ],
+      "condition": {
+       "bit": 0,
+       "value": 0
+      }
+     },
+     {
+      "id": "op7",
+      "column": 7,
+      "gate": "CNOT",
+      "controls": [
+       1
+      ],
+      "targets": [
+       2
+      ],
+      "params": [],
+      "condition": {
+       "bit": 0,
+       "value": 1
+      }
+     },
+     {
+      "id": "op8",
+      "column": 8,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 1
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0
+   ],
+   "probabilities": {
+    "0": 0.49999999999999967,
+    "1": 0.49999999999999967
+   }
+  },
+  {
+   "name": "random dynamic 10",
+   "circuit": {
+    "numQubits": 3,
+    "numColumns": 14,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle",
+     "|q_{2}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "CCX",
+      "controls": [
+       0,
+       1
+      ],
+      "targets": [
+       2
+      ],
+      "params": []
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "basis": "Y",
+      "classicalTarget": 2
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "CNOT",
+      "controls": [
+       0
+      ],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "condition": {
+       "bit": 2,
+       "value": 0
+      }
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "CCX",
+      "controls": [
+       0,
+       2
+      ],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "condition": {
+       "bit": 2,
+       "value": 1
+      }
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 1
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "SWAP",
+      "controls": [],
+      "targets": [
+       0,
+       2
+      ],
+      "params": [],
+      "condition": {
+       "bit": 1,
+       "value": 0
+      }
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "SWAP",
+      "controls": [],
+      "targets": [
+       1,
+       0
+      ],
+      "params": [],
+      "condition": {
+       "bit": 2,
+       "value": 0
+      }
+     },
+     {
+      "id": "op7",
+      "column": 7,
+      "gate": "Y",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op8",
+      "column": 8,
+      "gate": "RY",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [
+       "2.640011"
+      ]
+     },
+     {
+      "id": "op9",
+      "column": 9,
+      "gate": "CCX",
+      "controls": [
+       1,
+       2
+      ],
+      "targets": [
+       0
+      ],
+      "params": []
+     },
+     {
+      "id": "op10",
+      "column": 10,
+      "gate": "X",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "condition": {
+       "bit": 1,
+       "value": 1
+      }
+     },
+     {
+      "id": "op11",
+      "column": 11,
+      "gate": "Y",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "condition": {
+       "bit": 1,
+       "value": 1
+      }
+     },
+     {
+      "id": "op12",
+      "column": 12,
+      "gate": "RX",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [
+       "-2.235034"
+      ],
+      "condition": {
+       "bit": 1,
+       "value": 1
+      }
+     },
+     {
+      "id": "op13",
+      "column": 13,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [],
+      "basis": "X",
+      "classicalTarget": 2
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    2
+   ],
+   "probabilities": {
+    "0": 0.560101621245345,
+    "1": 0.439898378754654
+   }
+  },
+  {
+   "name": "random dynamic 11",
+   "circuit": {
+    "numQubits": 4,
+    "numColumns": 7,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle",
+     "|q_{2}\\rangle",
+     "|q_{3}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "CRZ",
+      "controls": [
+       3
+      ],
+      "targets": [
+       2
+      ],
+      "params": [
+       "2.902768"
+      ]
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "RY",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [
+       "-0.100065"
+      ]
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "H",
+      "controls": [],
+      "targets": [
+       3
+      ],
+      "params": []
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       3
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 2
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       3
+      ],
+      "params": [],
+      "basis": "Z"
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "RZ",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [
+       "-0.016641"
+      ],
+      "condition": {
+       "bit": 2,
+       "value": 1
+      }
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "CY",
+      "controls": [
+       1
+      ],
+      "targets": [
+       0
+      ],
+      "params": []
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    3
+   ],
+   "probabilities": {
+    "0": 0.4999999999999999,
+    "1": 0.49999999999999994
+   }
+  },
+  {
+   "name": "random dynamic 12",
+   "circuit": {
+    "numQubits": 2,
+    "numColumns": 8,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 0
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "RX",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [
+       "1.963337"
+      ]
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "CRZ",
+      "controls": [
+       1
+      ],
+      "targets": [
+       0
+      ],
+      "params": [
+       "1.046788"
+      ]
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "CZ",
+      "controls": [
+       1
+      ],
+      "targets": [
+       0
+      ],
+      "params": []
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 2
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "SWAP",
+      "controls": [],
+      "targets": [
+       0,
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "CRY",
+      "controls": [
+       0
+      ],
+      "targets": [
+       1
+      ],
+      "params": [
+       "-1.342811"
+      ],
+      "condition": {
+       "bit": 2,
+       "value": 0
+      }
+     },
+     {
+      "id": "op7",
+      "column": 7,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 0
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    1
+   ],
+   "probabilities": {
+    "0": 0.3087314614003579,
+    "1": 0.691268538599642
+   }
+  },
+  {
+   "name": "random dynamic 13",
+   "circuit": {
+    "numQubits": 4,
+    "numColumns": 11,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle",
+     "|q_{2}\\rangle",
+     "|q_{3}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       3
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 2
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "H",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "condition": {
+       "bit": 2,
+       "value": 0
+      }
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "CSWAP",
+      "controls": [
+       0
+      ],
+      "targets": [
+       3,
+       1
+      ],
+      "params": [],
+      "condition": {
+       "bit": 2,
+       "value": 0
+      }
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "CRY",
+      "controls": [
+       3
+      ],
+      "targets": [
+       1
+      ],
+      "params": [
+       "2.917344"
+      ]
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       3
+      ],
+      "params": [],
+      "basis": "Y",
+      "classicalTarget": 0
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "T",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "condition": {
+       "bit": 0,
+       "value": 0
+      }
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "RY",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [
+       "-0.669841"
+      ]
+     },
+     {
+      "id": "op7",
+      "column": 7,
+      "gate": "CNOT",
+      "controls": [
+       0
+      ],
+      "targets": [
+       2
+      ],
+      "params": []
+     },
+     {
+      "id": "op8",
+      "column": 8,
+      "gate": "T",
+      "controls": [],
+      "targets": [
+       3
+      ],
+      "params": [],
+      "condition": {
+       "bit": 2,
+       "value": 0
+      }
+     },
+     {
+      "id": "op9",
+      "column": 9,
+      "gate": "X",
+      "controls": [],
+      "targets": [
+       3
+      ],
+      "params": [],
+      "condition": {
+       "bit": 0,
+       "value": 0
+      }
+     },
+     {
+      "id": "op10",
+      "column": 10,
+      "gate": "CSWAP",
+      "controls": [
+       1
+      ],
+      "targets": [
+       2,
+       3
+      ],
+      "params": [],
+      "condition": {
+       "bit": 0,
+       "value": 1
+      }
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "probabilities": {
+    "0000": 0.22299004909305914,
+    "0001": 0.22299004909305914,
+    "0010": 0.027009950906940697,
+    "0011": 0.027009950906940697,
+    "0100": 0.0,
+    "0101": 0.0,
+    "0110": 0.0,
+    "0111": 0.0,
+    "1000": 0.027009950906940697,
+    "1001": 0.027009950906940697,
+    "1010": 0.22299004909305914,
+    "1011": 0.22299004909305914,
+    "1100": 0.0,
+    "1101": 0.0,
+    "1110": 0.0,
+    "1111": 0.0
+   }
+  },
+  {
+   "name": "random dynamic 14",
+   "circuit": {
+    "numQubits": 4,
+    "numColumns": 8,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle",
+     "|q_{2}\\rangle",
+     "|q_{3}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "H",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "CNOT",
+      "controls": [
+       1
+      ],
+      "targets": [
+       2
+      ],
+      "params": []
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "CNOT",
+      "controls": [
+       3
+      ],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "CZ",
+      "controls": [
+       2
+      ],
+      "targets": [
+       3
+      ],
+      "params": []
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "SWAP",
+      "controls": [],
+      "targets": [
+       1,
+       0
+      ],
+      "params": []
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "CRX",
+      "controls": [
+       3
+      ],
+      "targets": [
+       0
+      ],
+      "params": [
+       "-3.061167"
+      ]
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "CRZ",
+      "controls": [
+       3
+      ],
+      "targets": [
+       2
+      ],
+      "params": [
+       "1.519359"
+      ]
+     },
+     {
+      "id": "op7",
+      "column": 7,
+      "gate": "RZ",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [
+       "-2.757283"
+      ]
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "probabilities": {
+    "0000": 0.4999999999999999,
+    "0001": 0.0,
+    "0010": 0.0,
+    "0011": 0.0,
+    "0100": 0.0,
+    "0101": 0.0,
+    "0110": 0.0,
+    "0111": 0.0,
+    "1000": 0.0,
+    "1001": 0.0,
+    "1010": 0.4999999999999999,
+    "1011": 0.0,
+    "1100": 0.0,
+    "1101": 0.0,
+    "1110": 0.0,
+    "1111": 0.0
+   }
+  },
+  {
+   "name": "random dynamic 15",
+   "circuit": {
+    "numQubits": 3,
+    "numColumns": 8,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle",
+     "|q_{2}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "CNOT",
+      "controls": [
+       2
+      ],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [],
+      "basis": "X",
+      "classicalTarget": 1
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "CY",
+      "controls": [
+       1
+      ],
+      "targets": [
+       2
+      ],
+      "params": []
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "RX",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [
+       "-0.497191"
+      ]
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "S",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": []
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "CCX",
+      "controls": [
+       0,
+       1
+      ],
+      "targets": [
+       2
+      ],
+      "params": [],
+      "condition": {
+       "bit": 1,
+       "value": 0
+      }
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 0
+     },
+     {
+      "id": "op7",
+      "column": 7,
+      "gate": "X",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "condition": {
+       "bit": 0,
+       "value": 0
+      }
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    1
+   ],
+   "probabilities": {
+    "0": 0.9999999999999997,
+    "1": 0.0
+   }
+  },
+  {
+   "name": "random dynamic 16",
+   "circuit": {
+    "numQubits": 4,
+    "numColumns": 13,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle",
+     "|q_{2}\\rangle",
+     "|q_{3}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "basis": "Z"
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       3
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 2
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "CRX",
+      "controls": [
+       0
+      ],
+      "targets": [
+       2
+      ],
+      "params": [
+       "-2.696068"
+      ],
+      "condition": {
+       "bit": 2,
+       "value": 0
+      }
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "RY",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [
+       "-3.064161"
+      ]
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "CNOT",
+      "controls": [
+       2
+      ],
+      "targets": [
+       0
+      ],
+      "params": []
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "T",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "condition": {
+       "bit": 2,
+       "value": 0
+      }
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "CY",
+      "controls": [
+       0
+      ],
+      "targets": [
+       2
+      ],
+      "params": []
+     },
+     {
+      "id": "op7",
+      "column": 7,
+      "gate": "CRZ",
+      "controls": [
+       0
+      ],
+      "targets": [
+       2
+      ],
+      "params": [
+       "0.423408"
+      ],
+      "condition": {
+       "bit": 2,
+       "value": 1
+      }
+     },
+     {
+      "id": "op8",
+      "column": 8,
+      "gate": "CSWAP",
+      "controls": [
+       1
+      ],
+      "targets": [
+       0,
+       3
+      ],
+      "params": []
+     },
+     {
+      "id": "op9",
+      "column": 9,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 1
+     },
+     {
+      "id": "op10",
+      "column": 10,
+      "gate": "X",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [],
+      "condition": {
+       "bit": 1,
+       "value": 1
+      }
+     },
+     {
+      "id": "op11",
+      "column": 11,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 0
+     },
+     {
+      "id": "op12",
+      "column": 12,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 0
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0,
+    2
+   ],
+   "probabilities": {
+    "00": 1.0,
+    "01": 0.0,
+    "10": 0.0,
+    "11": 0.0
+   }
+  },
+  {
+   "name": "random dynamic 17",
+   "circuit": {
+    "numQubits": 4,
+    "numColumns": 8,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle",
+     "|q_{2}\\rangle",
+     "|q_{3}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "SWAP",
+      "controls": [],
+      "targets": [
+       2,
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "basis": "X"
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "basis": "Y",
+      "classicalTarget": 1
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "CRY",
+      "controls": [
+       0
+      ],
+      "targets": [
+       1
+      ],
+      "params": [
+       "-2.332947"
+      ]
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "S",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": []
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 0
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "Y",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": []
+     },
+     {
+      "id": "op7",
+      "column": 7,
+      "gate": "Z",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "condition": {
+       "bit": 0,
+       "value": 0
+      }
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "probabilities": {
+    "0000": 0.0,
+    "0001": 0.0,
+    "0010": 0.49999999999999967,
+    "0011": 0.0,
+    "0100": 0.0,
+    "0101": 0.0,
+    "0110": 0.0,
+    "0111": 0.0,
+    "1000": 0.0,
+    "1001": 0.0,
+    "1010": 0.07738031599279199,
+    "1011": 0.0,
+    "1100": 0.0,
+    "1101": 0.0,
+    "1110": 0.4226196840072076,
+    "1111": 0.0
+   }
+  },
+  {
+   "name": "random dynamic 18",
+   "circuit": {
+    "numQubits": 2,
+    "numColumns": 8,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "CY",
+      "controls": [
+       0
+      ],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "SWAP",
+      "controls": [],
+      "targets": [
+       0,
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "basis": "Y"
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "RX",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [
+       "1.70887"
+      ]
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "basis": "X",
+      "classicalTarget": 2
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "Y",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "condition": {
+       "bit": 2,
+       "value": 0
+      }
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "CRZ",
+      "controls": [
+       1
+      ],
+      "targets": [
+       0
+      ],
+      "params": [
+       "0.202742"
+      ],
+      "condition": {
+       "bit": 2,
+       "value": 0
+      }
+     },
+     {
+      "id": "op7",
+      "column": 7,
+      "gate": "H",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": []
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0,
+    1
+   ],
+   "probabilities": {
+    "00": 0.2499999999999998,
+    "01": 0.24743976785931096,
+    "10": 0.2499999999999998,
+    "11": 0.2525602321406886
+   }
+  },
+  {
+   "name": "random dynamic 19",
+   "circuit": {
+    "numQubits": 4,
+    "numColumns": 9,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle",
+     "|q_{2}\\rangle",
+     "|q_{3}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "Y",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": []
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "S",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": []
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "basis": "Y"
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       3
+      ],
+      "params": [],
+      "basis": "X",
+      "classicalTarget": 2
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [],
+      "basis": "Y",
+      "classicalTarget": 1
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "S",
+      "controls": [],
+      "targets": [
+       3
+      ],
+      "params": []
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [],
+      "basis": "X"
+     },
+     {
+      "id": "op7",
+      "column": 7,
+      "gate": "SWAP",
+      "controls": [],
+      "targets": [
+       0,
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op8",
+      "column": 8,
+      "gate": "CRX",
+      "controls": [
+       0
+      ],
+      "targets": [
+       1
+      ],
+      "params": [
+       "-3.079371"
+      ]
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    2
+   ],
+   "probabilities": {
+    "0": 0.4999999999999993,
+    "1": 0.4999999999999993
+   }
+  },
+  {
+   "name": "random dynamic 20",
+   "circuit": {
+    "numQubits": 2,
+    "numColumns": 12,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "CNOT",
+      "controls": [
+       0
+      ],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "S",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": []
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 0
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "CRX",
+      "controls": [
+       0
+      ],
+      "targets": [
+       1
+      ],
+      "params": [
+       "0.818157"
+      ]
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "RZ",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [
+       "2.220472"
+      ]
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "H",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": []
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "Z",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op7",
+      "column": 7,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 0
+     },
+     {
+      "id": "op8",
+      "column": 8,
+      "gate": "CRZ",
+      "controls": [
+       1
+      ],
+      "targets": [
+       0
+      ],
+      "params": [
+       "-2.160012"
+      ]
+     },
+     {
+      "id": "op9",
+      "column": 9,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 0
+     },
+     {
+      "id": "op10",
+      "column": 10,
+      "gate": "T",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": []
+     },
+     {
+      "id": "op11",
+      "column": 11,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 1
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0
+   ],
+   "probabilities": {
+    "0": 0.4999999999999999,
+    "1": 0.4999999999999999
+   }
+  },
+  {
+   "name": "random dynamic 21",
+   "circuit": {
+    "numQubits": 3,
+    "numColumns": 6,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle",
+     "|q_{2}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "SWAP",
+      "controls": [],
+      "targets": [
+       2,
+       0
+      ],
+      "params": []
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "RX",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [
+       "1.979038"
+      ]
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "CRY",
+      "controls": [
+       1
+      ],
+      "targets": [
+       0
+      ],
+      "params": [
+       "-1.793786"
+      ]
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "basis": "X",
+      "classicalTarget": 2
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "CSWAP",
+      "controls": [
+       2
+      ],
+      "targets": [
+       1,
+       0
+      ],
+      "params": [],
+      "condition": {
+       "bit": 2,
+       "value": 1
+      }
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "RY",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [
+       "-0.067313"
+      ],
+      "condition": {
+       "bit": 2,
+       "value": 1
+      }
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0,
+    1,
+    2
+   ],
+   "probabilities": {
+    "000": 0.49971691691455533,
+    "001": 0.0,
+    "010": 0.0002830830854444736,
+    "011": 0.0,
+    "100": 0.49971691691455533,
+    "101": 0.0,
+    "110": 0.0002830830854444736,
+    "111": 0.0
+   }
+  },
+  {
+   "name": "random dynamic 22",
+   "circuit": {
+    "numQubits": 4,
+    "numColumns": 10,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle",
+     "|q_{2}\\rangle",
+     "|q_{3}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 0
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "Z",
+      "controls": [],
+      "targets": [
+       3
+      ],
+      "params": []
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "Z",
+      "controls": [],
+      "targets": [
+       3
+      ],
+      "params": [],
+      "condition": {
+       "bit": 0,
+       "value": 1
+      }
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "RZ",
+      "controls": [],
+      "targets": [
+       3
+      ],
+      "params": [
+       "2.204482"
+      ],
+      "condition": {
+       "bit": 0,
+       "value": 0
+      }
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "H",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "CRX",
+      "controls": [
+       0
+      ],
+      "targets": [
+       3
+      ],
+      "params": [
+       "-1.573394"
+      ]
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "SWAP",
+      "controls": [],
+      "targets": [
+       3,
+       2
+      ],
+      "params": [],
+      "condition": {
+       "bit": 0,
+       "value": 1
+      }
+     },
+     {
+      "id": "op7",
+      "column": 7,
+      "gate": "RX",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [
+       "-2.903908"
+      ],
+      "condition": {
+       "bit": 0,
+       "value": 0
+      }
+     },
+     {
+      "id": "op8",
+      "column": 8,
+      "gate": "Z",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "condition": {
+       "bit": 0,
+       "value": 1
+      }
+     },
+     {
+      "id": "op9",
+      "column": 9,
+      "gate": "X",
+      "controls": [],
+      "targets": [
+       3
+      ],
+      "params": []
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "probabilities": {
+    "0000": 0.0,
+    "0001": 0.0070285663260346715,
+    "0010": 0.0,
+    "0011": 0.4929714336739653,
+    "0100": 0.0,
+    "0101": 0.0070285663260346715,
+    "0110": 0.0,
+    "0111": 0.4929714336739653,
+    "1000": 0.0,
+    "1001": 0.0,
+    "1010": 0.0,
+    "1011": 0.0,
+    "1100": 0.0,
+    "1101": 0.0,
+    "1110": 0.0,
+    "1111": 0.0
+   }
+  },
+  {
+   "name": "random dynamic 23",
+   "circuit": {
+    "numQubits": 2,
+    "numColumns": 8,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "Z",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "X",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "RX",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [
+       "0.220721"
+      ]
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "basis": "X"
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "RY",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [
+       "-0.497043"
+      ]
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "CY",
+      "controls": [
+       0
+      ],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "SWAP",
+      "controls": [],
+      "targets": [
+       0,
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op7",
+      "column": 7,
+      "gate": "X",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": []
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0,
+    1
+   ],
+   "probabilities": {
+    "00": 0.5,
+    "01": 0.0,
+    "10": 0.0,
+    "11": 0.5
+   }
+  },
+  {
+   "name": "random dynamic 24",
+   "circuit": {
+    "numQubits": 2,
+    "numColumns": 8,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "CY",
+      "controls": [
+       0
+      ],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "S",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "basis": "X",
+      "classicalTarget": 1
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "CNOT",
+      "controls": [
+       1
+      ],
+      "targets": [
+       0
+      ],
+      "params": []
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "X",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "condition": {
+       "bit": 1,
+       "value": 1
+      }
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "RZ",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [
+       "-0.179379"
+      ],
+      "condition": {
+       "bit": 1,
+       "value": 0
+      }
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "CRX",
+      "controls": [
+       1
+      ],
+      "targets": [
+       0
+      ],
+      "params": [
+       "2.187585"
+      ]
+     },
+     {
+      "id": "op7",
+      "column": 7,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 2
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    1
+   ],
+   "probabilities": {
+    "0": 0.4999999999999998,
+    "1": 0.4999999999999998
+   }
+  },
+  {
+   "name": "random dynamic 25",
+   "circuit": {
+    "numQubits": 3,
+    "numColumns": 7,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle",
+     "|q_{2}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "CSWAP",
+      "controls": [
+       2
+      ],
+      "targets": [
+       1,
+       0
+      ],
+      "params": []
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "CY",
+      "controls": [
+       1
+      ],
+      "targets": [
+       2
+      ],
+      "params": []
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "RY",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [
+       "-2.522923"
+      ]
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 0
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "CZ",
+      "controls": [
+       0
+      ],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "condition": {
+       "bit": 0,
+       "value": 0
+      }
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 0
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 0
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    1
+   ],
+   "probabilities": {
+    "0": 1.0,
+    "1": 0.0
+   }
+  },
+  {
+   "name": "random dynamic 26",
+   "circuit": {
+    "numQubits": 3,
+    "numColumns": 14,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle",
+     "|q_{2}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "Y",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 2
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "CNOT",
+      "controls": [
+       2
+      ],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "RZ",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [
+       "-1.701983"
+      ]
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "CSWAP",
+      "controls": [
+       0
+      ],
+      "targets": [
+       1,
+       2
+      ],
+      "params": [],
+      "condition": {
+       "bit": 2,
+       "value": 0
+      }
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 0
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "CRZ",
+      "controls": [
+       1
+      ],
+      "targets": [
+       2
+      ],
+      "params": [
+       "2.765152"
+      ]
+     },
+     {
+      "id": "op7",
+      "column": 7,
+      "gate": "CRZ",
+      "controls": [
+       1
+      ],
+      "targets": [
+       0
+      ],
+      "params": [
+       "-0.384857"
+      ],
+      "condition": {
+       "bit": 2,
+       "value": 0
+      }
+     },
+     {
+      "id": "op8",
+      "column": 8,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "basis": "X"
+     },
+     {
+      "id": "op9",
+      "column": 9,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 0
+     },
+     {
+      "id": "op10",
+      "column": 10,
+      "gate": "CY",
+      "controls": [
+       1
+      ],
+      "targets": [
+       2
+      ],
+      "params": [],
+      "condition": {
+       "bit": 2,
+       "value": 0
+      }
+     },
+     {
+      "id": "op11",
+      "column": 11,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 1
+     },
+     {
+      "id": "op12",
+      "column": 12,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [],
+      "basis": "X",
+      "classicalTarget": 1
+     },
+     {
+      "id": "op13",
+      "column": 13,
+      "gate": "S",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": []
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    1
+   ],
+   "probabilities": {
+    "0": 0.49999999999999956,
+    "1": 0.49999999999999956
+   }
+  },
+  {
+   "name": "random dynamic 27",
+   "circuit": {
+    "numQubits": 3,
+    "numColumns": 10,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle",
+     "|q_{2}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "SWAP",
+      "controls": [],
+      "targets": [
+       0,
+       2
+      ],
+      "params": []
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "X",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "CRY",
+      "controls": [
+       2
+      ],
+      "targets": [
+       1
+      ],
+      "params": [
+       "-1.930522"
+      ]
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "CRZ",
+      "controls": [
+       2
+      ],
+      "targets": [
+       1
+      ],
+      "params": [
+       "-0.35581"
+      ]
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "CRZ",
+      "controls": [
+       1
+      ],
+      "targets": [
+       2
+      ],
+      "params": [
+       "2.800941"
+      ]
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "Y",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": []
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "CRY",
+      "controls": [
+       2
+      ],
+      "targets": [
+       1
+      ],
+      "params": [
+       "2.325143"
+      ]
+     },
+     {
+      "id": "op7",
+      "column": 7,
+      "gate": "RZ",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [
+       "-2.734559"
+      ]
+     },
+     {
+      "id": "op8",
+      "column": 8,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 1
+     },
+     {
+      "id": "op9",
+      "column": 9,
+      "gate": "T",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "condition": {
+       "bit": 1,
+       "value": 1
+      }
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0,
+    1,
+    2
+   ],
+   "probabilities": {
+    "000": 0.9999999999999999,
+    "001": 0.0,
+    "010": 0.0,
+    "011": 0.0,
+    "100": 0.0,
+    "101": 0.0,
+    "110": 0.0,
+    "111": 0.0
+   }
+  },
+  {
+   "name": "random dynamic 28",
+   "circuit": {
+    "numQubits": 3,
+    "numColumns": 14,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle",
+     "|q_{2}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "CZ",
+      "controls": [
+       1
+      ],
+      "targets": [
+       0
+      ],
+      "params": []
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 0
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "RY",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [
+       "2.159926"
+      ]
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "CRX",
+      "controls": [
+       0
+      ],
+      "targets": [
+       2
+      ],
+      "params": [
+       "-0.621482"
+      ],
+      "condition": {
+       "bit": 0,
+       "value": 0
+      }
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 1
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "RZ",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [
+       "-0.357757"
+      ]
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "CCX",
+      "controls": [
+       2,
+       1
+      ],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "condition": {
+       "bit": 0,
+       "value": 0
+      }
+     },
+     {
+      "id": "op7",
+      "column": 7,
+      "gate": "RZ",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [
+       "0.00553"
+      ]
+     },
+     {
+      "id": "op8",
+      "column": 8,
+      "gate": "CRX",
+      "controls": [
+       0
+      ],
+      "targets": [
+       2
+      ],
+      "params": [
+       "2.840366"
+      ],
+      "condition": {
+       "bit": 1,
+       "value": 1
+      }
+     },
+     {
+      "id": "op9",
+      "column": 9,
+      "gate": "CRX",
+      "controls": [
+       0
+      ],
+      "targets": [
+       1
+      ],
+      "params": [
+       "2.980268"
+      ],
+      "condition": {
+       "bit": 1,
+       "value": 0
+      }
+     },
+     {
+      "id": "op10",
+      "column": 10,
+      "gate": "T",
+      "controls": [],
+      "targets": [
+       2
+      ],
+      "params": [],
+      "condition": {
+       "bit": 1,
+       "value": 1
+      }
+     },
+     {
+      "id": "op11",
+      "column": 11,
+      "gate": "CZ",
+      "controls": [
+       0
+      ],
+      "targets": [
+       2
+      ],
+      "params": [],
+      "condition": {
+       "bit": 1,
+       "value": 0
+      }
+     },
+     {
+      "id": "op12",
+      "column": 12,
+      "gate": "CCX",
+      "controls": [
+       0,
+       1
+      ],
+      "targets": [
+       2
+      ],
+      "params": []
+     },
+     {
+      "id": "op13",
+      "column": 13,
+      "gate": "SWAP",
+      "controls": [],
+      "targets": [
+       1,
+       0
+      ],
+      "params": [],
+      "condition": {
+       "bit": 1,
+       "value": 1
+      }
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0,
+    1,
+    2
+   ],
+   "probabilities": {
+    "000": 0.22218118882346655,
+    "001": 0.7778188111765336,
+    "010": 0.0,
+    "011": 0.0,
+    "100": 0.0,
+    "101": 0.0,
+    "110": 0.0,
+    "111": 0.0
+   }
+  },
+  {
+   "name": "random dynamic 29",
+   "circuit": {
+    "numQubits": 2,
+    "numColumns": 9,
+    "qubitLabels": [
+     "|q_{0}\\rangle",
+     "|q_{1}\\rangle"
+    ],
+    "operations": [
+     {
+      "id": "op0",
+      "column": 0,
+      "gate": "RZ",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [
+       "-2.216579"
+      ]
+     },
+     {
+      "id": "op1",
+      "column": 1,
+      "gate": "Z",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": []
+     },
+     {
+      "id": "op2",
+      "column": 2,
+      "gate": "RZ",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [
+       "-3.09567"
+      ]
+     },
+     {
+      "id": "op3",
+      "column": 3,
+      "gate": "CRX",
+      "controls": [
+       1
+      ],
+      "targets": [
+       0
+      ],
+      "params": [
+       "-2.764479"
+      ]
+     },
+     {
+      "id": "op4",
+      "column": 4,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "basis": "Z",
+      "classicalTarget": 2
+     },
+     {
+      "id": "op5",
+      "column": 5,
+      "gate": "CZ",
+      "controls": [
+       1
+      ],
+      "targets": [
+       0
+      ],
+      "params": []
+     },
+     {
+      "id": "op6",
+      "column": 6,
+      "gate": "RY",
+      "controls": [],
+      "targets": [
+       1
+      ],
+      "params": [
+       "-3.080092"
+      ],
+      "condition": {
+       "bit": 2,
+       "value": 1
+      }
+     },
+     {
+      "id": "op7",
+      "column": 7,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "basis": "Y"
+     },
+     {
+      "id": "op8",
+      "column": 8,
+      "gate": "MEASURE",
+      "controls": [],
+      "targets": [
+       0
+      ],
+      "params": [],
+      "basis": "Z"
+     }
+    ],
+    "customGates": []
+   },
+   "wires": [
+    0
+   ],
+   "probabilities": {
+    "0": 0.4999999999999997,
+    "1": 0.4999999999999997
+   }
   }
  ]
 }

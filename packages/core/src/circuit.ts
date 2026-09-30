@@ -3,6 +3,12 @@ import { GATES, type GateName } from './gates';
 
 export type Basis = 'Z' | 'X' | 'Y';
 
+/** Classical control: the operation is applied only when classical bit `bit` holds `value`. */
+export interface Condition {
+  bit: number;
+  value: 0 | 1;
+}
+
 export interface Operation {
   id: string;
   gate: GateName;
@@ -13,8 +19,12 @@ export interface Operation {
   controls: number[];
   /** Angle expressions, e.g. `pi/2` or `\theta`. */
   params: string[];
-  /** Readout basis of a MEASURE operation (defaults to Z). */
+  /** Basis of a MEASURE operation (defaults to Z). */
   basis?: Basis;
+  /** Classical bit a MEASURE operation stores its outcome in. */
+  classicalTarget?: number;
+  /** Classical control of a gate. */
+  condition?: Condition;
   /** Custom gate definition used by a CUSTOM operation. */
   customId?: string;
 }
@@ -35,6 +45,9 @@ export interface Circuit {
 }
 
 export const MAX_QUBITS = 16;
+export const MAX_CLBITS = 16;
+
+export const isClbit = (v: unknown): v is number => Number.isInteger(v) && (v as number) >= 0 && (v as number) < MAX_CLBITS;
 
 export const defaultQubitLabel = (wire: number) => `|q_{${wire}}\\rangle`;
 
@@ -64,28 +77,59 @@ export function orderedOperations(circuit: Circuit): Operation[] {
 /**
  * Circuit depth: the number of layers when every operation is pushed as early
  * as its wires allow. Empty columns do not count, and gates on disjoint wires
- * share a layer even if they were drawn in different columns.
+ * share a layer even if they were drawn in different columns. A classically
+ * controlled gate comes after the measurement that writes its bit.
  */
 export function circuitDepth(circuit: Circuit): number {
   const level = new Array<number>(circuit.numQubits).fill(0);
+  const written = new Map<number, number>();
   for (const op of orderedOperations(circuit)) {
     const wires = wiresOf(op);
-    const layer = Math.max(...wires.map((w) => level[w] ?? 0)) + 1;
+    const after = op.condition ? (written.get(op.condition.bit) ?? 0) : 0;
+    const layer = Math.max(after, ...wires.map((w) => level[w] ?? 0)) + 1;
     for (const w of wires) level[w] = layer;
+    if (op.gate === 'MEASURE' && op.classicalTarget !== undefined) written.set(op.classicalTarget, layer);
   }
   return Math.max(0, ...level);
 }
 
-/** Readout basis per explicitly measured wire; the last measurement on a wire wins. */
+/** Classical bits in use: one more than the highest bit a measurement writes or a gate reads. */
+export function numClbits(circuit: Circuit): number {
+  const used = Math.max(0, ...circuit.operations.map((op) => Math.max(op.classicalTarget ?? -1, op.condition?.bit ?? -1) + 1));
+  return Math.min(MAX_CLBITS, used);
+}
+
+/** Readout basis per wire that ends in a measurement (the last operation on the wire is a MEASURE). */
 export function measurementBases(circuit: Circuit): Map<number, Basis> {
   const bases = new Map<number, Basis>();
   for (const op of orderedOperations(circuit)) {
     if (op.gate === 'MEASURE') bases.set(op.targets[0], op.basis ?? 'Z');
+    else for (const w of wiresOf(op)) bases.delete(w);
   }
   return bases;
 }
 
-/** Wires included in the result: explicitly measured ones, or all wires when none are. */
+/**
+ * Measurements that have to collapse the state where they are placed: a later
+ * operation acts on the wire, or a later gate is conditioned on the outcome.
+ * All other measurements only read out their wire at the end of the circuit.
+ */
+export function midCircuitMeasurements(circuit: Circuit): Set<string> {
+  const mid = new Set<string>();
+  const usedLater = new Set<number>();
+  const readLater = new Set<number>();
+  for (const op of orderedOperations(circuit).reverse()) {
+    if (op.gate === 'MEASURE') {
+      const stored = op.classicalTarget !== undefined && readLater.delete(op.classicalTarget);
+      if (stored || usedLater.has(op.targets[0])) mid.add(op.id);
+    }
+    if (op.condition) readLater.add(op.condition.bit);
+    for (const w of wiresOf(op)) usedLater.add(w);
+  }
+  return mid;
+}
+
+/** Wires included in the result: the ones that end in a measurement, or all wires when none do. */
 export function measuredWires(circuit: Circuit): number[] {
   const measured = [...measurementBases(circuit).keys()].sort((a, b) => a - b);
   return measured.length > 0 ? measured : Array.from({ length: circuit.numQubits }, (_, i) => i);
@@ -152,26 +196,24 @@ export function validate(circuit: Circuit, opts: { numeric?: boolean } = {}): Is
       if (!circuit.customGates.some((g) => g.id === op.customId)) err('Custom gate definition is missing');
       if (opts.numeric) err(`Custom gate "${customLabel(circuit, op)}" can only be exported to LaTeX`);
     }
-  }
 
-  // Readout markers are applied at the end of the circuit, so gates after them are misleading.
-  const bases = measurementBases(circuit);
-  const lastMeasureColumn = new Map<number, number>();
-  for (const op of circuit.operations) {
-    if (op.gate === 'MEASURE') {
-      const w = op.targets[0];
-      lastMeasureColumn.set(w, Math.max(op.column, lastMeasureColumn.get(w) ?? -1));
+    if (op.classicalTarget !== undefined) {
+      if (op.gate !== 'MEASURE') err(`${spec.label} cannot store a result in a classical bit`);
+      else if (!isClbit(op.classicalTarget)) err(`${spec.label} stores its result in a classical bit that does not exist`);
     }
-  }
-  for (const op of circuit.operations) {
-    if (op.gate === 'MEASURE') continue;
-    const late = wiresOf(op).find((w) => bases.has(w) && op.column > (lastMeasureColumn.get(w) ?? Infinity));
-    if (late !== undefined) {
-      issues.push({
-        level: 'warning',
-        opId: op.id,
-        message: `${GATES[op.gate].label} comes after the measurement on q${late}. Measurements are applied at the end of the circuit (mid-circuit measurement is not supported yet).`,
-      });
+    if (op.condition) {
+      const { bit, value } = op.condition;
+      if (op.gate === 'MEASURE') err('A measurement cannot be classically controlled');
+      else if (!isClbit(bit) || (value !== 0 && value !== 1)) err(`${spec.label} has an invalid classical condition`);
+      else {
+        // Operations in one column are drawn as simultaneous, so the bit has to be written in an earlier one.
+        const writers = circuit.operations.filter((o) => o.gate === 'MEASURE' && o.classicalTarget === bit);
+        if (writers.some((o) => o.column === op.column)) {
+          err(`${spec.label} is conditioned on c${bit}, which is measured in the same step; move the gate to a later step`);
+        } else if (!writers.some((o) => o.column < op.column)) {
+          err(`${spec.label} is conditioned on c${bit}, but no earlier measurement stores its result there`);
+        }
+      }
     }
   }
 

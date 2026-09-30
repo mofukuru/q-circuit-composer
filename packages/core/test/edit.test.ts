@@ -9,12 +9,14 @@ import {
   decodeCircuit,
   encodeCircuit,
   moveOperation,
+  numClbits,
   parseCircuit,
   removeCustomGate,
   resizeCustom,
   setNumQubits,
   setQubitLabel,
   setWire,
+  updateOperation,
 } from '../src';
 
 function place(circuit: Circuit, gate: Parameters<typeof createOperation>[1], column: number, row: number, extra = {}) {
@@ -93,6 +95,14 @@ describe('circuitDepth', () => {
     c = place(c, 'X', 11, 1).circuit;
     expect(circuitDepth(c)).toBe(3);
   });
+
+  it('puts a classically controlled gate after the measurement it depends on', () => {
+    let { circuit: c, op: measure } = place(createCircuit(2), 'MEASURE', 3, 0);
+    c = updateOperation(c, measure.id, { classicalTarget: 0 });
+    const x = place(c, 'X', 5, 1);
+    expect(circuitDepth(x.circuit)).toBe(1);
+    expect(circuitDepth(updateOperation(x.circuit, x.op.id, { condition: { bit: 0, value: 1 } }))).toBe(2);
+  });
 });
 
 describe('serialization', () => {
@@ -100,6 +110,26 @@ describe('serialization', () => {
     let c = place(createCircuit(2), 'RX', 1, 0).circuit;
     c = setQubitLabel(c, 0, '|ψ⟩');
     expect(decodeCircuit(encodeCircuit(c))).toEqual(c);
+  });
+
+  it('round-trips classical bits and conditions', () => {
+    let { circuit: c, op: measure } = place(createCircuit(2), 'MEASURE', 0, 0);
+    c = updateOperation(c, measure.id, { classicalTarget: 2 });
+    const x = place(c, 'X', 1, 1);
+    c = updateOperation(x.circuit, x.op.id, { condition: { bit: 2, value: 0 } });
+    expect(numClbits(c)).toBe(3);
+    expect(decodeCircuit(encodeCircuit(c))).toEqual(c);
+  });
+
+  it('opens circuits saved before classical bits existed, and drops malformed ones', () => {
+    const old = parseCircuit('{"version":1,"numQubits":1,"operations":[{"gate":"MEASURE","column":0,"targets":[0],"basis":"X"}]}');
+    expect(old.operations[0]).not.toHaveProperty('classicalTarget');
+    expect(numClbits(old)).toBe(0);
+    const bad = parseCircuit(
+      '{"numQubits":1,"operations":[{"gate":"MEASURE","column":0,"targets":[0],"classicalTarget":-1},{"gate":"X","column":1,"targets":[0],"condition":{"bit":0,"value":2}}]}',
+    );
+    expect(bad.operations[0]).not.toHaveProperty('classicalTarget');
+    expect(bad.operations[1]).not.toHaveProperty('condition');
   });
 
   it('rejects data that is not a circuit', () => {

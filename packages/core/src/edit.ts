@@ -122,7 +122,11 @@ export function resizeCustom(circuit: Circuit, id: string, size: number): Circui
   return replace(circuit, { ...op, targets: Array.from({ length: size }, (_, i) => top + i) });
 }
 
-export function updateOperation(circuit: Circuit, id: string, patch: Partial<Pick<Operation, 'params' | 'basis' | 'customId'>>): Circuit {
+export function updateOperation(
+  circuit: Circuit,
+  id: string,
+  patch: Partial<Pick<Operation, 'params' | 'basis' | 'customId' | 'classicalTarget' | 'condition'>>,
+): Circuit {
   return { ...circuit, operations: circuit.operations.map((o) => (o.id === id ? { ...o, ...patch } : o)) };
 }
 

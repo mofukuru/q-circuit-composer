@@ -1,6 +1,6 @@
 import type { Circuit, Issue } from '../circuit';
 import { toQasm } from '../expr';
-import { type CodegenOptions, type CodegenResult, parsed, prepare, skipped } from './common';
+import { type CodegenOptions, type CodegenResult, inBasis, parsed, prepare, skipped } from './common';
 
 const NAMES: Record<string, string> = {
   H: 'h',
@@ -32,7 +32,7 @@ const DEFINITIONS: Record<string, string> = {
 };
 
 export function generateQasm(circuit: Circuit, _opts: CodegenOptions = {}): CodegenResult {
-  const { issues, ops, bases, measured, symbols } = prepare(circuit);
+  const { issues, ops, bases, measured, clbit, clbits, symbols } = prepare(circuit);
   const extra: Issue[] = [];
   if (symbols.length > 0) {
     extra.push({
@@ -44,7 +44,14 @@ export function generateQasm(circuit: Circuit, _opts: CodegenOptions = {}): Code
   const body: string[] = [];
 
   for (const op of ops) {
-    if (op.gate === 'MEASURE') continue;
+    if (op.gate === 'MEASURE') {
+      const bit = clbit.get(op.id);
+      if (bit === undefined) continue;
+      const q = `q[${op.targets[0]}]`;
+      const { before, after } = inBasis(op.basis, `sdg ${q};`, `h ${q};`, `s ${q};`);
+      body.push(...before, `measure ${q} -> c${bit}[0];`, ...after);
+      continue;
+    }
     if (op.gate === 'CUSTOM') {
       extra.push(skipped(op, 'OpenQASM'));
       body.push(`// custom gate on q[${op.targets.join('], q[')}] skipped`);
@@ -52,7 +59,9 @@ export function generateQasm(circuit: Circuit, _opts: CodegenOptions = {}): Code
     }
     const params = op.params.length > 0 ? `(${op.params.map((p) => toQasm(parsed(p))).join(', ')})` : '';
     const qubits = [...op.controls, ...op.targets].map((w) => `q[${w}]`).join(', ');
-    body.push(`${NAMES[op.gate]}${params} ${qubits};`);
+    // OpenQASM 2.0 can only compare a whole register, so each mid-circuit bit is a register of its own.
+    const condition = op.condition ? `if (c${op.condition.bit}==${op.condition.value}) ` : '';
+    body.push(`${condition}${NAMES[op.gate]}${params} ${qubits};`);
   }
 
   for (const [w, b] of [...bases].sort(([a], [c]) => a - c)) {
@@ -61,7 +70,7 @@ export function generateQasm(circuit: Circuit, _opts: CodegenOptions = {}): Code
   }
   measured.forEach((w, i) => body.push(`measure q[${w}] -> c[${i}];`));
 
-  const used = new Set(body.map((line) => line.split(/[ (]/)[0]));
+  const used = new Set(body.map((line) => line.replace(/^if \(.*?\) /, '').split(/[ (]/)[0]));
   const lines = [
     'OPENQASM 2.0;',
     'include "qelib1.inc";',
@@ -70,6 +79,8 @@ export function generateQasm(circuit: Circuit, _opts: CodegenOptions = {}): Code
       .map(([, def]) => def),
     `qreg q[${circuit.numQubits}];`,
     `creg c[${measured.length}];`,
+    ...(clbits > 0 ? ['// One register per mid-circuit result; c is the final readout.'] : []),
+    ...Array.from({ length: clbits }, (_, bit) => `creg c${bit}[1];`),
     ...body,
   ];
 

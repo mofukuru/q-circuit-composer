@@ -5,6 +5,7 @@ import {
   type Issue,
   measurementBases,
   measuredWires,
+  midCircuitMeasurements,
   numericParams,
   orderedOperations,
   validate,
@@ -42,6 +43,17 @@ function matrix(gate: Exclude<BaseGate, 'SWAP'>, theta = 0): Mat2 {
 }
 
 const S_DAG: Mat2 = [1, 0, 0, 0, 0, 0, 0, -1];
+
+/** Rotates `wire` so that a Z measurement reads it in `basis`: H for X, S^dagger then H for Y. */
+function toBasis(state: StateVector, wire: number, basis: Basis) {
+  if (basis === 'Y') state.apply1(S_DAG, wire);
+  if (basis !== 'Z') state.apply1(matrix('H'), wire);
+}
+
+function fromBasis(state: StateVector, wire: number, basis: Basis) {
+  if (basis !== 'Z') state.apply1(matrix('H'), wire);
+  if (basis === 'Y') state.apply1(matrix('S'), wire);
+}
 
 /**
  * Dense state vector. Wire 0 is the most significant bit of the basis-state
@@ -98,21 +110,97 @@ export class StateVector {
     for (let i = 0; i < p.length; i++) p[i] = this.re[i] ** 2 + this.im[i] ** 2;
     return p;
   }
-}
 
-/** Runs the unitary part of the circuit (measurements are handled by `simulate`). */
-export function runCircuit(circuit: Circuit): StateVector {
-  const state = new StateVector(circuit.numQubits);
-  for (const op of orderedOperations(circuit)) {
-    const base = GATES[op.gate].base;
-    if (!base) continue;
-    if (base === 'SWAP') {
-      state.swap(op.targets[0], op.targets[1], op.controls);
-    } else {
-      state.apply1(matrix(base, numericParams(op)[0]), op.targets[0], op.controls);
+  clone(): StateVector {
+    const copy = new StateVector(this.numQubits);
+    copy.re.set(this.re);
+    copy.im.set(this.im);
+    return copy;
+  }
+
+  /** Squared norm of the part of the state where `wire` reads `outcome`. */
+  weight(wire: number, outcome: 0 | 1): number {
+    const m = this.mask(wire);
+    let total = 0;
+    for (let i = 0; i < this.re.length; i++) {
+      if (!(i & m) === !outcome) total += this.re[i] ** 2 + this.im[i] ** 2;
+    }
+    return total;
+  }
+
+  /** Projects onto `wire` reading `outcome`, without renormalizing. */
+  project(wire: number, outcome: 0 | 1) {
+    const m = this.mask(wire);
+    for (let i = 0; i < this.re.length; i++) {
+      if (!(i & m) !== !outcome) this.re[i] = this.im[i] = 0;
     }
   }
-  return state;
+}
+
+/**
+ * One sequence of mid-circuit measurement outcomes. The state is not
+ * renormalized after a measurement, so its squared norm is the probability of
+ * the branch.
+ */
+export interface Branch {
+  state: StateVector;
+  /** Classical bits as a bit mask (bit k of the number is classical bit k). */
+  bits: number;
+}
+
+/** Amplitudes kept across all branches before exact simulation gives up. */
+const MAX_BRANCH_AMPLITUDES = 1 << 21;
+/** Outcomes less likely than this are not followed. */
+const NEGLIGIBLE = 1e-14;
+
+/**
+ * Runs the circuit, following every outcome of each mid-circuit measurement
+ * as its own branch. Measurements that end their wire are left to `simulate`.
+ */
+export function runBranches(circuit: Circuit): Branch[] {
+  const mid = midCircuitMeasurements(circuit);
+  let branches: Branch[] = [{ state: new StateVector(circuit.numQubits), bits: 0 }];
+
+  for (const op of orderedOperations(circuit)) {
+    if (op.gate === 'MEASURE') {
+      if (!mid.has(op.id)) continue;
+      const wire = op.targets[0];
+      const basis = op.basis ?? 'Z';
+      const next: Branch[] = [];
+      for (const { state, bits } of branches) {
+        toBasis(state, wire, basis);
+        const outcomes = ([0, 1] as const).filter((outcome) => state.weight(wire, outcome) > NEGLIGIBLE);
+        outcomes.forEach((outcome, i) => {
+          const projected = i < outcomes.length - 1 ? state.clone() : state;
+          projected.project(wire, outcome);
+          fromBasis(projected, wire, basis);
+          const stored = op.classicalTarget === undefined ? bits : (bits & ~(1 << op.classicalTarget)) | (outcome << op.classicalTarget);
+          next.push({ state: projected, bits: stored });
+        });
+      }
+      if (next.length << circuit.numQubits > MAX_BRANCH_AMPLITUDES) {
+        throw new CircuitError([
+          {
+            level: 'error',
+            opId: op.id,
+            message: `Too many mid-circuit measurement outcomes to simulate exactly (${next.length} branches of ${circuit.numQubits} qubits)`,
+          },
+        ]);
+      }
+      branches = next;
+      continue;
+    }
+
+    const base = GATES[op.gate].base;
+    if (!base) continue;
+    const m = base === 'SWAP' ? null : matrix(base, numericParams(op)[0]);
+    for (const { state, bits } of branches) {
+      if (op.condition && ((bits >> op.condition.bit) & 1) !== op.condition.value) continue;
+      if (m) state.apply1(m, op.targets[0], op.controls);
+      else state.swap(op.targets[0], op.targets[1], op.controls);
+    }
+  }
+  return branches;
 }
 
 export interface SimulationOptions {
@@ -142,30 +230,29 @@ export class CircuitError extends Error {
 }
 
 /**
- * Simulates the circuit. MEASURE operations select the readout basis of their
- * wire and are applied at the end of the circuit, like the original PennyLane
- * backend: X basis rotates with H, Y basis with S^dagger then H.
+ * Simulates the circuit. The result is the readout of the wires that end in a
+ * measurement, each in the basis of that measurement (X rotates with H, Y with
+ * S^dagger then H), or of all wires in the Z basis when none do. Measurements
+ * in the middle of the circuit collapse the state, and the probabilities are
+ * summed over their outcomes.
  */
 export function simulate(circuit: Circuit, opts: SimulationOptions = {}): SimulationResult {
   const issues = validate(circuit, { numeric: true });
   if (hasErrors(issues)) throw new CircuitError(issues);
 
-  const state = runCircuit(circuit);
   const bases = measurementBases(circuit);
-  for (const [wire, basis] of bases) {
-    if (basis === 'Y') state.apply1(S_DAG, wire);
-    if (basis !== 'Z') state.apply1(matrix('H'), wire);
-  }
-
   const wires = measuredWires(circuit);
-  const full = state.probabilities();
   const marginal = new Float64Array(1 << wires.length);
-  const masks = wires.map((w) => state.mask(w));
-  for (let i = 0; i < full.length; i++) {
-    if (full[i] === 0) continue;
-    let k = 0;
-    for (const m of masks) k = (k << 1) | (i & m ? 1 : 0);
-    marginal[k] += full[i];
+  for (const { state } of runBranches(circuit)) {
+    for (const [wire, basis] of bases) toBasis(state, wire, basis);
+    const full = state.probabilities();
+    const masks = wires.map((w) => state.mask(w));
+    for (let i = 0; i < full.length; i++) {
+      if (full[i] === 0) continue;
+      let k = 0;
+      for (const m of masks) k = (k << 1) | (i & m ? 1 : 0);
+      marginal[k] += full[i];
+    }
   }
 
   const label = (k: number) => k.toString(2).padStart(wires.length, '0');

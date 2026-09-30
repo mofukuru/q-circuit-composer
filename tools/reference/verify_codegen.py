@@ -5,7 +5,8 @@
 
 PennyLane and Qulacs outputs are exact and must match to 1e-9. Qiskit output
 is sampled, so it is checked with a tolerance, and the QASM is loaded through
-Qiskit. Frameworks that are not installed are skipped.
+Qiskit: exactly for static circuits, sampled with Aer for dynamic ones.
+Frameworks that are not installed are skipped.
 """
 
 import contextlib
@@ -44,11 +45,25 @@ def qiskit_probs(case):
     return {bits[::-1]: n / total for bits, n in counts.items()}
 
 
+SHOTS = 20000
+SAMPLING_TOLERANCE = 0.02
+
+
 def qasm_probs(case):
     from qiskit import qasm2
     from qiskit.quantum_info import Statevector
 
-    qc = qasm2.loads(case["qasm"]).remove_final_measurements(inplace=False)
+    qc = qasm2.loads(case["qasm"])
+    if case["dynamic"]:
+        from qiskit_aer import AerSimulator
+
+        # Registers are printed last-declared first; the final readout `c` is declared first.
+        counts = {}
+        for key, n in AerSimulator().run(qc, shots=SHOTS).result().get_counts().items():
+            bits = key.split()[-1][::-1]
+            counts[bits] = counts.get(bits, 0) + n
+        return {bits: n / SHOTS for bits, n in counts.items()}
+    qc = qc.remove_final_measurements(inplace=False)
     # Qiskit puts qargs[0] rightmost, so reversed wires read left to right in wire order.
     probs = Statevector(qc).probabilities_dict(qargs=case["wires"][::-1])
     return {bits: float(p) for bits, p in probs.items()}
@@ -57,8 +72,8 @@ def qasm_probs(case):
 CHECKS = [
     ("pennylane", "pennylane", pennylane_probs, 1e-9),
     ("qulacs", "qulacs", qulacs_probs, 1e-9),
-    ("qiskit", "qiskit_aer", qiskit_probs, 0.02),
-    ("qasm", "qiskit", qasm_probs, 1e-9),
+    ("qiskit", "qiskit_aer", qiskit_probs, SAMPLING_TOLERANCE),
+    ("qasm", "qiskit_aer", qasm_probs, 1e-9),
 ]
 
 
@@ -69,7 +84,11 @@ def main(path):
         if importlib.util.find_spec(module) is None:
             print(f"skip {label}: {module} is not installed")
             continue
-        bad = [c["name"] for c in cases if not close(c["probabilities"], fn(c), tol)]
+        bad = [
+            c["name"]
+            for c in cases
+            if not close(c["probabilities"], fn(c), SAMPLING_TOLERANCE if label == "qasm" and c["dynamic"] else tol)
+        ]
         failures += len(bad)
         print(f"{label}: {len(cases) - len(bad)}/{len(cases)} match" + (f"  FAILED: {bad}" if bad else ""))
     sys.exit(1 if failures else 0)
