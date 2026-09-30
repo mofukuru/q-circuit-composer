@@ -37,7 +37,8 @@ function PaletteItem({ gate, customId, label, title }: { gate: GateName; customI
   );
 }
 
-function CustomGates() {
+/** Custom gate list and the form to add one. With `listOnly` the gates are plain chips, for when the bar already offers them for dragging. */
+export function CustomGates({ listOnly }: { listOnly?: boolean }) {
   const { t } = useTranslation();
   const circuit = useStore((s) => s.circuit);
   const commit = useStore((s) => s.commit);
@@ -55,7 +56,13 @@ function CustomGates() {
       <div className="flex flex-wrap gap-1.5">
         {circuit.customGates.map((g) => (
           <div key={g.id} className="flex items-center gap-0.5">
-            <PaletteItem gate="CUSTOM" customId={g.id} label={<MathText latex={g.label} />} title={g.label} />
+            {listOnly ? (
+              <span className={`flex h-10 min-w-10 items-center justify-center rounded-md border px-2 font-mono text-sm font-semibold ${gateTone('CUSTOM')}`}>
+                <MathText latex={g.label} />
+              </span>
+            ) : (
+              <PaletteItem gate="CUSTOM" customId={g.id} label={<MathText latex={g.label} />} title={g.label} />
+            )}
             <button
               type="button"
               onClick={() => commit(removeCustomGate(circuit, g.id))}
@@ -114,6 +121,32 @@ export default function Palette() {
       <div>
         <h3 className="mb-1.5 text-xs font-medium text-muted">{t('palette.custom')}</h3>
         <CustomGates />
+      </div>
+    </section>
+  );
+}
+
+/**
+ * Compact palette for narrow screens: every gate in a few wrapped rows, pinned
+ * above the circuit so a gate is never more than a short drag away.
+ */
+export function PaletteBar() {
+  const { t } = useTranslation();
+  const customGates = useStore((s) => s.circuit.customGates);
+  return (
+    <section
+      aria-label={t('palette.title')}
+      data-drop-shield
+      className="sticky top-0 z-20 -mx-4 -mt-4 border-b border-line bg-surface shadow-sm"
+    >
+      {/* Capped so that many custom gates cannot push the circuit off a short screen. */}
+      <div data-no-autoscroll className="flex max-h-[40vh] flex-wrap gap-1.5 overflow-y-auto px-4 py-2">
+        {GROUPS.flatMap((group) => group.gates).map((gate) => (
+          <PaletteItem key={gate} gate={gate} label={GATES[gate].label} title={GATES[gate].description} />
+        ))}
+        {customGates.map((g) => (
+          <PaletteItem key={g.id} gate="CUSTOM" customId={g.id} label={<MathText latex={g.label} />} title={g.label} />
+        ))}
       </div>
     </section>
   );

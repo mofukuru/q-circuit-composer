@@ -1,4 +1,5 @@
 import {
+  type CollisionDetection,
   DndContext,
   type DragEndEvent,
   type DragOverEvent,
@@ -6,18 +7,19 @@ import {
   type DragStartEvent,
   KeyboardSensor,
   PointerSensor,
+  rectIntersection,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
 import { GATES, removeOperation } from '@qcc/core';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import CircuitEditor from './components/CircuitEditor';
 import { gateTone } from './components/gateStyle';
 import Header from './components/Header';
 import Inspector from './components/Inspector';
 import OutputPanel from './components/OutputPanel';
-import Palette from './components/Palette';
+import Palette, { CustomGates, PaletteBar } from './components/Palette';
 import { applyDrop, type Cell, type DragItem, DropPreview } from './drag';
 import { useStore } from './store';
 
@@ -31,6 +33,31 @@ function useTheme() {
     return () => media.removeEventListener('change', apply);
   }, [theme]);
 }
+
+/** Matches Tailwind's `lg` breakpoint, where the sidebar sits beside the circuit. */
+const WIDE = '(min-width: 64rem)';
+
+function useWide() {
+  return useSyncExternalStore(
+    (notify) => {
+      const media = matchMedia(WIDE);
+      media.addEventListener('change', notify);
+      return () => media.removeEventListener('change', notify);
+    },
+    () => matchMedia(WIDE).matches,
+  );
+}
+
+/** The pinned palette bar covers cells scrolled beneath it; releasing a gate over the bar must not drop it there. */
+const collisionDetection: CollisionDetection = (args) => {
+  const p = args.pointerCoordinates;
+  const shield = document.querySelector('[data-drop-shield]')?.getBoundingClientRect();
+  if (p && shield && p.x >= shield.left && p.x <= shield.right && p.y >= shield.top && p.y <= shield.bottom) return [];
+  return rectIntersection(args);
+};
+
+/** Dragging out of the palette bar should scroll the page, never the bar itself. */
+const autoScroll = { canScroll: (el: Element) => !el.hasAttribute('data-no-autoscroll') };
 
 function useShortcuts() {
   useEffect(() => {
@@ -77,6 +104,7 @@ const dragLabel = (item: DragItem) => {
 
 export default function App() {
   const { t } = useTranslation();
+  const wide = useWide();
   const [active, setActive] = useState<DragItem | null>(null);
   const [preview, setPreview] = useState<(Cell & { ok: boolean }) | null>(null);
   // A small movement threshold keeps clicks (select / arm a tool) working on draggable elements.
@@ -116,18 +144,41 @@ export default function App() {
   const label = active ? dragLabel(active) : null;
 
   return (
-    <DndContext sensors={sensors} onDragStart={onDragStart} onDragOver={onDragOver} onDragEnd={onDragEnd} onDragCancel={onDragCancel}>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={collisionDetection}
+      autoScroll={autoScroll}
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDragEnd={onDragEnd}
+      onDragCancel={onDragCancel}
+    >
       <DropPreview.Provider value={preview}>
         <div className="flex min-h-screen flex-col">
           <Header />
-          <main className="mx-auto grid w-full max-w-[1600px] flex-1 gap-4 p-4 lg:grid-cols-[15rem_minmax(0,1fr)]">
-            <aside className="space-y-6 panel p-4 lg:self-start">
-              <Palette />
-              <hr className="border-line" />
-              <Inspector />
-            </aside>
+          <main className="mx-auto grid w-full max-w-[1600px] flex-1 grid-cols-1 gap-4 p-4 lg:grid-cols-[15rem_minmax(0,1fr)]">
+            {wide ? (
+              <aside className="space-y-6 panel self-start p-4">
+                <Palette />
+                <hr className="border-line" />
+                <Inspector />
+              </aside>
+            ) : (
+              <PaletteBar />
+            )}
             <div className="min-w-0 space-y-4">
               <CircuitEditor />
+              {/* On narrow screens the inspector goes below the circuit, keeping the palette right above it. */}
+              {!wide && (
+                <aside className="space-y-6 panel p-4">
+                  <Inspector />
+                  <hr className="border-line" />
+                  <section className="space-y-2">
+                    <h2 className="text-sm font-semibold tracking-wide text-muted uppercase">{t('palette.custom')}</h2>
+                    <CustomGates listOnly />
+                  </section>
+                </aside>
+              )}
               <OutputPanel />
             </div>
           </main>
