@@ -14,26 +14,26 @@
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
     "@qcc/core": "*",
-    "i18next": "^26.4.2",
-    "lucide-react": "^1.48.0",
-    "react": "^19.3.0",
-    "react-dom": "^19.3.0",
-    "react-i18next": "^17.0.15",
-    "zustand": "^5.0.15"
+    "i18next": "^26.5.6",
+    "lucide-react": "^1.61.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-i18next": "^17.1.3",
+    "zustand": "^5.0.16"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@tailwindcss/vite": "^4.3.3",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "@vitejs/plugin-react": "^6.1.1",
-    "eslint": "^10.11.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "eslint": "^10.13.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.7",
-    "globals": "^17.12.0",
+    "globals": "^17.13.0",
     "tailwindcss": "^4.3.3",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.70.1",
-    "vite": "^8.3.1"
+    "typescript-eslint": "^8.72.0",
+    "vite": "^8.3.5"
   }
 }
